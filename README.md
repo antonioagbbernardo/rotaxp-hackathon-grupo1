@@ -17,6 +17,21 @@ uv run flask --app app run -p 5001
 
 Acesse http://127.0.0.1:5001. O seed só popula a base vazia.
 
+### Protótipo do front (React)
+
+O `frontend/` é um protótipo visual separado: usa dados fictícios próprios e
+**não chama a API Flask**, então não depende do backend estar rodando. Requer Node.js 22+.
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Acesse a URL que o Vite mostrar no terminal (por padrão http://localhost:5173).
+Outros comandos: `npm run build` (checagem de tipos + build) e `npm run lint`.
+Detalhes em [frontend/README.md](frontend/README.md).
+
 ## Verificar
 
 Dentro de `backend/`:
