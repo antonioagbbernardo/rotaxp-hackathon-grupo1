@@ -1,57 +1,65 @@
-# Plano de execução — proposta para seis pessoas
+# Plano de execução — seis pessoas
 
-Status: planejamento, sem implementação autorizada nesta etapa.
-Referências: `spec.md` e `design.md`. Os responsáveis serão definidos pela equipe.
+Status: plano adotado em 10/10/2026. Referências: `spec.md`, `design.md`,
+`contracts.md`. Responsáveis definidos pela equipe.
 
 ## Sequência de trabalho
 
-| Tarefa | Resultado verificável | Depende de | Aceite relacionado | Responsável proposto |
+| Tarefa | Resultado verificável | Depende de | Aceite | Responsável |
 | --- | --- | --- | --- | --- |
-| T01 — Alinhamento | Fluxo, exclusões, regras e stack registrados | Decisão da equipe | Todos | Pessoa 1 + equipe |
-| T02 — Base e dados | Ambiente reproduzível e clientes fictícios persistidos | T01 | CA02–CA04 | Pessoa 2 |
-| T03 — Primeiro fluxo | Lista abre detalhe com dados da base | T02 e contrato de dados | CA01, CA02, CA10 | Pessoas 2 e 4 |
-| T04 — Histórico | Registrar interação e consultar após recarregar | T03 | CA03, CA04 | Pessoa 5 |
-| T05 — Alertas | Vencimentos e eventos aparecem com motivo e fonte | T02 e regras validadas | CA05–CA08 | Pessoa 3 |
-| T06 — Relacionamento | Preferências e avaliação justificada funcionam | T03 | CA07, CA09 | Pessoas 4 e 5 |
-| T07 — Integração | Fluxo completo revisado, inclusive falhas | T04–T06 | Todos | Pessoa 6 + autores |
-| T08 — Entrega | README, repositório atualizado e pitch de até 5 min | T07 | Demonstração reproduzível | Pessoas 1 e 6 + equipe |
+| T00 — Contratos | `contracts.md` fechado (campos, rotas, erros, formatos); stack e responsáveis registrados; seed fictício com datas relativas definido | Equipe (≤ 20 min) | Todos | Líder técnico + backend + frontend |
+| T01 — Base | Projeto roda em ≥ 2 máquinas com lockfile; banco e clientes fictícios persistidos | T00 | CA02 | Pessoa 2 |
+| T02 — Consulta | Lista (busca, filtro, ordenação) abre detalhe com dados da base | T00 (usar contrato/seed enquanto T01 termina) | CA01, CA02, CA10 | Pessoas 2 e 4 |
+| T03 — Histórico | Registrar interação e consultar após recarregar | T00 | CA03, CA04, CA13 | Pessoa 5 |
+| T04 — Alertas e prioridade | Vencimentos, vencidos, aniversários, RN11 e tratar alerta | T00 | CA05, CA07, CA08, CA11, CA12, CA14 | Pessoa 3 |
+| T05 — Relacionamento | Preferência `permite_assuntos_pessoais` e estado com justificativa | T00 | CA07, CA09 | Pessoas 4 e 5 |
+| T06 — Integração | Fluxo completo revisado, inclusive falhas e celular | T01–T05 | Todos | Pessoa 6 + autores |
+| T07 — Entrega | README testado em clone limpo, pitch ≤ 5 min, push | T06 | Demo reproduzível | Pessoas 1 e 6 + equipe |
+| Opcional | Eventos externos/simulados (CA06) | T06 concluída | CA06 | Quem estiver livre |
 
-Pessoa 1 mantém a especificação e apoia testes após o alinhamento. Pessoa 6
-acompanha a integração desde a base, sem esperar o final. Cada autor verifica
-sua entrega. A divisão deve acompanhar as competências reais do grupo.
+Pessoa 1 mantém a especificação e apoia testes. Pessoa 6 integra desde a base.
+Cada autor verifica sua entrega. Quem escreve não revisa o próprio trabalho.
+Implementação paralela após T00: integrar assim que a base permitir, sem manter
+duas implementações incompatíveis.
 
-## Referência de tempo — 6h30 totais
+## Cronograma — 10/10/2026 (São Paulo)
 
-- 0h–0h30: alinhamento, regras, stack, contratos e responsáveis.
-- 0h30–1h15: base executável e primeiro fluxo de consulta integrado.
-- 1h15–3h30: interações, alertas e preferências, com integrações frequentes.
-- 3h30–4h30: testes essenciais e correções.
-- 4h30–5h30: revisão do fluxo completo e documentação de execução.
-- 5h30–6h30: envio final, ensaio e margem para imprevistos.
+| Horário | Entrega |
+| --- | --- |
+| 11h20–11h40 | T00: contratos, regras, stack e responsáveis |
+| 11h40–12h30 | Base executável, banco e dados fictícios |
+| 12h30–14h40 | Implementação paralela com integrações frequentes |
+| 14h40–15h45 | Integração completa e testes |
+| 15h45–16h20 | Correções, experiência de uso e demonstração |
+| 16h20–16h45 | README, ensaio e verificação do fluxo em clone limpo |
+| 16h45 | Primeiro push da versão final candidata |
+| 17h00 | Congelamento definitivo do código |
+| 17h00–17h15 | Conferência do commit remoto e da demonstração |
+| 17h30 | Clone previsto pela organização |
 
-Ajustar ao tempo efetivamente restante. O repositório será clonado às **17h30**,
-segundo as instruções do evento; o código da demonstração precisa estar enviado
-antes desse horário.
+Depois das 17h não assumir que alterações serão aceitas. Falha crítica antes do
+congelamento: corrigir, testar e enviar até o limite. Um representante confirma
+com a organização o horário do pitch e se o código pode mudar após o clone; o
+plano não depende da resposta (apresentação pronta até 17h).
 
-## SDD e TDD na prática
+## SDD e TDD
 
-Para cada tarefa, registrar a regra e o critério de aceite antes do código.
-Escrever e revisar testes de comportamento, observar a falha esperada,
-implementar e executar novamente. Não alterar um resultado correto só para passar.
+Registrar regra e critério de aceite antes do código. Escrever e revisar testes
+de comportamento, observar a falha esperada, implementar e rodar novamente. Não
+alterar um resultado correto só para passar. Priorizar limites de vencimento
+(0, 7, 8, 30, 31, vencido), prioridade (RN11), aniversário e permissão,
+idempotência de alertas e persistência. Fluxo completo e celular na integração.
 
-Priorizar testes dos limites de vencimento, associação de interesses,
-preferências de contato, duplicidade de eventos e persistência das interações.
-Complementar com teste do fluxo completo e da interface no celular.
+## Roteiro da demonstração (≤ 5 min)
 
-## Roteiro proposto para demonstração
-
-1. Explicar a dificuldade de reunir contexto e priorizar contatos.
-2. Abrir um cliente e mostrar resumo com evidências.
-3. Mostrar um vencimento e uma oportunidade de contato por interesse.
-4. Registrar uma interação e conferir o histórico atualizado.
-5. Explicar custo, privacidade, limitações e evolução.
+1. Problema e quem é impactado; como é hoje.
+2. Lista priorizada; abrir um cliente e mostrar resumo com fontes.
+3. Vencimento (alta) e aniversário (média, respeitando permissão).
+4. Registrar interação, tratar alerta e ver prioridade/histórico atualizados.
+5. Privacidade (dados fictícios), limitações, benefícios e evolução.
 
 ## Quando faltar tempo
 
-Preservar o fluxo completo. Adiar visualizações extras, integrações de canais e
-aplicativo separado antes de cortar persistência, regras essenciais ou validação.
+Preservar o fluxo completo. Cortar nesta ordem: eventos opcionais, visualizações
+extras, polimento visual. Não cortar persistência, regras essenciais nem a
+validação em clone limpo.
