@@ -7,12 +7,12 @@ Status: plano adotado em 10/10/2026. Referências: `spec.md`, `design.md`,
 
 | Tarefa | Resultado verificável | Depende de | Aceite | Responsável |
 | --- | --- | --- | --- | --- |
-| T00 — Contratos | `contracts.md` fechado (campos, rotas, erros, formatos); stack e responsáveis registrados; seed fictício com datas relativas definido | Equipe (≤ 20 min) | Todos | Líder técnico + backend + frontend |
-| T01 — Base | Projeto roda em ≥ 2 máquinas com lockfile; banco e clientes fictícios persistidos | T00 | CA02 | Pessoa 2 |
+| T00 — Contratos | `contracts.md` fechado (campos, rotas, erros, formatos); stack e responsáveis registrados; `Clock` e seed relativo definidos; primeiro lote de testes (vencimento, `Clock`, identidade e persistência do tratamento, permissões pessoais) escrito antes das rotas | Equipe (≤ 20 min, testes em seguida) | CA05, CA07, CA15 | Líder técnico + backend + frontend |
+| T01 — Base | Projeto roda em ≥ 2 máquinas com lockfile; banco, assessor e clientes fictícios persistidos; seed idempotente e reset explícito | T00 | CA02, CA15 | Pessoa 2 |
 | T02 — Consulta | Lista (busca, filtro, ordenação) abre detalhe com dados da base | T00 (usar contrato/seed enquanto T01 termina) | CA01, CA02, CA10 | Pessoas 2 e 4 |
-| T03 — Histórico | Registrar interação e consultar após recarregar | T00 | CA03, CA04, CA13 | Pessoa 5 |
-| T04 — Alertas e prioridade | Vencimentos, vencidos, aniversários, RN11 e tratar alerta | T00 | CA05, CA07, CA08, CA11, CA12, CA14 | Pessoa 3 |
-| T05 — Relacionamento | Preferência `permite_assuntos_pessoais` e estado com justificativa | T00 | CA07, CA09 | Pessoas 4 e 5 |
+| T03 — Histórico | Registrar interação (`ocorrida_em` e `registrada_em`) e consultar após recarregar | T00 | CA03, CA04, CA13 | Pessoa 5 |
+| T04 — Alertas e prioridade | Alertas calculados sob demanda, tratamento persistido, RN11 e resumo com fontes (RN08) | T00 | CA05, CA07, CA08, CA11, CA12, CA14, CA16 | Pessoa 3 |
+| T05 — Relacionamento | Preferências (RN13) e avaliação com justificativa, responsável e data | T00 | CA07, CA09 | Pessoas 4 e 5 |
 | T06 — Integração | Fluxo completo revisado, inclusive falhas e celular | T01–T05 | Todos | Pessoa 6 + autores |
 | T07 — Entrega | README testado em clone limpo, pitch ≤ 5 min, push | T06 | Demo reproduzível | Pessoas 1 e 6 + equipe |
 | Opcional | Eventos externos/simulados (CA06) | T06 concluída | CA06 | Quem estiver livre |

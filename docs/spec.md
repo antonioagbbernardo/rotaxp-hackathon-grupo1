@@ -97,8 +97,8 @@ RN12. Datas importantes (`DataImportante`, aniversário) geram alerta recorrente
       preferências (RN13). A ocorrência anual é identificada pela data naquele
       ano.
 RN13. Preferências estruturadas do cliente: `canal_preferido`,
-      `intervalo_minimo_dias` (7, 14 ou 30) e `permite_assuntos_pessoais`
-      (padrão `false`).
+      `intervalo_minimo_dias` (7, 14 ou 30; padrão 7) e
+      `permite_assuntos_pessoais` (padrão `false`).
       - O canal preferido é o padrão ao registrar interação; não há envio
         automático.
       - O intervalo é contado desde a última interação realizada, em qualquer
@@ -189,6 +189,5 @@ verificações executadas e limitações.
 
 ## Decisões pendentes
 
-- Horário do pitch e possibilidade de alterar o código após o clone (a
-  organização).
-- Valor padrão de `intervalo_minimo_dias` quando não informado (proposta: 7).
+Nenhuma bloqueante para o MVP. Autenticação e acesso multiassessor ficam para
+depois do hackathon (ver "Fora do MVP").

@@ -33,9 +33,9 @@ distribuídos. Web responsiva não é app nativo e não deve ser apresentada com
 | --- | --- |
 | Interface | Lista, filtros, detalhe, linha do tempo, registro de interação, tratar alerta (via API JSON) |
 | API JSON | Validar entradas, chamar regras, devolver JSON e erros padronizados |
-| Regras | Prioridade (RN11), vencimentos (RN03/04), aniversários (RN12), relógio injetável |
-| Persistência | Clientes, posições, interações, datas importantes, alertas, decisões |
-| Resumo | Organiza fatos registrados com fonte e atualidade (template, sem IA) |
+| Regras | Prioridade (RN11), vencimentos (RN03/04), aniversários (RN12), preferências (RN13), `Clock` injetável |
+| Persistência | Assessor, clientes, posições, interações, datas importantes, avaliações de relacionamento e tratamentos de alerta |
+| Resumo | Template determinístico; cada fato com `{tipo_fonte, id_fonte, data_referencia}` (RN08); sem LLM |
 
 ## Entidades
 
@@ -43,29 +43,47 @@ Campos mínimos em `contracts.md`.
 
 | Entidade | Relações |
 | --- | --- |
-| Assessor | Único no MVP; sem autenticação |
-| Cliente | Tem posições, interações, datas importantes, interesses e alertas |
+| Assessor | Único e fictício (seed); identifica interações, avaliações e tratamentos |
+| Cliente | Tem posições, interações, datas importantes, preferências e avaliações |
 | Posição | Pertence a cliente; origem dos alertas de vencimento |
-| Interação | Pertence a cliente |
-| DataImportante | Pertence a cliente; origem dos alertas de aniversário; separada de Interesse e Evento |
-| Interesse / Interesse do cliente | Assunto e evidência; usado só pelo opcional de eventos |
-| Evento (opcional) | Fonte e identificador externo; pode gerar alertas |
-| Alerta | Pertence a cliente; aponta para posição, data importante ou evento; `chave_ocorrencia` única |
-| Avaliação do relacionamento | Estado, justificativa, autor, data |
+| Interação | Pertence a cliente; `ocorrida_em` (informada) e `registrada_em` (automática) |
+| DataImportante | Pertence a cliente; origem dos alertas de aniversário |
+| Avaliação do relacionamento | Histórico: estado, justificativa, assessor, data |
+| Tratamento de alerta | Única entidade persistida do alerta: chave de ocorrência, `tratado_em`, `assessor_id` |
+| Interesse / Evento (opcional) | Somente se o fluxo principal estiver validado |
 
-Restrições: vínculos válidos, `chave_ocorrencia` única por alerta, dinheiro em
-`Decimal` (inteiro de centavos ou NUMERIC como texto no SQLite, nunca float).
-Exclusão e retenção não fazem parte do MVP.
+Restrições: vínculos válidos, `chave_ocorrencia` única em tratamento, dinheiro
+em `Decimal` (TEXT/NUMERIC, nunca float), instantes em UTC. Exclusão e retenção
+não fazem parte do MVP.
 
-## Alertas: geração
+## Relógio
 
-Geração idempotente, executada na carga/abertura da lista e após mudanças
-relevantes (não é job agendado). Reprocessar não recria alerta existente,
-inclusive tratado, pela `chave_ocorrencia`:
+Serviço `Clock` único, com fuso `America/Sao_Paulo`. Toda regra de vencimento,
+aniversário e intervalo recebe a data/hora dele; nenhuma regra chama
+`date.today()`. Testes injetam data fixa (ex.: `2026-10-10`).
 
-- Vencimento: `venc:{posicao_id}`; a prioridade é recalculada pela distância a
-  "hoje", mantendo o mesmo alerta.
-- Aniversário: `aniv:{data_importante_id}:{ano}`.
+Seed: só popula base vazia, com vencimentos relativos à execução em −2, 0, 5, 7,
+8, 30 e 31 dias. Reexecutar não sobrescreve nem desloca dados. Um comando de
+reset explícito reconstrói a demonstração.
+
+## Alertas: cálculo sob demanda
+
+Alerta é uma **representação calculada** a partir de posições e datas
+importantes a cada consulta de lista ou detalhe; não há cópia persistida, cron,
+worker nem botão de processamento. Somente o tratamento é gravado.
+
+- Identidade: `(cliente_id, regra, entidade_origem_id, ocorrencia)`.
+- Vencimento: `ocorrencia` = data de vencimento; a prioridade é recalculada
+  sem mudar a identidade. Vencimento corrigido = nova ocorrência.
+- Aniversário: `ocorrencia` = data no ano; ano seguinte = nova ocorrência.
+- Estado `tratado` vem da existência do tratamento para a chave.
+- Alertas pessoais passam pelo filtro de RN13 (permissão e intervalo mínimo).
+
+## Acesso
+
+Sem autenticação. Um assessor fictício único; executar somente em
+`127.0.0.1`; sem dados reais. Não há `403` no contrato. Não publicar nem tratar
+dados financeiros pessoais reais com esta versão.
 
 ## Eventos externos (opcional)
 
@@ -73,9 +91,9 @@ Se o fluxo principal estiver validado: eventos simulados e identificados,
 consultados uma vez por assunto e reutilizados entre clientes. Fonte real,
 frequência, limites e orçamento não aprovados.
 
-## Questões abertas
+## Questões abertas (pós-MVP)
 
 - Fonte real das posições (Open Finance etc.) e análises de risco/tributárias.
-- Autenticação e autorização por cliente, gestor/investidor.
+- Autenticação, autorização e acesso multiassessor, gestor/investidor.
 - Uso de IA, dados enviados e custo.
 - Armazenamento, correção, exclusão e retenção de dados pessoais.
