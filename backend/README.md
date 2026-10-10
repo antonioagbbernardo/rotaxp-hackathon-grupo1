@@ -97,6 +97,17 @@ sistemas com a mesma chave. Falhas preservam cache; sem retries automáticos.
 Plano Developer pode atrasar os artigos em 24h e é limitado a desenvolvimento.
 [Contrato/aceites](../docs/planejamento/incrementos/05-noticias-newsapi.md).
 
+### Google Agenda (incremento SDD 10)
+
+Configure no `backend/.env` OAuth Client ID, Client Secret e Redirect URI,
+seguindo [o guia da integração](../docs/integracoes/google-agenda.md). O token
+fica cifrado na base SQLite local com a chave persistente `session.key`; mantenha
+ambos protegidos e não os compartilhe. A conexão é por conta Google individual,
+somente para eventos no calendário principal. O painel sincroniza agendamentos,
+alterações de objetivo/horário e cancelamentos; não importa alterações do Google.
+Sem configuração/conexão ou durante falha, a reunião local é preservada e a
+interface apresenta o estado para nova tentativa. Eventos têm duração de uma hora.
+
 ### Configurar IA (incremento SDD 02)
 
 Em `backend/.env` local, ignorado pelo Git:

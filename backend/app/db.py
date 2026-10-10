@@ -5,7 +5,7 @@ from flask import Flask, current_app, g
 
 # Dinheiro: TEXT com Decimal (nunca float). Datas: YYYY-MM-DD. Instantes: UTC ISO 8601.
 # O alerta NÃO é persistido (calculado sob demanda); só o tratamento (tratamento_alerta).
-TABELAS = ("humor_inferido", "nota_assessor", "chat_turno", "feedback_lembranca", "lembranca_contexto", "pauta_reuniao", "reuniao", "sessao_acesso", "descarte_noticia", "coleta_artigo_noticia", "artigo_noticia", "coleta_noticia", "vinculo_noticia",
+TABELAS = ("humor_inferido", "nota_assessor", "chat_turno", "feedback_lembranca", "lembranca_contexto", "pauta_reuniao", "reuniao", "google_agenda_token", "sessao_acesso", "descarte_noticia", "coleta_artigo_noticia", "artigo_noticia", "coleta_noticia", "vinculo_noticia",
            "resumo_ia", "historico_assunto", "preferencia_assunto", "revisao_contexto", "item_contexto", "processamento_contexto",
            "documento_fonte", "tratamento_alerta", "avaliacao_relacionamento", "interacao", "data_importante",
            "posicao", "cliente", "assessor")
@@ -48,9 +48,15 @@ CREATE TABLE IF NOT EXISTS reuniao (
     inicio_em TEXT NOT NULL, criada_em TEXT NOT NULL,
     estado TEXT NOT NULL DEFAULT 'agendada' CHECK(estado IN ('agendada','cancelada','concluida')),
     notas TEXT NOT NULL DEFAULT '', pauta_revisada_id INTEGER, avisos_busca TEXT NOT NULL DEFAULT '[]',
-    interacao_id INTEGER UNIQUE REFERENCES interacao(id)
+    interacao_id INTEGER UNIQUE REFERENCES interacao(id), google_event_id TEXT,
+    google_sync_status TEXT NOT NULL DEFAULT 'nao_conectado', google_sync_error TEXT,
+    google_event_url TEXT
 );
 CREATE INDEX IF NOT EXISTS reuniao_cliente_inicio ON reuniao(cliente_id,inicio_em);
+CREATE TABLE IF NOT EXISTS google_agenda_token (
+    id INTEGER PRIMARY KEY CHECK(id=1), email TEXT NOT NULL, access_token TEXT NOT NULL,
+    refresh_token TEXT NOT NULL, expira_em TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS pauta_reuniao (
     id INTEGER PRIMARY KEY, reuniao_id INTEGER NOT NULL REFERENCES reuniao(id),
     assinatura TEXT NOT NULL, dados TEXT NOT NULL, gerada_em TEXT NOT NULL,
@@ -210,6 +216,15 @@ def close_db(_exc=None) -> None:
 def init_db() -> None:
     db = get_db()
     db.executescript(SCHEMA)
+    colunas = {linha["name"] for linha in db.execute("PRAGMA table_info(reuniao)")}
+    for nome, definicao in (
+        ("google_event_id", "TEXT"),
+        ("google_sync_status", "TEXT NOT NULL DEFAULT 'nao_conectado'"),
+        ("google_sync_error", "TEXT"),
+        ("google_event_url", "TEXT"),
+    ):
+        if nome not in colunas:
+            db.execute(f"ALTER TABLE reuniao ADD COLUMN {nome} {definicao}")
     colunas_assessor = {r['name'] for r in db.execute('PRAGMA table_info(assessor)')}
     for campo, padrao in (('cargo', 'Assessor de investimentos'), ('email', ''), ('telefone', ''), ('escritorio', '')):
         if campo not in colunas_assessor:

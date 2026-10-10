@@ -25,6 +25,9 @@ def create_app(config: dict | None = None) -> Flask:
         NEWSAPI_API_KEY=(os.environ.get("NEWSAPI_API_KEY") or os.environ.get("NEWSAPI_KEY")
             or locais.get("NEWSAPI_API_KEY") or locais.get("NEWSAPI_KEY") or ""),
         NEWSAPI_LIMITE_DIARIO=os.environ.get("NEWSAPI_LIMITE_DIARIO", locais.get("NEWSAPI_LIMITE_DIARIO", "20")),
+        GOOGLE_CALENDAR_CLIENT_ID=os.environ.get("GOOGLE_CALENDAR_CLIENT_ID", locais.get("GOOGLE_CALENDAR_CLIENT_ID", "")),
+        GOOGLE_CALENDAR_CLIENT_SECRET=os.environ.get("GOOGLE_CALENDAR_CLIENT_SECRET", locais.get("GOOGLE_CALENDAR_CLIENT_SECRET", "")),
+        GOOGLE_CALENDAR_REDIRECT_URI=os.environ.get("GOOGLE_CALENDAR_REDIRECT_URI", locais.get("GOOGLE_CALENDAR_REDIRECT_URI", "")),
     )
     if config:
         app.config.update(config)

@@ -451,6 +451,29 @@ keynotes/fontes → revisão humana/notas → concluir → histórico; confirmar
 data pertinente e mostrar feedback. Para mostrar notícias automáticas, manter
 o processo aberto e usar um vínculo de interesse já revisado pelo assessor.
 
+## Incremento 10 — Google Agenda
+
+- Escopo combinado: OAuth pela conta Google do assessor; sincronização em uma
+  direção para o calendário principal. Evento de uma hora com nome do cliente,
+  objetivo e horário. Falhas não apagam reuniões locais; a interface permite
+  nova tentativa. Sem importação, convidados ou sincronização de mudanças feitas
+  diretamente no Google.
+- Backend: endpoints de estado, início/retorno OAuth, desconexão e nova tentativa;
+  criação/edição/cancelamento de eventos com identificador idempotente. Tokens
+  OAuth cifrados com Fernet derivado da chave de sessão local. GET de reuniões
+  não chama o Google.
+- Frontend: conexão/reconexão/desconexão, conta conectada, estado/erro de cada
+  reunião e link do evento.
+- Documentação: RF32, RN76–RN79, CA99–CA102, contratos e guia de configuração
+  Google Cloud/OAuth.
+- Verificação executada: `uv run --locked pytest tests/test_google_agenda.py
+  tests/test_agenda.py` (**11 aprovados**); `npm test` (**22 aprovados**);
+  `npm run lint` e `npm run build` aprovados; `git diff --check` sem erros.
+  Testes usam respostas Google simuladas; não houve chamada externa.
+- Limites não verificados: consentimento OAuth real, gravação na agenda real,
+  fluxo visual no navegador e suíte backend completa. A URI de retorno do cliente
+  OAuth ainda precisa incluir a rota e a porta documentadas; configuração local
+  não foi preenchida.
 ## Ajuste — Todos na interface atual de humor (10/10/2026)
 
 - Pedido: implementar Todos na versão atualizada da main (`77cf36d`). Branch

@@ -374,6 +374,34 @@ adiar exige data futura e só essa ação aceita `adiado_ate`. Feedback por ocor
 Mudança de tipo/descrição/data incrementa versão da anotação; feedback antigo não
 se aplica a essa versão. Pergunta sobre lembranças usa a mesma seleção com fontes.
 
+## Incremento 10 — Google Agenda
+
+[Regras e aceites](incrementos/10-google-agenda.md). Usa OAuth com escopo de
+eventos e e-mail, mediante sessão e CSRF. Credenciais de aplicação são locais;
+token OAuth fica na base local e nunca no frontend/Git. O assessor conecta uma
+conta Google e o painel sincroniza apenas com o calendário `primary`.
+
+```
+GET  /api/integracoes/google-agenda
+     → {configurado,conectado,email}
+POST /api/integracoes/google-agenda/conectar
+     → {url} para redirecionamento explícito ao consentimento Google
+GET  /api/integracoes/google-agenda/retorno?code&state
+     → callback OAuth; redireciona ao painel
+POST /api/integracoes/google-agenda/desconectar
+     → {conectado:false,aviso}
+POST /api/reunioes/<id>/sincronizar-google-agenda
+     → reunião atualizada, inclusive estado da sincronização
+```
+
+Reunião passa a expor `google_agenda: {estado,erro,evento_url}`. `estado` é
+`nao_configurado`, `nao_conectado`, `sincronizado` ou `falhou`. Criar, alterar
+objetivo/horário ou cancelar tenta sincronizar após persistir a alteração local;
+falha externa não desfaz o agendamento. Nova tentativa é explícita e não duplica
+eventos. Cancelamento remove o evento da agenda. Concluir mantém o evento passado.
+Eventos usam `inicio_em`, fuso `America/Sao_Paulo`, duração de 1 hora, título
+“Reunião com <cliente>” e objetivo na descrição. GET de reuniões não chama Google.
+Erros de configuração, OAuth e API são apresentados sem expor tokens.
 ## Incremento 10 — perfil do assessor
 
 `GET /api/pulse/assessor` retorna `{name, role, email, phone, office}` do assessor

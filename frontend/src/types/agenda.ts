@@ -12,6 +12,7 @@ export interface Reuniao {
   inicio_em: string
   estado: 'agendada' | 'cancelada' | 'concluida'
   notas: string
+  google_agenda: { estado: 'nao_configurado' | 'nao_conectado' | 'sincronizado' | 'falhou'; erro: string | null; evento_url: string | null }
   proxima: boolean
   pauta: Pauta | null
   pauta_desatualizada: boolean
