@@ -33,11 +33,17 @@ const options: {
     face: 'negative',
     activeClass: 'bg-negative-soft text-negative ring-1 ring-negative/40',
   },
+  {
+    value: 'unknown',
+    label: 'Sem avaliação',
+    face: 'unknown',
+    activeClass: 'bg-surface-raised text-ink ring-1 ring-line',
+  },
 ]
 
 export function ClientFilterTabs({ value, counts, onChange }: ClientFilterTabsProps) {
   return (
-    <div role="group" aria-label="Filtrar clientes por emoção" className="flex flex-wrap gap-1.5">
+    <div role="group" aria-label="Filtrar clientes por emoção" className="grid grid-cols-2 gap-1.5">
       {options.map((option) => {
         const isActive = option.value === value
 
@@ -48,7 +54,7 @@ export function ClientFilterTabs({ value, counts, onChange }: ClientFilterTabsPr
             aria-pressed={isActive}
             onClick={() => onChange(isActive ? 'all' : option.value)}
             className={cn(
-              'flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors text-ink-muted hover:text-ink',
+              'flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-medium whitespace-nowrap transition-colors text-ink-muted hover:text-ink',
               'focus-visible:outline-2 focus-visible:outline-brand',
               isActive ? option.activeClass : 'hover:bg-surface-raised/60',
             )}
