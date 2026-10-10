@@ -44,3 +44,11 @@ test('data de cadastro completa não interrompe a renderização do perfil', () 
   assert.equal(formatMonth(''), 'Data não informada')
   assert.equal(formatMonth('2021-13-15'), 'Data não informada')
 })
+
+test('perfil editável e cabeçalho preservam o nome e contatos salvos sem substituições', async (t) => {
+  const perfil = { name: 'Assessor Fictício', role: 'Assessor de investimentos', email: 'ficticio@example.com', phone: '', office: 'Escritório fictício' }
+  t.mock.method(globalThis, 'fetch', async (path) => new Response(JSON.stringify(
+    path === '/api/pulse/assessor' ? perfil : { advisor: { name: perfil.name, role: perfil.role }, clients: [] })))
+  assert.deepEqual(await api('/api/pulse/assessor'), perfil)
+  assert.deepEqual((await api('/api/pulse')).advisor, { name: perfil.name, role: perfil.role })
+})

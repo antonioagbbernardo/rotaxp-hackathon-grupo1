@@ -29,5 +29,9 @@ export async function api<T>(path: string, options: { method?: string; body?: un
     }
     throw new Error(error?.mensagem ? `${error.campo ? error.campo + ': ' : ''}${error.mensagem}` : `Erro ${response.status}`)
   }
-  return apresentar(data)
+  // Dados editáveis precisam manter exatamente o valor persistido no perfil.
+  if (path === '/api/pulse/assessor') return data
+  const apresentado = apresentar(data)
+  if (path === '/api/pulse' && data.advisor) apresentado.advisor = data.advisor
+  return apresentado
 }

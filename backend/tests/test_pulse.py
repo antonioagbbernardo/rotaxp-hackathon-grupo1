@@ -43,7 +43,7 @@ def test_lista_real_ordenada_sem_ia_e_ausencias_explicitas(ambiente):
     assert ana['portfolio']['total'] == '80000.00' and ana['portfolio']['allocation'] == [{'asset': 'fixedIncome', 'percent': 100}]
     assert ana['clientSince'] is None and ana['whatsapp'] == '' and ana['email'] == ''
     assert ana['news'] == [] and ana['sentiment'] == 'unknown'
-    assert ana['relationshipLabel'] == 'Não avaliado' and ana['lastContactDays'] == 10
+    assert ana['relationshipLabel'] == 'Não avaliado' and ana['lastContactDays'] == 8
     assert not e.chamadas
 
 

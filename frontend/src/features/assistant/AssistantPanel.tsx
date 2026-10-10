@@ -3,7 +3,6 @@ import { Panel } from '@/components/ui/Panel'
 import wave from '@/assets/onda-pulse.png'
 import type { Client } from '@/types/client'
 import { AskAssistantForm } from './AskAssistantForm'
-import { InsightCard } from './InsightCard'
 import { OpeningSuggestion } from './OpeningSuggestion'
 import { UserMessage } from './UserMessage'
 import { api } from '@/lib/api'
@@ -67,7 +66,7 @@ export function AssistantPanel({ client, onUpdated }: AssistantPanelProps) {
         <img src={wave} alt="" aria-hidden className="mt-0.5 h-5 w-auto shrink-0" />
         <div>
           <h2 id="assistant-title" className="text-base font-semibold">
-            Pulse AI
+            Pulse IA
           </h2>
           <p className="mt-1 text-[11px] text-ink-muted">Seu assistente de relacionamento · Prepare o atendimento de {firstName}.</p>
         </div>
@@ -77,14 +76,6 @@ export function AssistantPanel({ client, onUpdated }: AssistantPanelProps) {
         <UserMessage>{assistant.question}</UserMessage>
 
         <ClientBriefing client={client} onUpdated={onUpdated} />
-
-        <ol className="space-y-3">
-          {assistant.insights.map((insight, index) => (
-            <li key={insight.title}>
-              <InsightCard insight={insight} position={index + 1} />
-            </li>
-          ))}
-        </ol>
 
         <OpeningSuggestion openings={assistant.openings} />
 

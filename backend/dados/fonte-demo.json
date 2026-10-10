@@ -23,7 +23,7 @@
       "tipo": "interacao",
       "canal": "telefone",
       "ocorrida_em": "2026-10-06T10:00:00-03:00",
-      "conteudo": "Dados fictícios: Ana comenta interesse em Fórmula 1."
+      "conteudo": "[Transcrição de Áudio — XP Voice · 03:12]\nAssessor: 'Oi Ana, bom dia! Como você está?'\nAna: 'Tudo bem! Menino, você viu o GP de Fórmula 1 no fim de semana? Que corrida sensacional!'\nAssessor: 'Vi sim, corrida eletrizante! Aproveitando o contato, como estão os planos pra carteira este mês?'\nAna: 'Quero manter os aportes programados e ficar de olho no vencimento do CDB. Me manda as opções depois!'"
     },
     {
       "registro_id": "1-email",
@@ -32,7 +32,7 @@
       "tipo": "interacao",
       "canal": "email",
       "ocorrida_em": "2026-10-07T10:00:00-03:00",
-      "conteudo": "Dados fictícios: aguardo retorno sobre o vencimento do CDB."
+      "conteudo": "De: Ana Souza <ana.souza@exemplo.com>\nPara: assessor@xp.com.br\nAssunto: Vencimento do CDB e planejamento\n\n'Olá! Aguardo retorno com o estudo das melhores taxas sobre o vencimento do CDB de R$ 50k. Abraços, Ana.'"
     },
     {
       "registro_id": "1-whatsapp",
@@ -41,7 +41,7 @@
       "tipo": "interacao",
       "canal": "whatsapp",
       "ocorrida_em": "2026-10-08T10:00:00-03:00",
-      "conteudo": "Dados fictícios: minha filha faz aniversário em novembro; o dia não foi informado."
+      "conteudo": "Ana: 'Oi! Minha filha faz aniversário em novembro; o dia exato ainda vou confirmar com a escola, mas já quero me organizar.'\nAssessor: 'Combinado, Ana! Já anotei aqui para provisionarmos quando você definir.'"
     },
     {
       "registro_id": "2-formulario",
@@ -64,7 +64,7 @@
       "tipo": "interacao",
       "canal": "telefone",
       "ocorrida_em": "2026-10-06T10:00:00-03:00",
-      "conteudo": "Dados fictícios: Bruno comenta interesse em somente assuntos financeiros."
+      "conteudo": "[Transcrição de Áudio — XP Voice · 02:05]\nAssessor: 'Sr. Bruno, bom dia. Ligando para alinhar o acompanhamento trimestral.'\nBruno: 'Bom dia. Por gentileza, gostaria de reforçar que meu foco é em somente assuntos financeiros. Peço que as propostas sejam sempre técnicas e enviadas por e-mail.'\nAssessor: 'Perfeitamente compreendido, Sr. Bruno. Seguiremos estritamente esse padrão.'"
     },
     {
       "registro_id": "2-email",
@@ -73,7 +73,7 @@
       "tipo": "interacao",
       "canal": "email",
       "ocorrida_em": "2026-10-07T10:00:00-03:00",
-      "conteudo": "Dados fictícios: aguardo retorno sobre o vencimento do CDB."
+      "conteudo": "De: Bruno Lima <bruno.lima@exemplo.com>\nPara: assessor@xp.com.br\nAssunto: Solicitação de opções de reinvestimento pós-vencimento\n\n'Prezado assessor, aguardo retorno sobre as taxas conservadoras para realocação do capital da debênture e títulos vencidos. Favor enviar tabela com remuneração líquida.'"
     },
     {
       "registro_id": "2-whatsapp",
@@ -82,7 +82,7 @@
       "tipo": "interacao",
       "canal": "whatsapp",
       "ocorrida_em": "2026-10-08T10:00:00-03:00",
-      "conteudo": "Dados fictícios: podemos retomar o assunto na próxima reunião?"
+      "conteudo": "Bruno: 'Recebi a lâmina por e-mail. Analisarei no final de semana. Podemos retomar o assunto na próxima reunião agendada.'\nAssessor: 'Perfeito, Sr. Bruno. Estaremos prontos na data combinada.'"
     },
     {
       "registro_id": "3-formulario",
@@ -105,7 +105,7 @@
       "tipo": "interacao",
       "canal": "telefone",
       "ocorrida_em": "2026-10-06T10:00:00-03:00",
-      "conteudo": "Dados fictícios: Carla comenta interesse em corridas de rua."
+      "conteudo": "[Transcrição de Áudio — XP Voice · 03:40]\nCarla: 'Fala! Tudo bem? Tô saindo do treino de corridas de rua agora!'\nAssessor: 'Tudo excelente, Carla! Parabéns pela dedicação aos treinos. Ligando para alinhar o vencimento do CRA de R$ 80k na semana que vem.'\nCarla: 'Show! Tô querendo aproveitar que a bolsa abriu oportunidade pra buscar mais alfa. Me manda algo com yield alto!'"
     },
     {
       "registro_id": "3-email",
@@ -114,7 +114,7 @@
       "tipo": "interacao",
       "canal": "email",
       "ocorrida_em": "2026-10-07T10:00:00-03:00",
-      "conteudo": "Dados fictícios: aguardo retorno sobre o vencimento do CDB."
+      "conteudo": "De: Carla Mendes <carla.mendes@exemplo.com>\nPara: assessor@xp.com.br\nAssunto: Re: Proposta de alocação de risco\n\n'Recebi o material. Aguardo retorno sobre o vencimento do CDB e da debênture para consolidarmos tudo numa tacada só.'"
     },
     {
       "registro_id": "3-whatsapp",
@@ -123,7 +123,7 @@
       "tipo": "interacao",
       "canal": "whatsapp",
       "ocorrida_em": "2026-10-08T10:00:00-03:00",
-      "conteudo": "Dados fictícios: podemos retomar o assunto na próxima reunião?"
+      "conteudo": "Carla: 'Gostei da tese de infraestrutura! Podemos retomar o assunto na próxima reunião ou você já boletar a reserva do IPO?'\nAssessor: 'Posso deixar a reserva pronta e alinhamos os ajustes finos na reunião!'"
     },
     {
       "registro_id": "identidade-ausente",

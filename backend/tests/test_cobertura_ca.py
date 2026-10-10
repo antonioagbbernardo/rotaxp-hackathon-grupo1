@@ -2,7 +2,7 @@ from client_autenticado import cliente_autenticado
 """Testes dos critérios de aceite que a suíte principal cobria só em parte.
 
 Rastreabilidade: README.md e especificações anteriores no histórico Git. As expectativas
-vêm do texto de spec.md/requisitos.md e do seed, não da saída da aplicação.
+vêm das especificações preservadas no histórico Git e do seed, não da saída da aplicação.
 """
 from datetime import UTC, date, datetime, timedelta
 

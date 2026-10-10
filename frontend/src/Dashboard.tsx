@@ -7,17 +7,19 @@ import { PerceptionHistory } from '@/features/client-overview/PerceptionHistory'
 import { RadarPerfil } from '@/features/client-overview/RadarPerfil'
 import { ClientSidebar } from '@/features/clients/ClientSidebar'
 import { NewsSection } from '@/features/news/NewsSection'
-import { ClientWorkspace } from '@/features/client-overview/ClientWorkspace'
+
 import { Button } from '@/components/ui/Button'
 import { api } from '@/lib/api'
 import type { PulseView } from '@/types/client'
 import { MeetingsSection, UpcomingMeetings } from '@/features/meetings/MeetingsSection'
 import { RemindersSection } from '@/features/reminders/RemindersSection'
+import { AdvisorProfile } from '@/features/advisor/AdvisorProfile'
 
 export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () => void; loggingOut: boolean; logoutError: string }) {
   const [data, setData] = useState<PulseView | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [profileOpen, setProfileOpen] = useState(location.hash === '#/perfil')
   const [selectedClientId, setSelectedClientId] = useState(location.hash.match(/^#\/clientes\/(\d+)$/)?.[1] ?? '')
   const requestId = useRef(0)
   const humorTentado = useRef(new Set<string>())
@@ -54,6 +56,7 @@ export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () 
   }, [])
   useEffect(() => {
     const changed = () => {
+      setProfileOpen(location.hash === '#/perfil')
       const id = location.hash.match(/^#\/clientes\/(\d+)$/)?.[1]
       if (id && data?.clients.some((c) => c.id === id)) setSelectedClientId(id)
     }
@@ -98,7 +101,8 @@ export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () 
 
   return (
     <div className="flex min-h-dvh flex-col xl:h-dvh">
-      <AppHeader advisor={data?.advisor ?? { name: 'Carregando assessor', role: 'Assessor de investimentos' }} onLogout={onLogout} loggingOut={loggingOut} />
+      <AppHeader advisor={data?.advisor ?? { name: 'Carregando assessor', role: 'Assessor de investimentos' }} onLogout={onLogout} loggingOut={loggingOut}
+        onOpenProfile={() => { location.hash = '/perfil' }} profileOpen={profileOpen} profileAvailable={!!data} />
       <div className="px-4 pt-3 text-xs text-ink-muted" aria-live="polite">
         {logoutError && <p role="alert" className="mb-2 text-negative">{logoutError}</p>}
         {loading && <p>Carregando dados do backend…</p>}
@@ -106,7 +110,9 @@ export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () 
         {!loading && !error && data && <p>Contexto para poupar sua busca; a decisão continua com o assessor.</p>}
       </div>
 
-      {data && <main className="grid min-w-0 flex-1 gap-4 p-4 sm:gap-6 sm:p-6 lg:grid-cols-[280px_minmax(0,1fr)] xl:min-h-0 xl:grid-cols-[280px_minmax(0,1fr)_400px]">
+      {profileOpen ? <AdvisorProfile onBack={() => { location.hash = selectedClientId ? `/clientes/${selectedClientId}` : '' }}
+        onSaved={(perfil) => { setData((current) => current ? { ...current, advisor: { name: perfil.name, role: perfil.role } } : current) }} />
+        : data && <main className="grid min-w-0 flex-1 gap-4 p-4 sm:gap-6 sm:p-6 lg:grid-cols-[280px_minmax(0,1fr)] xl:min-h-0 xl:grid-cols-[280px_minmax(0,1fr)_400px]">
         <div className="min-w-0 space-y-4 xl:overflow-y-auto">
         <ClientSidebar
           clients={data.clients}
@@ -124,7 +130,6 @@ export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () 
             <InvestmentProfile portfolio={selectedClient.portfolio} />
           </div>
           {data && <RadarPerfil client={selectedClient} hoje={data.generatedAt} />}
-          <ClientWorkspace key={selectedClient.id} client={selectedClient} onUpdated={updated} />
           <MeetingsSection key={`agenda-${selectedClient.id}`} clientId={selectedClient.id} revision={data.generatedAt} onUpdated={updated} />
           <RemindersSection key={`lembrancas-${selectedClient.id}`} clientId={selectedClient.id} revision={data.generatedAt} onUpdated={updated} />
           <NewsSection key={selectedClient.id} client={selectedClient} onUpdated={updated} />

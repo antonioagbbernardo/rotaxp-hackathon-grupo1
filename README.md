@@ -56,7 +56,9 @@ Na interface, o fundo escuro, os detalhes amarelos, os cards e a hierarquia tipo
 | Clientes | Lista de dez perfis de demonstração, fotos, busca por nome/interesses e filtros por humor inferido. |
 | Carteira | Total com precisão decimal, posições e fontes, perfil cadastrado, objetivo e distribuição por valor agrupada pelo tipo dos ativos. |
 | Radar | Estimativa heurística de risco, crédito privado, liquidez, horizonte e diversificação; compara o perfil declarado com o sugerido pela carteira. |
-| Relacionamento | Histórico de avaliações do assessor, preferências de canal e cadência, interações e próximos passos. |
+| Relacionamento | Avaliação do assessor, preferências de canal e cadência, interações e consulta de mensagens recentes, incluindo transcrições. |
+| Histórico de humor | Linha do tempo por interação, classificada por palavras-chave no backend; a inferência OpenAI do humor atual é uma funcionalidade separada. |
+| Perfil do assessor | Edição de nome, cargo, e-mail, telefone e escritório pelo cabeçalho, com persistência e proteção de sessão/CSRF. |
 | Humor | Inferência OpenAI baseada nas interações com o investidor, com trechos de evidência e possibilidade de revisão pelo assessor. |
 | Pulse AI | Conversa natural com contexto do cliente; registra automaticamente informações declaradas pelo assessor e atualiza o painel. |
 | Notícias | NewsAPI por interesses identificados, inclusive assuntos fora do catálogo inicial; adicionar um interesse no chat ou no campo de notícias dispara atualização automática. |
@@ -148,6 +150,7 @@ As dependências efetivas estão em `backend/pyproject.toml`, `backend/uv.lock`,
 │   │   ├── newsapi.py          # Cliente do provedor de notícias
 │   │   ├── reunioes.py         # Agenda e pautas
 │   │   ├── lembrancas.py       # Datas e feedback
+│   │   ├── perfil_assessor*.py # Perfil editável e validação dos campos
 │   │   ├── humor.py            # Inferência com evidências das interações
 │   │   ├── seed.py             # Carga inicial
 │   │   ├── demo_pulse.py       # Carga ampliada de dez clientes
@@ -254,6 +257,7 @@ As APIs de dados exigem sessão. Escritas exigem o header `X-CSRF-Token`, obtido
 | --- | --- |
 | `GET /api/auth/sessao`, `POST /api/auth/login`, `POST /api/auth/logout` | Sessão, acesso e saída. |
 | `GET /api/pulse` | Painel consolidado. |
+| `GET/PUT /api/pulse/assessor` | Consulta e edição do perfil do assessor. |
 | `GET /api/clientes`, `GET /api/clientes/<id>` | Clientes e detalhes. |
 | `GET/POST /api/pulse/clientes/<id>/chat` | Histórico e conversa do Pulse AI; envio usa `pergunta` e `request_id`. |
 | `POST /api/pulse/clientes/<id>/humor` | Inferência de humor das interações. |
@@ -287,7 +291,7 @@ npm run build
 
 Os testes cobrem regras de prioridade, precisão financeira, contratos, login/CSRF, fontes versionadas, contexto, conversa, humor, notícias, reuniões, lembretes e repetição sem duplicações. Provedores são simulados nos testes para verificar comportamento sem gastar chamadas externas. Os testes de frontend incluem autenticação, comunicação com a API, formatação e radar.
 
-Na consolidação desta documentação, a suíte completa do backend passou com **387 testes**. A verificação mais recente do frontend passou com **23 testes**, lint e build. Essas contagens representam a versão verificada, não uma garantia de cobertura integral.
+Antes de incorporar as últimas alterações remotas, a suíte completa passou com 387 testes de backend e a verificação do frontend passou com 23 testes, lint e build. A versão integrada é verificada novamente na consolidação final.
 
 A CI em `.github/workflows/ci.yml` executa pytest no backend e testes, lint e build no frontend. O build também faz a checagem TypeScript. Verificações reais realizadas durante o desenvolvimento incluíram chat, coleta de notícias e atualização automática após inclusão de interesse; no navegador, também foi conferida a recuperação do painel após corrigir a formatação da data de cadastro.
 

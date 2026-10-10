@@ -2,6 +2,7 @@ import { cn } from '@/lib/cn'
 import type { ClientFilter } from '@/hooks/useClientFilters'
 import { SentimentFace } from '@/components/ui/SentimentFace'
 import type { Sentiment } from '@/types/client'
+import { UsersRound } from 'lucide-react'
 
 interface ClientFilterTabsProps {
   value: ClientFilter
@@ -10,11 +11,16 @@ interface ClientFilterTabsProps {
 }
 
 const options: {
-  value: Exclude<ClientFilter, 'all'>
+  value: ClientFilter
   label: string
-  face: Sentiment
+  face?: Sentiment
   activeClass: string
 }[] = [
+  {
+    value: 'all',
+    label: 'Todos',
+    activeClass: 'bg-surface-raised text-ink ring-1 ring-line',
+  },
   {
     value: 'positive',
     label: 'Feliz',
@@ -56,10 +62,11 @@ export function ClientFilterTabs({ value, counts, onChange }: ClientFilterTabsPr
             className={cn(
               'flex min-w-0 items-center justify-center gap-1 whitespace-nowrap rounded-md px-1.5 py-1 text-[11px] font-medium transition-colors text-ink-muted hover:text-ink',
               'focus-visible:outline-2 focus-visible:outline-brand',
+              option.value === 'all' && 'col-span-2',
               isActive ? option.activeClass : 'hover:bg-surface-raised/60',
             )}
           >
-            <SentimentFace sentiment={option.face} className="size-4" />
+            {option.face ? <SentimentFace sentiment={option.face} className="size-4" /> : <UsersRound aria-hidden="true" className="size-4 shrink-0" />}
             <span>{option.label}</span>
             <span className="text-[10px] opacity-75">{counts[option.value]}</span>
           </button>
