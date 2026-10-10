@@ -1,5 +1,7 @@
 """Conversa OpenAI por cliente; dados declarados são registrados automaticamente."""
 import json
+import re
+import unicodedata
 from datetime import timedelta
 from uuid import UUID, uuid4
 
@@ -59,8 +61,11 @@ def _entrada(cliente):
 
 
 def responder(cliente, entrada):
-    b = corpo(entrada, ('pergunta', 'request_id'), ('pergunta',))
+    b = corpo(entrada, ('pergunta', 'request_id', 'interesse'), ('pergunta',))
     pergunta = texto(b['pergunta'], 'pergunta', 4000)
+    interesse = texto(b['interesse'], 'interesse', 500) if 'interesse' in b else None
+    if interesse is not None and pergunta != f'Adicionar interesse do cliente: {interesse}':
+        raise ErroAgenda('A mensagem deve corresponder ao interesse declarado.', 'interesse')
     try:
         request_id = str(UUID(b.get('request_id', str(uuid4()))))
     except (ValueError, TypeError, AttributeError):
@@ -94,8 +99,24 @@ def responder(cliente, entrada):
         mensagens = []
         for r in reversed(historico):
             mensagens.extend([{'role': 'user', 'content': r['pergunta']}, {'role': 'assistant', 'content': r['resposta']}])
-        provedor = current_app.config.get('CHAT_OPENAI') or OpenAIChat(current_app.config['OPENAI_API_KEY'], current_app.config['OPENAI_MODEL'])
-        saida = provedor.conversar(fatos, mensagens, pergunta)
+        if interesse is not None:
+            # Entrada explícita do assessor: não depende de a IA reconhecer uma frase nominal.
+            norm = ''.join(c for c in unicodedata.normalize('NFD', interesse.casefold()) if unicodedata.category(c) != 'Mn')
+            assunto = re.sub(r'[^a-z0-9]+', '-', norm).strip('-')[:80] or 'interesse-declarado'
+            valor = interesse
+            saida = {'resposta': f'Interesse registrado: {interesse}. A seleção de notícias foi atualizada.',
+                'fontes': ['mensagem-atual'], 'nota_sugerida': valor,
+                'contexto_sugerido': [{'categoria': 'interesse', 'assunto': assunto, 'sujeito': 'cliente',
+                    'valor': valor, 'trecho': interesse}]}
+        else:
+            provedor = current_app.config.get('CHAT_OPENAI') or OpenAIChat(current_app.config['OPENAI_API_KEY'], current_app.config['OPENAI_MODEL'])
+            saida = provedor.conversar(fatos, mensagens, pergunta)
+            if isinstance(saida, dict) and isinstance(saida.get('contexto_sugerido', []), list) and not any(p.get('categoria') == 'interesse' for p in saida.get('contexto_sugerido', []) if isinstance(p, dict)):
+                from .contexto_chat import interesses_declarados
+                declarados = interesses_declarados(pergunta)
+                if declarados:
+                    saida['contexto_sugerido'] = (saida.get('contexto_sugerido') or []) + declarados
+                    saida['nota_sugerida'] = pergunta[:1000]
         if (not isinstance(saida, dict) or set(saida) not in ({'resposta', 'fontes', 'nota_sugerida'}, {'resposta', 'fontes', 'nota_sugerida', 'contexto_sugerido'})
                 or not isinstance(saida['resposta'], str) or not saida['resposta'].strip() or len(saida['resposta']) > 10000
                 or not isinstance(saida['fontes'], list) or len(saida['fontes']) > 15

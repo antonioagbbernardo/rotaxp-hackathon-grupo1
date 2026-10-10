@@ -235,11 +235,29 @@ def test_busca_sem_interesse_usa_mercado_e_cache_manual_curto(ambiente):
     assert atualizar(c, 2)['estado'] == 'atualizado' and len(g.chamadas) == 2
 
 
+def test_noticias_representam_interesses_distintos_mesmo_com_datas_diferentes(ambiente):
+    from uuid import uuid4
+    app, c, g = ambiente
+    for valor in ('futebol', 'café'):
+        r = c.post('/api/pulse/clientes/2/chat', json={'pergunta': f'Adicionar interesse do cliente: {valor}',
+            'interesse': valor, 'request_id': str(uuid4())})
+        assert r.status_code == 200 and r.get_json()['nota_id']
+    def buscar(consulta, agora):
+        tema = 'cafe' if 'café' in consulta['q'] else 'futebol'
+        data = AGORA - timedelta(days=1 if tema == 'cafe' else 2)
+        return {'status': 'ok', 'articles': [artigo(url=f'https://exemplo.test/{tema}/{i}', publishedAt=data.isoformat()) for i in range(3)]}
+    g.buscar = buscar
+    assert c.post('/api/clientes/2/noticias/atualizar').status_code == 200
+    assert {a['topic'] for a in consultar(c, 2)['artigos']} == {'Futebol', 'Café'}
+    assert len(consultar(c, 2)['artigos']) == 3
+
+
 def test_deduplicacao_limite_janela_e_artigos_removidos(ambiente):
     _, c, g = ambiente
     vincular(c)
     g.resultado['articles'] = [artigo(), artigo(url='https://exemplo.test/f1?utm_medium=email'),
         artigo(title='[Removed]', url='https://exemplo.test/removido'),
+        artigo(title=None, url='https://exemplo.test/incompleto'),
         artigo(url='https://exemplo.test/velho', publishedAt=(AGORA - timedelta(days=8)).isoformat()),
         *[artigo(url=f'https://exemplo.test/{n}') for n in range(4)]]
     assert atualizar(c)['estado'] == 'atualizado'

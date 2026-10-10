@@ -143,7 +143,18 @@ def consultar(cid, itens=None):
                 'relevance': 'Sugestão de assunto para o assessor revisar.', 'topic': CATALOGO[assunto]['nome'],
                 'collectedAt': sucesso['fim_em'],
                 'updatedMinutesAgo': max(0, int((clock.agora() - parse_instante(sucesso['fim_em'])).total_seconds() // 60))})
-    saida = sorted(artigos.values(), key=lambda a: (a['publishedAt'], a['url']), reverse=True)[:3]
+    recentes = sorted(artigos.values(), key=lambda a: (a['publishedAt'], a['url']), reverse=True)
+    saida, temas = [], set()
+    for a in recentes:
+        if a['topic'] not in temas:
+            saida.append(a); temas.add(a['topic'])
+        if len(saida) == 3:
+            break
+    for a in recentes:
+        if len(saida) == 3:
+            break
+        if a['id'] not in {r['id'] for r in saida}:
+            saida.append(a)
     # GET permanece útil mesmo quando um valor de configuração requer correção.
     try:
         limite = _limite()
@@ -176,8 +187,11 @@ def _coletar(assunto, max_idade=None):
                 raise ErroNoticias('Cota externa esgotada; aguarde o próximo dia local.', status=503, codigo='cota_externa')
             if r['erro_codigo'] == 'limite_provedor' and fim > agora - timedelta(minutes=30):
                 raise ErroNoticias('NewsAPI limitou as consultas. Aguarde 30 minutos.', status=503, codigo='limite_provedor')
-        if coletas and coletas[0]['estado'] == 'falhou' and parse_instante(coletas[0]['fim_em']) > agora - timedelta(minutes=15):
-            raise ErroNoticias('Aguarde 15 minutos entre tentativas após uma falha.', status=409, codigo='intervalo_coleta')
+        if coletas and coletas[0]['estado'] == 'falhou':
+            intervalo = timedelta(seconds=30) if coletas[0]['erro_codigo'] == 'saida_noticias_invalida' else timedelta(minutes=15)
+            if parse_instante(coletas[0]['fim_em']) > agora - intervalo:
+                mensagem = 'Aguarde 30 segundos para tentar novamente.' if intervalo == timedelta(seconds=30) else 'Aguarde 15 minutos entre tentativas após uma falha.'
+                raise ErroNoticias(mensagem, status=409, codigo='intervalo_coleta')
         if _chamadas_hoje() >= limite:
             raise ErroNoticias('Limite diário local atingido. O cache foi preservado.', status=503, codigo='cota_local')
         db.execute("UPDATE coleta_noticia SET estado='falhou',fim_em=?,erro_codigo='coleta_abandonada',erro_mensagem='Coleta antiga substituída.' WHERE assunto=? AND estado='em_processamento'",

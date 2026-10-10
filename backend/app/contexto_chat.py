@@ -1,10 +1,33 @@
 """Contexto declarado pelo assessor no chat, validado e salvo automaticamente."""
 import json
+import re
+import unicodedata
 
 from flask import current_app
 
 from .contexto_rules import validar_saida
 from .seed import ASSESSOR_ID
+
+
+def interesses_declarados(pergunta):
+    """Reconhece declarações explícitas mesmo quando a IA omite a atualização."""
+    norm = ''.join(c for c in unicodedata.normalize('NFD', pergunta.casefold()) if unicodedata.category(c) != 'Mn')
+    if '?' in pergunta or re.search(r'\b(?:talvez|hipotetico|hipoteticamente|exemplo|imagina|suponha)\b', norm):
+        return []
+    itens = []
+    for m in re.finditer(r'\b(?:gosta de|tem interesse em|tem interesse por|acompanha)\s+([^.!?\n]{1,150})', pergunta, re.IGNORECASE):
+        prefixo = pergunta[max(0, m.start()-80):m.start()].casefold()
+        if re.search(r'\b(?:eu|assessor|assistente)\b', prefixo):
+            continue
+        sujeito = 'familiar' if re.search(r'\b(?:filha|filho|esposa|marido|familia)\b', prefixo) else 'cliente'
+        gosto = m.group(1).strip()
+        slug = ''.join(c for c in unicodedata.normalize('NFD', gosto.casefold()) if unicodedata.category(c) != 'Mn')
+        slug = re.sub(r'[^a-z0-9]+', '-', slug).strip('-')[:80] or 'interesse-declarado'
+        negado = bool(re.search(r'\b(?:não|nao)\s*$', prefixo))
+        trecho = m.group(0)
+        valor = ('Não ' if negado else '') + trecho
+        itens.append({'categoria': 'interesse', 'assunto': slug, 'sujeito': sujeito, 'valor': valor, 'trecho': trecho})
+    return itens[:10]
 
 
 def validar(propostas, pergunta):
