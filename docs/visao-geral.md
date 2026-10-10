@@ -3,9 +3,9 @@
 **Em uma frase:** transformar informações que já existem sobre o investidor em
 contexto, lembranças e preparação de reuniões, com decisão final do assessor.
 
-**Estado atual:** base de consulta e acompanhamento implementada em Flask, SQLite,
-JavaScript e Tailwind. Extração Gemini com evidências e revisão humana implementadas;
-125 testes; chamada real com quatro fontes fictícias gerou sete propostas.
+**Estado atual:** painel React/TypeScript/Tailwind integrado ao Flask/SQLite.
+Extração Gemini com evidências e revisão humana implementadas;
+143 testes backend e cinco frontend; chamada real com quatro fontes fictícias gerou sete propostas.
 Lembranças derivadas, notícias e reuniões são evolução.
 **Atualizado em:** 10/10/2026. Acesso à fonte real pendente; modelo configurável.
 
@@ -83,7 +83,7 @@ aparecer nas sugestões pessoais dela até nova revisão.
 | Lembranças e alertas | Aniversários, combinados, notícias e vencimentos quando houver dados |
 | Reunião | Keynotes, fontes, dúvidas a confirmar, notas próprias e próximos passos |
 
-Proposta inicial: web responsiva no computador e celular. Aplicativo separado
+Interface atual: web responsiva no computador e celular. Aplicativo separado
 continua uma possibilidade de evolução. O assessor mantém a decisão de contato;
 lembranças não enviam mensagens automaticamente ao investidor.
 
@@ -160,12 +160,13 @@ e limites do provedor estão em [busca de notícias](integracoes/busca-noticias.
 | Inferir contexto dessas fontes | Núcleo confirmado |
 | Lembranças, revisão final humana e feedback | Incluídos no planejamento |
 | NewsAPI, atualização diária e keynotes | Direção definida; parâmetros pendentes |
-| Stack | Flask + SQLite + JavaScript + Tailwind definidos |
+| Stack | Flask + SQLite + React/TypeScript + Tailwind/Vite integrados |
 | Modelo de IA | Gemini configurável; extração real validada em uma amostra fictícia |
 | Contrato da fonte e acesso | JSON fictício definido; fonte real pendente |
 | Funcionalidades implementadas | Consulta, interações manuais, preferências, relacionamento e alertas |
 | Entrada simulada de fontes | JSON fictício, versões, histórico e pendências implementados |
-| Contexto e revisão | Extração, quatro ações, possíveis conflitos e bloqueio individual implementados; 125 testes; visual parcial |
+| Contexto e revisão | Extração, quatro ações, possíveis conflitos e bloqueio individual implementados; painel React conectado e fluxos principais conferidos |
+| Assistente do painel | Perguntas básicas e rascunhos por templates com fontes; consulta não chama Gemini e nenhuma mensagem é enviada |
 
 **Ordem de construção proposta:** consumir fonte → extrair contexto → revisar e
 aplicar feedback → sugerir lembranças/notícias → preparar reunião → validar o ciclo.

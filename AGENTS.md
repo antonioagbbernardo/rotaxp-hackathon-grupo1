@@ -12,8 +12,9 @@ registrar contatos. Idioma de código, commits e documentação: **português do
 4. Confira o estado real (`git status`, rodar os testes) antes de afirmar algo.
 
 ## Stack e comandos
-Python 3.13 + Flask + SQLite (gerenciado com `uv`); interface em JS puro com
-Tailwind compilado via Node (só ferramenta de build). Sem Django e sem Docker.
+Python 3.13 + Flask + SQLite (gerenciado com `uv`). Frontend principal recebido
+pela equipe: React/TypeScript/Tailwind/Vite em `frontend/`, integração autorizada
+pelo usuário. Interface JS anterior em `/legacy`. Sem Django e sem Docker.
 
 Executar os comandos dentro de `backend/` (a partir da raiz: `cd backend`).
 
@@ -26,6 +27,10 @@ uv run flask --app app run            # http://127.0.0.1:5000
 npm install && npm run css:build      # recompila o CSS (versionado) após mexer em classes
 ```
 
+No frontend: `npm ci`, `npm run build`, `npm run lint`, `npm test`, `npm run dev`.
+Build `frontend/dist` local/ignorado pode ser servido pelo Flask; desenvolvimento
+usa proxy `/api` para 127.0.0.1:5001. Não expor credenciais com prefixo VITE_.
+
 Nunca use `pip` ou `python` direto no host: use `uv run`.
 
 ## Estrutura
@@ -36,7 +41,9 @@ Nunca use `pip` ou `python` direto no host: use `uv run`.
 | `backend/app/resumo.py` | Resumo por template com fontes |
 | `backend/app/clock.py` | `Clock` único (America/Sao_Paulo) |
 | `backend/app/api.py`, `backend/app/db.py`, `backend/app/seed.py` | Rotas JSON, schema SQLite, dados fictícios |
-| `backend/app/static/js/app.js`, `backend/app/templates/` | Interface |
+| `frontend/src/` | Interface principal React e chamadas à API |
+| `backend/app/pulse.py` | Adaptador de leitura XP Pulse e consultas por template |
+| `backend/app/static/js/app.js`, `backend/app/templates/` | Interface anterior `/legacy` |
 | `backend/tests/` | pytest |
 
 ## Regras que não podem ser quebradas
@@ -66,7 +73,9 @@ Nunca use `pip` ou `python` direto no host: use `uv run`.
   em `docs/registro-desenvolvimento.md`, usado para montar a apresentação.
 - Uma tarefa = uma branch `tipo/descricao-em-kebab-case` (`feat/`, `fix/`,
   `docs/`, `test/`). Cada pessoa valida a própria entrega.
-- Mudou classes Tailwind em JS/HTML? Rode `npm run css:build` e commite o CSS.
+- Mudou a interface React? Rode build, lint e testes em `frontend/`; `dist` é
+  ignorado. Mudou classes da interface anterior? Rode `npm run css:build` em
+  `backend/` e versione seu CSS compilado.
 - Verifique antes de dar como pronto: testes + o fluxo no navegador (inclusive
   viewport de celular, sem rolagem horizontal). Diga o que **não** foi verificado.
 

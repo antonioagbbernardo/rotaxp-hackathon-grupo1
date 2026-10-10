@@ -1,9 +1,10 @@
 # Requisitos e etapas de implementação do MVP
 
-**Status:** base Flask/Tailwind, ingestão JSON fictícia e contexto/revisão implementados;
+**Status:** React XP Pulse integrado ao Flask/SQLite, ingestão JSON fictícia e contexto/revisão implementados;
 Gemini testado com simulação e uma amostra fictícia real. Fonte real,
 lembranças derivadas, notícias e reuniões ainda planejadas.
 **Referências:** [especificação](spec.md), [arquitetura](design.md) e [tarefas](tasks.md).
+Integração do front: [incremento 03, RN33–RN39 e CA57–CA64](incrementos/03-front-pulse.md).
 **Usuário principal proposto:** assessor de investimentos.
 **Revisado em:** 10/10/2026. Fontes existentes, inferência de contexto, supervisão humana e feedback são o núcleo do produto.
 
@@ -221,8 +222,9 @@ em `spec.md`, `design.md` e `contracts.md`. Contratos de importação e revisão
 ### Etapa 1 — Preparar ambiente e persistência
 
 **Base integrada:** Python 3.13 + Flask + SQLite, gerenciados com `uv`;
-interface em JavaScript puro e Tailwind compilado via Node.js. Ambiente, schema
-e seed fictício já existem. Node é ferramenta de CSS, não segundo backend.
+interface React/TypeScript/Tailwind em `frontend/`, build Vite via Node.js.
+Ambiente, schema e seed fictício já existem. Node é ferramenta da interface,
+não segundo backend; interface JS anterior permanece em `/legacy`.
 
 **Dados da base:** assessor, cliente/preferências, posição, interação, data
 importante, avaliação e tratamento de alerta. Alertas são calculados sob demanda;

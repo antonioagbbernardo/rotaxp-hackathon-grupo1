@@ -19,15 +19,10 @@ export function NewsSection({ client }: NewsSectionProps) {
             Impacto personalizado com base nos interesses e na carteira.
           </p>
         </div>
-        <a
-          href="#noticias"
-          className="mt-1.5 shrink-0 text-[11px] text-ink-muted hover:text-ink"
-        >
-          Ver todas →
-        </a>
       </div>
 
       <ul className="mt-4 space-y-4">
+        {client.news.length === 0 && <li className="rounded-xl border border-line p-4 text-xs text-ink-muted">Nenhuma notícia coletada para este cliente. A integração de notícias será a próxima etapa.</li>}
         {client.news.map((news) => (
           <li key={news.id}>
             <NewsCard news={news} pronoun={client.pronoun} />

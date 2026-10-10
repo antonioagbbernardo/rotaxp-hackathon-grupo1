@@ -225,6 +225,9 @@ Segundo recorte SDD: [contexto e revisão](incrementos/02-contexto-revisao.md),
 RN24–RN32 e CA48–CA56. Gemini configurável, evidências validadas e decisões
 humanas persistidas; não altera o resumo por template nem os alertas da base.
 
+Integração autorizada do frontend React recebido: [incremento 03](incrementos/03-front-pulse.md),
+RN33–RN39 e CA57–CA64. Layout XP Pulse, dados persistidos e ações explícitas.
+
 CA11–CA25 (notícias, reuniões e keynotes) estão em [requisitos](requisitos.md);
 CA26–CA33 de inferência/feedback continuam em requisitos; CA34–CA39 acima
 validam a base implementada (IDs reconciliados durante o merge).

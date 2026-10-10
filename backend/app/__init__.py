@@ -2,7 +2,7 @@ from pathlib import Path
 import os
 
 from dotenv import dotenv_values
-from flask import Flask, render_template
+from flask import Flask, render_template, send_from_directory
 
 from .clock import Clock
 
@@ -13,6 +13,7 @@ def create_app(config: dict | None = None) -> Flask:
     app.config.update(
         DATABASE=str(Path(app.instance_path) / "app.db"),
         CLOCK=Clock(),  # relógio único e injetável (America/Sao_Paulo)
+        FRONTEND_DIST=str(Path(app.root_path).parents[1] / "frontend" / "dist"),
     )
     locais = dotenv_values(Path(app.root_path).parent / ".env")
     app.config.update(
@@ -33,6 +34,21 @@ def create_app(config: dict | None = None) -> Flask:
 
     @app.get("/")
     def index():
+        dist = Path(app.config["FRONTEND_DIST"])
+        if (dist / "index.html").is_file():
+            return send_from_directory(dist, "index.html")
+        return render_template("index.html")
+
+    @app.get("/assets/<path:nome>")
+    def assets_frontend(nome):
+        return send_from_directory(Path(app.config["FRONTEND_DIST"]) / "assets", nome)
+
+    @app.get("/favicon.svg")
+    def favicon_frontend():
+        return send_from_directory(Path(app.config["FRONTEND_DIST"]), "favicon.svg")
+
+    @app.get("/legacy")
+    def interface_anterior():
         return render_template("index.html")
 
     return app

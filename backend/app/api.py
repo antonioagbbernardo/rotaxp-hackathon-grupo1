@@ -4,6 +4,7 @@ from flask import Blueprint, current_app, jsonify, request
 
 from . import alertas as alertas_mod
 from . import contexto as contexto_ia
+from . import pulse
 from .contexto_rules import ErroContexto
 from .clock import TZ, formatar_utc, parse_instante
 from .db import get_db
@@ -76,6 +77,23 @@ def revisar_contexto(cliente_id, item_id):
 def alterar_assunto(cliente_id, assunto):
     _cliente_ou_404(get_db(), cliente_id)
     return jsonify(contexto_ia.alterar_assunto(cliente_id, assunto, request.get_json(silent=True)))
+
+
+@bp.get("/pulse")
+def painel_pulse():
+    return jsonify(pulse.consultar_painel())
+
+
+@bp.post("/pulse/clientes/<int:cliente_id>/perguntar")
+def perguntar_pulse(cliente_id):
+    c = _cliente_ou_404(get_db(), cliente_id)
+    corpo = _corpo()
+    if set(corpo) != {"pergunta"}:
+        raise ErroApi("entrada_invalida", "Informe apenas pergunta.", campo="pergunta")
+    pergunta = _texto_obrigatorio(corpo, "pergunta")
+    if len(pergunta) > 500:
+        raise ErroApi("entrada_invalida", "Pergunta deve ter até 500 caracteres.", campo="pergunta")
+    return jsonify(pulse.responder(pulse.montar_cliente(c), pergunta))
 
 
 def _clock():

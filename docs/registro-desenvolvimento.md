@@ -51,11 +51,11 @@ persistidas; não é retreinamento automático do modelo.
 | Entrega | Frontend | Backend | Evidência e limite |
 | --- | --- | --- | --- |
 | Base integrada | Lista com busca/filtro, detalhe, histórico, preferências, avaliação e tratamento de alertas | Flask/SQLite, Clock injetável, resumo por template com fontes, alertas sob demanda | 47 testes aprovados na base; HTTP e CSS verificados. Sem avaliação visual nesta sessão |
-| Organização | Interface atual continua servida pelo Flask | Aplicação/testes/lockfiles em `backend/`; documentos em `docs/` | Commit `7456543`, enviado para main |
+| Organização | React em `frontend/`; build pode ser servido pelo Flask | API/testes/lockfiles Python em `backend/`; documentos em `docs/` | Base organizada em `7456543`; execução atual no README |
 | Incremento 01: fontes | Importação JSON, resultado/erro, pendências de identidade, versões e origem no detalhe/histórico | Validação pura, transação SQLite, documentos versionados e API/CLI compartilhados | Implementado: 34 testes novos + 47 anteriores = 81 aprovados; CSS e sintaxe JS verificados; visual parcial |
 | Incremento 02: contexto e feedback | Processamento, fila, evidências, quatro ações e bloqueio por cliente | Gemini REST, validação literal, cache, controle de concorrência, revisão/auditoria | 44 testes novos, total 125; testes simulados + extração real de 4 fontes/7 propostas. Visual completo pendente |
 | Notícias e reuniões | Notícias pertinentes e keynotes | NewsAPI compartilhada, cache, preparação de pauta | Planejado, não implementado |
-| Protótipo visual React (XP Pulse) | Tela do Figma em `frontend/` (React + TypeScript + Tailwind v4): clientes com busca/filtro, resumo, percepção, carteira, notícias e assistente com sugestão de abertura | Nenhum; dados fictícios locais em `frontend/src/data` | Build e lint aprovados; conferido no navegador em 1600px e 390px. Não integrado à API Flask; respostas do assistente são estáticas |
+| Incremento 03: XP Pulse integrado | Layout React recebido da equipe; clientes, resumo, carteira, percepção, fontes, revisão, alertas e registros conectados | Adaptador `/api/pulse`, perguntas por templates, assets no Flask; SQLite e regras anteriores preservados | 143 testes backend + cinco frontend, build/lint aprovados; fluxos no navegador e viewport móvel, com limites abaixo |
 
 ## Registro SDD por incremento
 
@@ -133,8 +133,66 @@ apenas na configuração local ignorada, nunca neste documento ou nos mocks.
   modelos adicional; nenhuma chamada NewsAPI. Não medimos faturamento/tokens;
   essa investigação não representa custo rotineiro. Sem retries automáticos
   ou fallback simulado no produto. Nenhuma revisão humana aplicada à amostra.
-- Entrega registrada em commit local na `main`, a pedido do usuário; push não
-  executado. Fonte real, lembretes derivados, notícias e keynotes pendentes.
+- Entrega registrada em `dccc3e9` na `main` e enviada a pedido do usuário.
+  Fonte real, lembretes derivados, notícias e keynotes pendentes.
+
+### 03 — Integrar o layout XP Pulse à aplicação
+
+- Pedido: buscar a primeira versão do frontend no repositório e adaptar as
+  inconsistências para funcionar. `main` atualizada até `5eac9c5`; trabalho
+  na branch `feat/integra-front-pulse`; commit/push autorizado pelo usuário após
+  a validação da integração.
+- SDD: [incremento 03](planejamento/incrementos/03-front-pulse.md), RN33–RN39,
+  CA57–CA64 e contrato do painel escritos antes do código. Os 16 primeiros
+  testes falharam pela ausência da integração; duas regressões adicionais
+  falharam antes dos ajustes de preferência/atualização.
+- Backend: `/api/pulse` adapta o formato do React com IDs da base e reutiliza
+  prioridade, resumo, fontes e contexto existentes. Totais somados com Decimal,
+  sem converter valores monetários em float. `/perguntar` consulta registros por
+  templates com referências; não é conversa generativa e não recomenda ativos.
+- Frontend: remove uso dos clientes/notícias fixos durante execução. Preserva
+  o layout preto/amarelo, separa prioridade de relacionamento humano e mostra
+  ausências de cadastro, contato e distribuição. Nova leitura após gravações,
+  erro/retry, seleção por ID, cancelamento e proteção contra resposta antiga.
+- Ações: importar JSON, consultar originais, processar fontes explicitamente,
+  aprovar/corrigir/descartar/adiar, bloquear assunto, registrar contato,
+  avaliar relacionamento, salvar preferências e tratar alertas pela API.
+  Rascunhos de abertura por template são revisáveis/copiáveis; nenhum envio.
+- Execução: Vite em `127.0.0.1:5173` com proxy para Flask na 5001; build
+  `frontend/dist` servido em `/`, assets/favicon e interface anterior `/legacy`.
+  Node necessário para compilar após o clone; build ignorado pelo Git.
+- Verificação: `uv run --locked pytest -q` **143 aprovados** (18 novos);
+  `npm test` **cinco aprovados**, `npm run lint`, `npm run build` e
+  `git diff --check`. HTTP de build/assets/favicon/legacy e proxy verificados.
+  Nenhuma chave encontrada nos arquivos publicáveis ou no bundle; `.env`
+  permanece ignorado e com permissão 0600.
+- Navegador: layout com cinco clientes do SQLite; Ana com sete propostas e
+  R$ 80.000,00; pergunta de perfil com fonte; troca para Bruno sem manter
+  resposta de Ana. Em cópia isolada da base: aprovação com evidência/auditoria,
+  bloqueio do assunto sem apagar conhecimento, tratamento do alerta com
+  prioridade recalculada, contato, avaliação e preferência pessoal persistidos
+  após recarregar. Dados da demonstração original não alterados por esses testes.
+- Celular: Chrome em viewport **390 × 844**, colunas empilhadas e medidas
+  `innerWidth = scrollWidth = 390`. Verificação de layout; não equivale a teste
+  em dispositivo físico nem a executar todos os formulários em celular.
+  Importação pelo seletor e todas as variantes de revisão não foram executadas
+  visualmente neste incremento; contratos correspondentes têm testes de API.
+- Não houve novas chamadas Gemini ou NewsAPI. Reaproveitamos a amostra anterior
+  para validar a revisão. NewsAPI, reuniões, keynotes, análise tributária/risco
+  e autenticação continuam pendentes. Ganho de tempo ainda não medido.
+
+**Demonstração sugerida:** lista priorizada → cliente → evidência e proposta →
+decisão do assessor → interesse revisado/bloqueio → alerta tratado → registro
+do contato e percepção. Pergunta básica mostra a fonte; notícias são evolução.
+
+**Integração na main:** solicitada pelo usuário após o push da branch. A main
+recebeu `67591c6` com logo, cursores e cartão mais claro. Conflitos de App,
+resumo, cartão e lista conciliados: preservar esses ajustes visuais e os dados
+da API, ausências explícitas e distinção entre relacionamento e prioridade.
+Removido o `isDemo` do cabeçalho conforme seu contrato novo; indicação de dados
+fictícios permanece no painel. Após a combinação: 143 testes backend e cinco
+frontend aprovados, build e lint aprovados. Layout/fluxos visuais registrados
+acima correspondem à integração anterior; não repetidos após este merge visual.
 
 ## Roteiro para a apresentação
 
@@ -143,7 +201,7 @@ apenas na configuração local ignorada, nunca neste documento ou nos mocks.
 | 0:00–0:40 | Conversas dispersas e o que o assessor precisa saber antes do contato |
 | 0:40–1:40 | Entrada de fontes e rastreabilidade; indicar dados fictícios e estágio real da entrega |
 | 1:40–2:40 | Cliente, histórico, pendências e prioridade calculada |
-| 2:40–3:40 | Revisão humana se implementada; caso contrário, preferências e avaliação manual da base |
+| 2:40–3:40 | Conferir evidência, registrar revisão e mostrar o efeito do feedback |
 | 3:40–4:20 | Arquitetura, testes, custo compartilhado planejado e privacidade na demo |
 | 4:20–5:00 | Resultado demonstrado, limites e próximos passos |
 
