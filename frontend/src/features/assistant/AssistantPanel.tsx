@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Badge } from '@/components/ui/Badge'
 import { Panel } from '@/components/ui/Panel'
-import { SparkleIcon } from '@/components/ui/icons'
+import wave from '@/assets/onda-pulse.png'
 import { getInitials } from '@/lib/format'
 import type { Client } from '@/types/client'
 import { AskAssistantForm } from './AskAssistantForm'
@@ -39,7 +39,7 @@ export function AssistantPanel({ client, onUpdated }: AssistantPanelProps) {
   return (
     <Panel className="flex min-h-0 flex-1 flex-col px-5 pt-5 pb-3" aria-labelledby="assistant-title">
       <header className="flex items-start gap-4 border-b border-line px-2 pb-3.5">
-        <SparkleIcon className="mt-1 size-5 text-brand" />
+        <img src={wave} alt="" aria-hidden className="mt-0.5 h-5 w-auto shrink-0" />
         <div>
           <h2 id="assistant-title" className="text-base font-semibold">
             Assistente do assessor

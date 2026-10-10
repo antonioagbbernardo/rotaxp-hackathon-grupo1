@@ -252,6 +252,11 @@ diff aprovados. Credenciais locais excluídas do commit. A verificação visual
 da síntese foi feita antes deste merge; o layout combinado não foi novamente
 verificado em navegador. Não houve chamadas adicionais aos provedores.
 
+Durante o push, a main remota avançou para `c84a9bd` (onda dourada no cabeçalho
+do assistente). A atualização foi integrada sem conflitos, preservando o resumo
+OpenAI. Os cinco testes frontend, lint e build passaram novamente. Backend
+sem alterações neste merge; imagem nova não conferida em navegador.
+
 ## Roteiro para a apresentação
 
 | Tempo sugerido | Mostrar e explicar |
