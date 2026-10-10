@@ -29,6 +29,7 @@ try:
     flask = [uv, 'run', '--locked', 'flask', '--app', 'app']
     executar([*flask, 'seed'], backend)
     executar([*flask, 'importar-fontes', 'dados/fonte-demo.json'], backend)
+    executar([*flask, 'popular-pulse'], backend)
     if not (backend / '.env').is_file():
         shutil.copyfile(backend / '.env.example', backend / '.env')
         (backend / '.env').chmod(0o600)

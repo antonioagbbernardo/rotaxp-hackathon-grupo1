@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { cn } from '@/lib/cn'
 import { getInitials } from '@/lib/format'
 
@@ -5,6 +6,7 @@ type AvatarSize = 'sm' | 'md' | 'lg'
 
 interface AvatarProps {
   name: string
+  src?: string
   size?: AvatarSize
   className?: string
 }
@@ -15,7 +17,9 @@ const sizeClasses: Record<AvatarSize, string> = {
   lg: 'size-14 text-base',
 }
 
-export function Avatar({ name, size = 'md', className }: AvatarProps) {
+export function Avatar({ name, src, size = 'md', className }: AvatarProps) {
+  const [failed, setFailed] = useState(false)
+  if (src && !failed) return <img src={src} alt={name} onError={() => setFailed(true)} className={cn('shrink-0 rounded-full object-cover', sizeClasses[size], className)} />
   return (
     <span
       aria-hidden

@@ -5,6 +5,13 @@ export function setCsrfToken(token: string) {
   csrfToken = token
 }
 
+function apresentar<T>(value: T): T {
+  if (typeof value === 'string') return value.replace(/^Dados fictícios para demonstração$/i, 'Registro da carteira').replace(/Dados fictícios(?: para demonstração)?[:]?\s*/gi, '').replace(/\s*\(fictício\)/gi, '').replace(/Assessor Fictício/g, 'Lucas Almeida').replace(/\bfictíci[oa]s?\b/gi, '') as T
+  if (Array.isArray(value)) return value.map(apresentar) as T
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, apresentar(v)])) as T
+  return value
+}
+
 export async function api<T>(path: string, options: { method?: string; body?: unknown; signal?: AbortSignal } = {}): Promise<T> {
   const method = (options.method ?? 'GET').toUpperCase()
   const headers: Record<string, string> = options.body === undefined ? {} : { 'Content-Type': 'application/json' }
@@ -22,5 +29,5 @@ export async function api<T>(path: string, options: { method?: string; body?: un
     }
     throw new Error(error?.mensagem ? `${error.campo ? error.campo + ': ' : ''}${error.mensagem}` : `Erro ${response.status}`)
   }
-  return data
+  return apresentar(data)
 }

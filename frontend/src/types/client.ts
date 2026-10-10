@@ -97,6 +97,7 @@ export interface ResumoIA {
 }
 
 export interface Client {
+  photoUrl?: string
   mood?: { sentiment: Sentiment; motivo: string; estado: string; assinatura: string; configurado: boolean; revisado_em: string | null; gerado_em?: string; evidencias: { fonte: string; trecho: string }[] }
   id: string
   name: string

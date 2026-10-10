@@ -67,6 +67,8 @@ def seed_db(hoje: date, agora: datetime) -> bool:
 
 
 def init_app(app: Flask) -> None:
+    from . import demo_pulse
+    demo_pulse.init_app(app)
     @app.cli.command("seed")
     def seed_command():
         """Popula dados fictícios somente se a base estiver vazia."""

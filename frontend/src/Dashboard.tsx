@@ -103,7 +103,7 @@ export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () 
         {logoutError && <p role="alert" className="mb-2 text-negative">{logoutError}</p>}
         {loading && <p>Carregando dados do backend…</p>}
         {error && <div role="alert" className="flex flex-wrap items-center gap-3 text-negative">{error}<Button onClick={retry}>Tentar novamente</Button></div>}
-        {!loading && !error && data && <p>Dados fictícios persistidos · Contexto para poupar sua busca; a decisão continua com o assessor.</p>}
+        {!loading && !error && data && <p>Contexto para poupar sua busca; a decisão continua com o assessor.</p>}
       </div>
 
       {data && <main className="grid min-w-0 flex-1 gap-4 p-4 sm:gap-6 sm:p-6 lg:grid-cols-[280px_minmax(0,1fr)] xl:min-h-0 xl:grid-cols-[280px_minmax(0,1fr)_400px]">
@@ -133,7 +133,7 @@ export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () 
         <div className="flex min-h-0 flex-col lg:col-span-2 xl:col-span-1">
           <AssistantPanel key={selectedClient.id} client={selectedClient} onUpdated={updated} />
         </div>
-        </> : <div className="p-5 text-sm text-ink-muted">Nenhum cliente cadastrado. Inicialize a base fictícia com o comando seed do backend.</div>}
+        </> : <div className="p-5 text-sm text-ink-muted">Nenhum cliente cadastrado. Cadastre clientes para começar.</div>}
       </main>}
     </div>
   )

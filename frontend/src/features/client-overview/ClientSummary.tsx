@@ -36,7 +36,7 @@ export function ClientSummary({ client, onUpdated }: ClientSummaryProps) {
   return (
     <Panel className="px-6 pt-6 pb-4">
       <div className="flex items-start gap-4">
-        <Avatar name={client.name} size="lg" />
+        <Avatar name={client.name} src={client.photoUrl} size="lg" />
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-start justify-between gap-3">

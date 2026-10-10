@@ -67,6 +67,7 @@ def montar_cliente(c, incluir_resumo_ia=True):
                           ctx["avaliacoes"][0] if ctx["avaliacoes"] else None, clock.hoje(), ctx["ultima_data"])
     revisao = contexto.consultar(c["id"])
     fontes_cliente = consultar_fontes(c["id"])
+    formulario = next((f['conteudo'] for f in fontes_cliente if f['atual'] and f['tipo'] == 'formulario' and f['origem'] == 'demo-pulse-v2'), {})
     novidades = noticias.consultar(c['id'], revisao['itens'])
     confirmados = [i for i in revisao["itens"] if i["estado"] in ("confirmado", "corrigido")
                    and i["sujeito"] == "cliente" and i["evidencia_atual"] and not i["conflitos"]]
@@ -97,6 +98,7 @@ def montar_cliente(c, incluir_resumo_ia=True):
     atualizado = max(instantes, default=None)
     linhas_resumo = [apresentar_fato(f['texto']) for f in resumo['fatos']] + resumo['ausencias']
     cliente = {
+        "photoUrl": f"/assets/avatars/{c['id']}.jpg" if 1 <= c["id"] <= 10 else None,
         "id": str(c["id"]), "name": c["nome"], "pronoun": "este cliente",
         "status": "attention" if ctx["prioridade"] in ("alta", "media") else "stable",
         "priority": ctx["prioridade"], "nextDue": ctx["proxima_pendencia"],
@@ -106,8 +108,8 @@ def montar_cliente(c, incluir_resumo_ia=True):
         "sentiment": humor['sentiment'], "mood": humor,
         "headline": f"{len(alertas)} pendência(s) · {len(pendentes)} proposta(s) para revisar",
         "updatedMinutesAgo": max(0, int((clock.agora() - parse_instante(atualizado)).total_seconds() // 60)) if atualizado else None,
-        "clientSince": None, "lastContactDays": (clock.hoje() - ctx["ultima_data"]).days if ctx["ultima_data"] else None,
-        "whatsapp": "", "email": "",
+        "clientSince": formulario.get("cliente_desde"), "lastContactDays": (clock.hoje() - ctx["ultima_data"]).days if ctx["ultima_data"] else None,
+        "whatsapp": formulario.get("whatsapp", ""), "email": formulario.get("email", ""),
         "perception": [{"id": r["id"], "month": parse_instante(r["avaliada_em"]).astimezone(TZ).strftime("%Y-%m"),
                         "sentiment": {"positivo": "positive", "negativo": "negative", "atencao": "neutral"}[r["estado"]],
                         "label": {"positivo": "Positivo", "negativo": "Negativo", "atencao": "Atenção"}[r["estado"]],

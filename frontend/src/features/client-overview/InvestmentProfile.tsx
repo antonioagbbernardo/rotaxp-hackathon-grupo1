@@ -24,7 +24,7 @@ export function InvestmentProfile({ portfolio }: InvestmentProfileProps) {
 
       <div className="mt-1 flex flex-wrap items-baseline gap-x-4 gap-y-1">
         <p className="text-2xl font-semibold">{formatCurrency(portfolio.total)}</p>
-        <p className="text-[10px] text-ink-muted">Posições cadastradas · dados fictícios</p>
+        <p className="text-[10px] text-ink-muted">Posições cadastradas</p>
       </div>
 
       {slices.length > 0 ? <div
