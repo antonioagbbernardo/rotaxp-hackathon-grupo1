@@ -45,7 +45,26 @@ O app roda só em `127.0.0.1`, sem login, e **não deve receber dados reais**.
    só para este cliente e mantém o contexto. Nenhuma decisão envia mensagem.
 9. **Assistente:** consultas básicas por templates com fontes dos registros.
    Rascunhos podem ser copiados e revisados pelo assessor. Notícias não coletadas
-   permanecem vazias; não há conversa generativa nem envio automático.
+   permanecem vazias. **Preparar resumo com IA** gera uma síntese OpenAI em
+   Visão geral, Pontos de atenção e Antes do contato, com fontes por trecho.
+   Relacionamento vem da avaliação humana; nenhum contato é enviado.
+
+### Configurar síntese OpenAI (incremento SDD 04)
+
+Copie `.env.example` para `.env` se ainda não existir; preserve as chaves
+existentes. Preencha localmente:
+
+```dotenv
+OPENAI_API_KEY=sua-chave-local
+OPENAI_MODEL=gpt-4.1-mini
+```
+
+Reinicie o Flask. A chave nunca vai ao frontend. GET/recargas não chamam o
+modelo; o botão usa POST e cache SQLite por dados, dia, modelo e prompt. Depois
+de alterar registros relevantes, gere outra síntese. Falhas mantêm os fatos e
+permitem retry. Apenas dados fictícios; o assessor deve conferir texto e fontes.
+Extração continua no Gemini; perguntas básicas continuam por templates.
+[Contrato/aceites](../docs/planejamento/incrementos/04-resumo-openai.md).
 
 ### Configurar IA (incremento SDD 02)
 
@@ -128,14 +147,15 @@ O CSS compilado (`app/static/css/app.css`) é versionado, então o clone roda se
 | `app/resumo.py` | Resumo por template com fontes (RN08) |
 | `app/api.py` | Rotas JSON `/api/...` (lista, detalhe, interações, relacionamento, preferências, tratar) |
 | `app/pulse.py` | Adaptador do painel React e perguntas básicas com fontes |
+| `app/resumo_ia_rules.py`, `app/resumo_ia.py`, `app/ia_openai.py` | Seleção de fatos, validação, cache e síntese OpenAI por REST |
 | `app/db.py`, `app/seed.py` | Schema SQLite e dados fictícios com datas relativas |
 | `app/fontes_rules.py`, `app/fontes.py`, `dados/` | Validação, ingestão transacional e fonte JSON fictícia |
 | `app/contexto_rules.py`, `app/contexto.py`, `app/ia_gemini.py` | Evidências, cache incremental, Gemini REST e supervisão persistida |
 | `app/templates`, `app/static/js` | Interface anterior `/legacy` |
 | `tests/` | pytest (regras, alertas, API, persistência, relógio, seed) |
 
-Importação fictícia, contexto/revisão e painel React integrados, com 143 testes aprovados
+Importação fictícia, contexto/revisão, painel React e síntese OpenAI integrados, com 169 testes aprovados
 (chamadas ao provedor/transporte simuladas).
-Chamada Gemini real validada em amostra fictícia; conexão à fonte real, NewsAPI, reuniões e
+Chamadas Gemini e OpenAI reais validadas em amostras fictícias; conexão à fonte real, NewsAPI, reuniões e
 keynotes seguem planejados. Ver [visão do produto](../docs/visao-geral.md)
 e [registro para apresentação](../docs/registro-desenvolvimento.md).

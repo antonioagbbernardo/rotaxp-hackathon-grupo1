@@ -141,6 +141,11 @@ RF25–RF30 complementam RF03/RF05/RF10 e constituem o núcleo do recorte revisa
 
 ## 3. Regras da base e propostas de evolução
 
+Síntese legível com OpenAI autorizada após a integração do painel:
+[incremento SDD 04](incrementos/04-resumo-openai.md), RN40–RN45 e CA65–CA71.
+Organiza fatos em Visão geral, Pontos de atenção e Antes do contato, com
+fontes/cache e decisão final do assessor. Preserva RN08 e avaliações humanas.
+
 As regras da base foram definidas pela equipe e estão em `spec.md`; não são regras dos organizadores. As regras de inferência, notícias e reuniões abaixo continuam propostas de implementação.
 
 > **Decisões de 10/10/2026 que prevalecem** (detalhes em `spec.md` e

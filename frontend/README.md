@@ -29,6 +29,9 @@ Mudou o frontend? Recompile para atualizar a demonstração na porta 5001.
 - Importar JSON, registrar contato, tratar alerta, revisar contexto, bloquear
   assunto e salvar preferências usam as rotas existentes e atualizam o painel.
 - Processar fontes com IA é ação explícita. Consultar a tela não chama Gemini.
+- **Preparar resumo com IA** usa OpenAI pelo backend, com carregamento, erro/retry,
+  fontes por trecho e cache persistente. Texto organizado em três seções;
+  registros da base continuam acessíveis. Recargas não chamam o modelo.
 - Perguntas básicas usam `POST /api/pulse/clientes/{id}/perguntar`, por templates
   com fontes. Rascunhos são para revisão/cópia, sem envio automático.
 - Campos ausentes e notícias ainda não coletadas aparecem como ausência.
@@ -46,6 +49,7 @@ Testes verificam precisão monetária, ausências e comunicação/erros da API.
 Verificação visual e seus limites ficam no
 [registro do incremento](../docs/registro-desenvolvimento.md).
 Especificação: [incremento SDD 03](../docs/planejamento/incrementos/03-front-pulse.md).
+Síntese: [incremento SDD 04](../docs/planejamento/incrementos/04-resumo-openai.md).
 
 ## Estrutura
 

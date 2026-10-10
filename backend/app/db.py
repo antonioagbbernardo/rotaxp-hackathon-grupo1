@@ -5,11 +5,17 @@ from flask import Flask, current_app, g
 
 # Dinheiro: TEXT com Decimal (nunca float). Datas: YYYY-MM-DD. Instantes: UTC ISO 8601.
 # O alerta NÃO é persistido (calculado sob demanda); só o tratamento (tratamento_alerta).
-TABELAS = ("historico_assunto", "preferencia_assunto", "revisao_contexto", "item_contexto", "processamento_contexto",
+TABELAS = ("resumo_ia", "historico_assunto", "preferencia_assunto", "revisao_contexto", "item_contexto", "processamento_contexto",
            "documento_fonte", "tratamento_alerta", "avaliacao_relacionamento", "interacao", "data_importante",
            "posicao", "cliente", "assessor")
 
 SCHEMA = """
+CREATE TABLE IF NOT EXISTS resumo_ia (
+    cliente_id INTEGER PRIMARY KEY REFERENCES cliente(id),
+    assinatura TEXT NOT NULL, tentativa TEXT NOT NULL,
+    estado TEXT NOT NULL CHECK (estado IN ('em_processamento','concluido','falhou')),
+    inicio_em TEXT NOT NULL, resposta TEXT
+);
 CREATE TABLE IF NOT EXISTS assessor (
     id INTEGER PRIMARY KEY,
     nome TEXT NOT NULL

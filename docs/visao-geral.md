@@ -5,7 +5,9 @@ contexto, lembranças e preparação de reuniões, com decisão final do assesso
 
 **Estado atual:** painel React/TypeScript/Tailwind integrado ao Flask/SQLite.
 Extração Gemini com evidências e revisão humana implementadas;
-143 testes backend e cinco frontend; chamada real com quatro fontes fictícias gerou sete propostas.
+Síntese OpenAI em três seções com fontes e cache implementada;
+169 testes backend e cinco frontend. Gemini: quatro fontes fictícias geraram sete propostas;
+OpenAI: síntese real de um cliente fictício validada, sem mudar os registros.
 Lembranças derivadas, notícias e reuniões são evolução.
 **Atualizado em:** 10/10/2026. Acesso à fonte real pendente; modelo configurável.
 
@@ -18,6 +20,9 @@ foi verificada; benefícios ainda precisam ser medidos.
 A base já permite listar clientes, consultar resumo por template, registrar
 interações manualmente, avaliar relacionamento, ajustar preferências e tratar
 alertas de vencimento/aniversário. [Execução local](../README.md).
+O assistente mostra os fatos em linhas e pode preparar uma síntese OpenAI:
+**Visão geral → Pontos de atenção → Antes do contato**. O assessor confere as
+fontes e conduz o atendimento; GET apenas reutiliza o cache quando válido.
 Também importa formulário/conversas de JSON fictício, preserva versões e
 separa identidades pendentes. Essa entrada simulada não é uma conexão aos canais reais.
 
@@ -93,6 +98,7 @@ lembranças não enviam mensagens automaticamente ao investidor.
 | --- | --- |
 | Adaptador da fonte | Lê registros existentes e identifica cliente, origem, data e versão |
 | Extração e inferência | Gemini configurável via REST; propostas pendentes e evidências literais validadas |
+| Síntese para atendimento | OpenAI configurável; apenas fatos selecionados, fontes por trecho e cache SQLite |
 | Banco de contexto | Guarda fontes, fatos, hipóteses, revisões, lembranças e feedback |
 | Regras de pertinência | Consideram preferências, atualidade, pendências e feedback |
 | Agendador e NewsAPI | Atualizam assuntos diariamente e antes de reuniões quando necessário |
@@ -161,12 +167,12 @@ e limites do provedor estão em [busca de notícias](integracoes/busca-noticias.
 | Lembranças, revisão final humana e feedback | Incluídos no planejamento |
 | NewsAPI, atualização diária e keynotes | Direção definida; parâmetros pendentes |
 | Stack | Flask + SQLite + React/TypeScript + Tailwind/Vite integrados |
-| Modelo de IA | Gemini configurável; extração real validada em uma amostra fictícia |
+| Modelos de IA | Gemini para extração revisável e OpenAI (`gpt-4.1-mini` configurável) para síntese; chamadas reais em amostras fictícias |
 | Contrato da fonte e acesso | JSON fictício definido; fonte real pendente |
 | Funcionalidades implementadas | Consulta, interações manuais, preferências, relacionamento e alertas |
 | Entrada simulada de fontes | JSON fictício, versões, histórico e pendências implementados |
 | Contexto e revisão | Extração, quatro ações, possíveis conflitos e bloqueio individual implementados; painel React conectado e fluxos principais conferidos |
-| Assistente do painel | Perguntas básicas e rascunhos por templates com fontes; consulta não chama Gemini e nenhuma mensagem é enviada |
+| Assistente do painel | Perguntas básicas e rascunhos por templates; síntese OpenAI explícita com fontes/cache. Nenhuma mensagem enviada |
 
 **Ordem de construção proposta:** consumir fonte → extrair contexto → revisar e
 aplicar feedback → sugerir lembranças/notícias → preparar reunião → validar o ciclo.

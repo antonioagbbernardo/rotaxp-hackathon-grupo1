@@ -33,8 +33,10 @@ npm run dev
 ```
 
 Acesse http://127.0.0.1:5173. O Vite encaminha `/api` ao Flask.
-Credenciais Gemini ficam somente em `backend/.env`; processamento é explícito
-na tela de contexto. Sem chave, registros e revisões continuam consultáveis.
+Credenciais OpenAI/Gemini ficam somente em `backend/.env` (modelo em
+`backend/.env.example`). Extração Gemini é explícita na tela de contexto;
+o botão **Preparar resumo com IA** usa OpenAI. Sem chave, os registros continuam
+consultáveis. Reinicie o Flask após configurar ou alterar o `.env`.
 
 ## Verificar
 
@@ -49,7 +51,9 @@ npm run build
 
 O painel integra lista/prioridade, posições, histórico, fontes, revisão,
 bloqueios, preferências, relacionamento e alertas. Perguntas básicas e rascunhos
-usam templates com fontes. IA atua na extração revisável. NewsAPI e keynotes
+usam templates com fontes. Gemini extrai contexto revisável; OpenAI redige
+uma síntese com fontes em três seções, reutilizada enquanto os fatos estiverem
+iguais. Relacionamento humano e prioridade calculada aparecem separados. NewsAPI e keynotes
 continuam planejados, sem notícias estáticas apresentadas como coleta real.
 
 ## Estrutura
