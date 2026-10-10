@@ -47,3 +47,17 @@ export function getInitials(name: string) {
   const last = parts.length > 1 ? parts[parts.length - 1][0] : ''
   return (first + last).toUpperCase()
 }
+
+const diaSaoPaulo = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/Sao_Paulo',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
+
+/** Instante ISO (UTC) -> dia civil "YYYY-MM-DD" em America/Sao_Paulo, como o Clock do backend. */
+export function diaLocal(iso: string) {
+  const data = new Date(iso)
+  if (Number.isNaN(data.getTime())) throw new Error(`Instante inválido: "${iso}"`)
+  return diaSaoPaulo.format(data)
+}

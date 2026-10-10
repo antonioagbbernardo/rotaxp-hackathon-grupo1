@@ -240,6 +240,9 @@ Síntese OpenAI autorizada: [incremento 04](incrementos/04-resumo-openai.md),
 RN40–RN45 e CA65–CA71. Melhora a redação com fontes, cache e revisão humana;
 o resumo factual RN08 e as regras determinísticas continuam independentes.
 
+Radar de perfil heurístico (demonstração): [incremento 09](incrementos/09-radar-perfil.md),
+RN71–RN75 e CA95–CA98. Só frontend; estimativa sobre posições, sem ML nem recomendação.
+
 Primeiro recorte de T08: [incremento 05](incrementos/05-noticias-newsapi.md),
 RN46–RN52 e CA72–CA78. Notícias por consultas compartilhadas, vínculo humano,
 cache diário, cota e feedback por cliente. Agenda e keynotes são outro recorte.
