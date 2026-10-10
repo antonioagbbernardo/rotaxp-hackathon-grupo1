@@ -35,7 +35,7 @@ O diferencial proposto é aproximar contexto financeiro e relacionamento: prepar
 | **Pedro Azevedo** | Automatização dos testes, colaboração na estruturação do design, deploy e refino do frontend. |
 | **Pedro Bernardo** | Integração das APIs de notícias e Google Calendar e suas respectivas funcionalidades, colaboração no backend e criação dos slides para o pitch. |
 
-A tabela registra a divisão de responsabilidades informada pela equipe. **Nesta versão do repositório, a agenda implementada é local, em SQLite; não há um conector Google Calendar implementado no código inspecionado.** A preparação de reuniões funciona com essa agenda local.
+A tabela registra a divisão de responsabilidades informada pela equipe. **Na `main` inspecionada, a agenda funciona localmente em SQLite.** A implementação do conector Google Calendar está na branch remota `api-calendar` e ainda não foi incorporada à `main`. A preparação de reuniões funciona com a agenda local.
 
 ### Ferramentas de apoio
 
@@ -114,6 +114,12 @@ Consultas de leitura (`GET`) não chamam os provedores de IA ou notícias. As at
 | **Lucide React + clsx** | Ícones e composição de classes da interface. |
 
 As dependências efetivas estão em `backend/pyproject.toml`, `backend/uv.lock`, `frontend/package.json` e `frontend/package-lock.json`. Não foi adotado um banco NoSQL. O backend possui ferramentas de CSS para a interface anterior, preservada em `/legacy`; o frontend principal é React.
+
+### Integração Google Calendar em desenvolvimento paralelo
+
+A branch `api-calendar` contém conexão OAuth com a conta do assessor, sincronização das reuniões para o calendário principal e estados de conexão/sincronização no painel. O painel local continua como fonte da verdade. Essa implementação não importa eventos existentes nem envia convites; a documentação da branch define reuniões de uma hora.
+
+As variáveis previstas nessa branch são `GOOGLE_CALENDAR_CLIENT_ID`, `GOOGLE_CALENDAR_CLIENT_SECRET` e `GOOGLE_CALENDAR_REDIRECT_URI`; ela também adiciona a dependência Python `cryptography`. **Esses recursos e configurações ainda não estão ativos na `main` descrita por este README.** O pull feito para esta consolidação atualizou a `main`; não mesclou automaticamente a branch de integração.
 
 ## Decisões de eficiência
 
@@ -291,7 +297,7 @@ npm run build
 
 Os testes cobrem regras de prioridade, precisão financeira, contratos, login/CSRF, fontes versionadas, contexto, conversa, humor, notícias, reuniões, lembretes e repetição sem duplicações. Provedores são simulados nos testes para verificar comportamento sem gastar chamadas externas. Os testes de frontend incluem autenticação, comunicação com a API, formatação e radar.
 
-Antes de incorporar as últimas alterações remotas, a suíte completa passou com 387 testes de backend e a verificação do frontend passou com 23 testes, lint e build. A versão integrada é verificada novamente na consolidação final.
+Após o pull e a integração desta documentação, a verificação local passou com **404 testes de backend**, **24 testes de frontend**, lint e build. Também foram verificadas a leitura do painel, a rota do perfil do assessor e a repetição da importação das fontes atualizadas. Essas contagens registram a versão verificada; não representam cobertura integral de todos os cenários possíveis.
 
 A CI em `.github/workflows/ci.yml` executa pytest no backend e testes, lint e build no frontend. O build também faz a checagem TypeScript. Verificações reais realizadas durante o desenvolvimento incluíram chat, coleta de notícias e atualização automática após inclusão de interesse; no navegador, também foi conferida a recuperação do painel após corrigir a formatação da data de cadastro.
 
@@ -301,7 +307,7 @@ A aplicação é um MVP de demonstração com um assessor e login compartilhado.
 
 A arquitetura considera privacidade e princípios da LGPD ao separar credenciais, manter evidências e permitir correções/feedback. Isso não representa uma certificação de conformidade: uso com dados reais depende de consentimento/base legal aplicável, controle de acesso individual, retenção e exclusão, infraestrutura segura e avaliação do fluxo de dados enviado aos provedores.
 
-Notícias dependem de disponibilidade, atraso, quotas e cobertura da NewsAPI; um interesse salvo pode não ter artigos recentes. O humor é uma hipótese apoiada em trechos. O radar não substitui a análise de risco ou suitability. Integração efetiva com Google Calendar, acesso multiassessor, canais reais e análises tributárias ficam para evolução da solução.
+Notícias dependem de disponibilidade, atraso, quotas e cobertura da NewsAPI; um interesse salvo pode não ter artigos recentes. O humor é uma hipótese apoiada em trechos. O radar não substitui a análise de risco ou suitability. A incorporação da branch Google Calendar à `main`, o acesso multiassessor, os canais reais e as análises tributárias ficam para a evolução da solução.
 
 ## Apresentação
 
