@@ -60,7 +60,7 @@ def revisar(c, item, **campos):
                         "revisao": item["revisao"], **campos})
 
 
-def test_somente_fontes_atuais_cliente_correto_e_sem_alterar_base(ambiente):
+def test_ca48_somente_fontes_atuais_cliente_correto_e_sem_alterar_base(ambiente):
     app, c, e = ambiente
     c.post("/api/fontes/importar", json=lote(documento(versao=2), documento(registro_id="outro", cliente_id=2),
                                              documento(registro_id="pendente", cliente_id=None)))
@@ -74,7 +74,7 @@ def test_somente_fontes_atuais_cliente_correto_e_sem_alterar_base(ambiente):
     assert contexto(c, 2) == []
 
 
-def test_cache_novidades_e_correcao_persistem_apos_reinicio(ambiente):
+def test_ca49_cache_novidades_e_correcao_persistem_apos_reinicio(ambiente):
     app, c, e = ambiente
     processar(c)
     item = contexto(c)[0]
@@ -98,7 +98,7 @@ def test_cache_novidades_e_correcao_persistem_apos_reinicio(ambiente):
     {"categoria": "humor"}, {"sujeito": "todos"}, {"tipo": "confirmado"},
     {"assunto": "Formula 1"}, {"valor": " "}, {"campo_extra": "x"},
 ])
-def test_saida_invalida_nao_salva_parte_e_permite_retry(ambiente, mudanca):
+def test_ca50_saida_invalida_nao_salva_parte_e_permite_retry(ambiente, mudanca):
     _, c, e = ambiente
     e.transformar = lambda itens: [itens[0], itens[0] | mudanca]
     r = processar(c)
@@ -108,7 +108,7 @@ def test_saida_invalida_nao_salva_parte_e_permite_retry(ambiente, mudanca):
     assert processar(c).status_code == 200
 
 
-def test_formulario_e_familiar_nao_viram_dado_cliente(ambiente):
+def test_ca52_formulario_e_familiar_nao_viram_dado_cliente(ambiente):
     _, c, e = ambiente
     c.post("/api/fontes/importar", json=lote(documento(registro_id="form", tipo="formulario", canal=None,
                                                        conteudo={"familia": "Minha filha faz aniversário em novembro."})))
@@ -122,7 +122,7 @@ def test_formulario_e_familiar_nao_viram_dado_cliente(ambiente):
 @pytest.mark.parametrize("acao,extras,estado", [("aprovar", {}, "confirmado"),
     ("corrigir", {"valor": "Corrigido"}, "corrigido"), ("descartar", {}, "descartado"),
     ("adiar", {"adiado_ate": "2026-10-11"}, "adiado")])
-def test_acoes_humanas_e_adiamento(ambiente, acao, extras, estado):
+def test_ca51_acoes_humanas_e_adiamento(ambiente, acao, extras, estado):
     app, c, _ = ambiente
     processar(c)
     item = contexto(c)[0]
@@ -137,7 +137,7 @@ def test_acoes_humanas_e_adiamento(ambiente, acao, extras, estado):
 @pytest.mark.parametrize("campos", [{"motivo": " "}, {"revisao": True}, {"acao": "enviar"},
     {"acao": "corrigir", "valor": ""}, {"acao": "adiar", "adiado_ate": "2026-10-10"},
     {"acao": "adiar", "adiado_ate": "amanha"}, {"valor": "sem correcao"}, {"extra": "x"}])
-def test_revisao_invalida_e_concorrencia(ambiente, campos):
+def test_ca55_revisao_invalida_e_concorrencia(ambiente, campos):
     _, c, _ = ambiente
     processar(c)
     item = contexto(c)[0]
@@ -148,7 +148,7 @@ def test_revisao_invalida_e_concorrencia(ambiente, campos):
     assert c.post(f"/api/clientes/2/contexto/{item['id']}/revisar", json={}).status_code == 404
 
 
-def test_bloqueio_preserva_contexto_isola_cliente_e_descarte(ambiente):
+def test_ca53_bloqueio_preserva_contexto_isola_cliente_e_descarte(ambiente):
     _, c, _ = ambiente
     processar(c)
     item = contexto(c)[0]
@@ -163,7 +163,7 @@ def test_bloqueio_preserva_contexto_isola_cliente_e_descarte(ambiente):
     assert not contexto(c)[0]["bloqueado"]
 
 
-def test_fonte_muda_durante_chamada_e_preserva_revisao(ambiente):
+def test_ca55_fonte_muda_durante_chamada_e_preserva_revisao(ambiente):
     _, c, e = ambiente
     original = e.extrair
     def alterar(docs):
@@ -177,7 +177,7 @@ def test_fonte_muda_durante_chamada_e_preserva_revisao(ambiente):
     assert processar(c).status_code == 200
 
 
-def test_sem_chave_sem_fontes_ou_cliente_inexistente(ambiente):
+def test_ca54_sem_chave_sem_fontes_ou_cliente_inexistente(ambiente):
     app, c, _ = ambiente
     app.config["EXTRATOR_IA"] = None
     assert processar(c).status_code == 503
@@ -185,7 +185,7 @@ def test_sem_chave_sem_fontes_ou_cliente_inexistente(ambiente):
     assert processar(c, 999).status_code == 404
 
 
-def test_nova_versao_sinaliza_conflito_com_correcao_antiga(ambiente):
+def test_ca52_nova_versao_sinaliza_conflito_com_correcao_antiga(ambiente):
     _, c, _ = ambiente
     processar(c)
     antigo = contexto(c)[0]
@@ -198,7 +198,7 @@ def test_nova_versao_sinaliza_conflito_com_correcao_antiga(ambiente):
     assert not revisado["evidencia_atual"] and revisado["estado"] == "corrigido"
 
 
-def test_processamento_concorrente_e_retomada_abandonada(ambiente):
+def test_rn27_processamento_concorrente_e_retomada_abandonada(ambiente):
     app, c, e = ambiente
     original = e.extrair
     def concorrente(docs):
@@ -215,7 +215,7 @@ def test_processamento_concorrente_e_retomada_abandonada(ambiente):
     assert processar(c).status_code == 200
 
 
-def test_falha_provedor_preserva_contexto_e_tentativa_nova(ambiente):
+def test_ca54_falha_provedor_preserva_contexto_e_tentativa_nova(ambiente):
     _, c, e = ambiente
     processar(c)
     antes = contexto(c)
@@ -230,7 +230,7 @@ def test_falha_provedor_preserva_contexto_e_tentativa_nova(ambiente):
     assert processar(c).status_code == 200
 
 
-def test_limite_sem_truncamento_e_corpo_nao_autorizado(ambiente):
+def test_ca50_limite_sem_truncamento_e_corpo_nao_autorizado(ambiente):
     _, c, e = ambiente
     assert c.post("/api/clientes/1/contexto/processar", json={"modelo": "outro"}).status_code == 400
     c.post("/api/fontes/importar", json=lote(documento(registro_id="longa", conteudo="x" * 40_001)))
@@ -238,7 +238,7 @@ def test_limite_sem_truncamento_e_corpo_nao_autorizado(ambiente):
     assert not e.chamadas and contexto(c) == []
 
 
-def test_bloqueio_auditado_e_reset_isolado(ambiente):
+def test_ca53_bloqueio_auditado_e_reset_isolado(ambiente):
     app, c, _ = ambiente
     processar(c)
     url = "/api/clientes/1/assuntos/formula-1"
@@ -253,7 +253,7 @@ def test_bloqueio_auditado_e_reset_isolado(ambiente):
     assert contexto(c) == []
 
 
-def test_elegibilidade_exige_revisao_permissao_intervalo_e_assunto_livre(ambiente):
+def test_rn31_elegibilidade_exige_revisao_permissao_intervalo_e_assunto_livre(ambiente):
     app, c, _ = ambiente
     processar(c)
     item = contexto(c)[0]
@@ -271,7 +271,7 @@ def test_elegibilidade_exige_revisao_permissao_intervalo_e_assunto_livre(ambient
     assert contexto(c)[0]["elegivel_contato"]
 
 
-def test_evidencia_nao_pode_reutilizar_documento_fora_do_lote_novo(ambiente):
+def test_ca48_evidencia_nao_pode_reutilizar_documento_fora_do_lote_novo(ambiente):
     _, c, e = ambiente
     processar(c)
     antes = contexto(c)
