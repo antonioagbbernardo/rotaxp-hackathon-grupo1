@@ -101,13 +101,19 @@ def responder(cliente, entrada):
             mensagens.extend([{'role': 'user', 'content': r['pergunta']}, {'role': 'assistant', 'content': r['resposta']}])
         if interesse is not None:
             # Entrada explícita do assessor: não depende de a IA reconhecer uma frase nominal.
-            norm = ''.join(c for c in unicodedata.normalize('NFD', interesse.casefold()) if unicodedata.category(c) != 'Mn')
-            assunto = re.sub(r'[^a-z0-9]+', '-', norm).strip('-')[:80] or 'interesse-declarado'
-            valor = interesse
-            saida = {'resposta': f'Interesse registrado: {interesse}. A seleção de notícias foi atualizada.',
-                'fontes': ['mensagem-atual'], 'nota_sugerida': valor,
-                'contexto_sugerido': [{'categoria': 'interesse', 'assunto': assunto, 'sujeito': 'cliente',
-                    'valor': valor, 'trecho': interesse}]}
+            from .contexto_chat import interesses_declarados
+            propostas = interesses_declarados(interesse)
+            if not propostas:
+                propostas = []
+                for termo in re.split(r',|;|\s+e\s+', interesse, flags=re.IGNORECASE)[:10]:
+                    termo = termo.strip()
+                    if not termo:
+                        continue
+                    norm = ''.join(c for c in unicodedata.normalize('NFD', termo.casefold()) if unicodedata.category(c) != 'Mn')
+                    assunto = re.sub(r'[^a-z0-9]+', '-', norm).strip('-')[:80] or 'interesse-declarado'
+                    propostas.append({'categoria': 'interesse', 'assunto': assunto, 'sujeito': 'cliente', 'valor': termo, 'trecho': termo})
+            saida = {'resposta': f'Informação registrada: {interesse}.',
+                'fontes': ['mensagem-atual'], 'nota_sugerida': interesse, 'contexto_sugerido': propostas}
         else:
             provedor = current_app.config.get('CHAT_OPENAI') or OpenAIChat(current_app.config['OPENAI_API_KEY'], current_app.config['OPENAI_MODEL'])
             saida = provedor.conversar(fatos, mensagens, pergunta)

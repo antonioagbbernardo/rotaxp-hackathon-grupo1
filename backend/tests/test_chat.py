@@ -215,3 +215,14 @@ def test_declaracao_gosta_de_cafe_salva_mesmo_se_ia_omite_nota(ambiente):
     assert {a['id'] for a in cliente['newsState']['assuntos']} == {'cafe'}
     fake.saida = {'resposta': 'Não tenho essa informação.', 'fontes': [], 'nota_sugerida': None}
     assert perguntar(c, 'Ele gosta de café?', cid=2).get_json()['nota_id'] is None
+
+
+def test_campo_noticias_entende_frase_e_lista_sem_buscar_frase_inteira(ambiente):
+    _, c, fake = ambiente
+    for mensagem, esperados in [('Ele gosta de uva', {'uva'}), ('ciclismo, chocolate', {'uva', 'ciclismo', 'chocolate'})]:
+        r = c.post('/api/pulse/clientes/2/chat', json={'pergunta': f'Adicionar interesse do cliente: {mensagem}',
+                   'interesse': mensagem, 'request_id': str(uuid4())})
+        assert r.status_code == 200 and r.get_json()['nota_id']
+        cliente = next(i for i in c.get('/api/pulse').get_json()['clients'] if i['id'] == '2')
+        assert {a['id'] for a in cliente['newsState']['assuntos']} == esperados
+    assert not fake.chamadas

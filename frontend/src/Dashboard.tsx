@@ -8,7 +8,6 @@ import { RadarPerfil } from '@/features/client-overview/RadarPerfil'
 import { ClientSidebar } from '@/features/clients/ClientSidebar'
 import { NewsSection } from '@/features/news/NewsSection'
 import { ClientWorkspace } from '@/features/client-overview/ClientWorkspace'
-import { SourceImporter } from '@/features/clients/SourceImporter'
 import { Button } from '@/components/ui/Button'
 import { api } from '@/lib/api'
 import type { PulseView } from '@/types/client'
@@ -114,7 +113,6 @@ export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () 
           selectedClientId={selectedClient?.id ?? ''}
           onSelectClient={(id) => { setSelectedClientId(id); location.hash = `/clientes/${id}` }}
         />
-        <SourceImporter onUpdated={updated} />
         <UpcomingMeetings revision={data.generatedAt} onSelect={(id) => { setSelectedClientId(id); location.hash = `/clientes/${id}` }} />
         </div>
 
