@@ -1,6 +1,6 @@
 import unicodedata
 
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, current_app, jsonify, redirect, request, session
 
 from . import alertas as alertas_mod
 from . import contexto as contexto_ia
@@ -11,6 +11,7 @@ from . import resumo_ia
 from . import noticias
 from . import reunioes
 from . import lembrancas
+from . import google_agenda
 from .agenda_rules import ErroAgenda
 from .noticias_rules import ErroNoticias
 from .clock import TZ, formatar_utc, parse_instante
@@ -70,6 +71,12 @@ def _erro(e: ErroApi):
 @bp.errorhandler(ErroAgenda)
 def _erro_fonte(e: ErroFonte):
     return _erro(e)
+
+
+@bp.errorhandler(google_agenda.ErroGoogleAgenda)
+def _erro_google_agenda(e):
+    return jsonify(erro={"codigo": "integracao_indisponivel", "campo": "google_agenda",
+                         "mensagem": e.mensagem}), e.status
 
 
 @bp.post("/fontes/importar")
@@ -422,6 +429,37 @@ def lista_reunioes():
     return jsonify(reunioes.listar())
 
 
+@bp.get('/integracoes/google-agenda')
+def estado_google_agenda():
+    return jsonify(google_agenda.estado())
+
+
+@bp.post('/integracoes/google-agenda/conectar')
+def conectar_google_agenda():
+    return jsonify(google_agenda.url_autorizacao())
+
+
+@bp.get('/integracoes/google-agenda/retorno')
+def retorno_google_agenda():
+    if request.args.get('error'):
+        session.pop('google_agenda_oauth_state', None)
+        return redirect('/?google_agenda=cancelado')
+    try:
+        code, state = request.args.get('code'), request.args.get('state')
+        if not code or not state:
+            raise google_agenda.ErroGoogleAgenda('O retorno OAuth não contém o código e o estado esperados.', 400)
+        google_agenda.concluir_oauth(code, state)
+    except google_agenda.ErroGoogleAgenda as exc:
+        current_app.logger.warning("Falha no retorno OAuth do Google Agenda: %s", exc.mensagem)
+        return redirect('/?google_agenda=erro')
+    return redirect('/?google_agenda=conectado')
+
+
+@bp.post('/integracoes/google-agenda/desconectar')
+def desconectar_google_agenda():
+    return jsonify(google_agenda.desconectar())
+
+
 @bp.get('/clientes/<int:cliente_id>/reunioes')
 def reunioes_cliente(cliente_id):
     _cliente_ou_404(get_db(), cliente_id)
@@ -453,6 +491,12 @@ def _sem_corpo():
 def cancelar_reuniao(reuniao_id):
     _sem_corpo()
     return jsonify(reunioes.cancelar(reuniao_id))
+
+
+@bp.post('/reunioes/<int:reuniao_id>/sincronizar-google-agenda')
+def sincronizar_reuniao_google_agenda(reuniao_id):
+    _sem_corpo()
+    return jsonify(reunioes.sincronizar_google(reuniao_id))
 
 
 @bp.post('/reunioes/<int:reuniao_id>/preparar')

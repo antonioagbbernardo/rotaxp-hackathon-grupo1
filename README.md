@@ -35,7 +35,7 @@ O diferencial proposto é aproximar contexto financeiro e relacionamento: prepar
 | **Pedro Azevedo** | Automatização dos testes, colaboração na estruturação do design, deploy e refino do frontend. |
 | **Pedro Bernardo** | Integração das APIs de notícias e Google Calendar e suas respectivas funcionalidades, colaboração no backend e criação dos slides para o pitch. |
 
-A tabela registra a divisão de responsabilidades informada pela equipe. **Na `main` inspecionada, a agenda funciona localmente em SQLite.** A implementação do conector Google Calendar está na branch remota `api-calendar` e ainda não foi incorporada à `main`. A preparação de reuniões funciona com a agenda local.
+A tabela registra a divisão de responsabilidades informada pela equipe. Após o pull, a integração **Google Calendar** também está na `main`: a agenda local continua sendo a fonte da verdade, com sincronização opcional para o calendário principal da conta conectada por OAuth.
 
 ### Ferramentas de apoio
 
@@ -64,6 +64,7 @@ Na interface, o fundo escuro, os detalhes amarelos, os cards e a hierarquia tipo
 | Notícias | NewsAPI por interesses identificados, inclusive assuntos fora do catálogo inicial; adicionar um interesse no chat ou no campo de notícias dispara atualização automática. |
 | Curadoria | O assessor pode remover notícias que não forem pertinentes; não precisa anexá-las ao cliente. |
 | Reuniões | Agendamento, edição, cancelamento, notas e pautas/keynotes com fontes; conclusão registra o resultado sem duplicar a interação. |
+| Google Calendar | Conexão OAuth e sincronização de criação, edição e cancelamento para o calendário principal; falhas mantêm a reunião local e permitem nova tentativa. |
 | Lembranças | Aniversários e compromissos com evidência, confirmação e feedback por ocorrência. |
 | Acesso | Login, sessão, proteção CSRF nas escritas e logout. |
 
@@ -82,6 +83,7 @@ flowchart LR
     B <--> O[OpenAI: Pulse AI, síntese e humor]
     B <--> G[Gemini: extração de contexto]
     B <--> N[NewsAPI: notícias por interesse]
+    B <--> C[Google Calendar: sincronização opcional]
     W[Processo de agenda] --> B
     B --> P[Painel, notícias, lembretes e pautas]
 ```
@@ -108,6 +110,8 @@ Consultas de leitura (`GET`) não chamam os provedores de IA ou notícias. As at
 | **OpenAI — API Responses** | Conversa do Pulse AI, síntese textual e inferência de humor, com saídas estruturadas e validação de fontes. |
 | **Gemini — API Generative Language** | Extração de interesses, objetivos, preferências e outros contextos a partir das fontes. Modelo configurável. |
 | **NewsAPI.org** | Busca de artigos por assuntos pertinentes ao cliente. |
+| **Google Calendar API + OAuth 2.0** | Sincronização unidirecional das reuniões, mantendo o painel como fonte da verdade. |
+| **cryptography / Fernet** | Criptografia dos tokens Google armazenados localmente, com chave derivada do segredo da sessão. |
 | **pytest** | Testes de regras, rotas, acesso, persistência e integrações simuladas. |
 | **Node test runner + Oxlint** | Testes e lint do frontend; TypeScript valida tipos durante o build. |
 | **Git, GitHub e GitHub Actions** | Integração das entregas e execução de testes, lint e build na CI. |
@@ -115,11 +119,11 @@ Consultas de leitura (`GET`) não chamam os provedores de IA ou notícias. As at
 
 As dependências efetivas estão em `backend/pyproject.toml`, `backend/uv.lock`, `frontend/package.json` e `frontend/package-lock.json`. Não foi adotado um banco NoSQL. O backend possui ferramentas de CSS para a interface anterior, preservada em `/legacy`; o frontend principal é React.
 
-### Integração Google Calendar em desenvolvimento paralelo
+### Integração Google Calendar
 
-A branch `api-calendar` contém conexão OAuth com a conta do assessor, sincronização das reuniões para o calendário principal e estados de conexão/sincronização no painel. O painel local continua como fonte da verdade. Essa implementação não importa eventos existentes nem envia convites; a documentação da branch define reuniões de uma hora.
+A integração incorporada à `main` conecta a conta do assessor por OAuth e sincroniza as reuniões para o calendário principal. Criar ou reagendar uma reunião cria/atualiza o evento; cancelar remove o evento correspondente. Concluir mantém o evento passado. Cada evento dura uma hora, com fuso `America/Sao_Paulo`, nome do cliente e objetivo da reunião.
 
-As variáveis previstas nessa branch são `GOOGLE_CALENDAR_CLIENT_ID`, `GOOGLE_CALENDAR_CLIENT_SECRET` e `GOOGLE_CALENDAR_REDIRECT_URI`; ela também adiciona a dependência Python `cryptography`. **Esses recursos e configurações ainda não estão ativos na `main` descrita por este README.** O pull feito para esta consolidação atualizou a `main`; não mesclou automaticamente a branch de integração.
+O painel salva a reunião primeiro. Ausência de configuração ou falha Google não perde os dados locais; o estado da sincronização e a opção de tentar novamente aparecem na seção de reuniões. IDs determinísticos evitam eventos duplicados. Reuniões anteriores à conexão exigem tentativa explícita para serem enviadas. Não há importação de eventos Google, sincronização bidirecional, convidados ou envio de convites.
 
 ## Decisões de eficiência
 
@@ -154,6 +158,7 @@ As variáveis previstas nessa branch são `GOOGLE_CALENDAR_CLIENT_ID`, `GOOGLE_C
 │   │   ├── ia_*.py             # Adaptadores OpenAI e Gemini
 │   │   ├── noticias*.py        # Regras, cache e curadoria das notícias
 │   │   ├── newsapi.py          # Cliente do provedor de notícias
+│   │   ├── google_agenda.py  # OAuth, tokens e sincronização do calendário
 │   │   ├── reunioes.py         # Agenda e pautas
 │   │   ├── lembrancas.py       # Datas e feedback
 │   │   ├── perfil_assessor*.py # Perfil editável e validação dos campos
@@ -213,9 +218,26 @@ Preencha apenas as integrações utilizadas em `backend/.env`. Esse arquivo não
 | `GEMINI_MODEL` | Modelo Gemini configurável; confira o exemplo e a disponibilidade na sua conta. |
 | `NEWSAPI_API_KEY` | Busca de notícias; `NEWSAPI_KEY` também é aceito como alias. |
 | `NEWSAPI_LIMITE_DIARIO` | Teto local de consultas, de 1 a 100; padrão do repositório: 20. A instalação usada na demonstração foi ajustada para 50. |
-| `SECRET_KEY` | Segredo de assinatura da sessão; mantenha privado. |
+| `SECRET_KEY` | Segredo de assinatura da sessão e derivação da chave dos tokens Google; mantenha privado e estável. |
+| `GOOGLE_CALENDAR_CLIENT_ID` | Identificação do cliente OAuth Google. |
+| `GOOGLE_CALENDAR_CLIENT_SECRET` | Segredo do cliente OAuth Google. |
+| `GOOGLE_CALENDAR_REDIRECT_URI` | URL exata de retorno OAuth cadastrada no projeto Google. |
 
 Reinicie os processos após alterar o `.env`. Sem chaves, os registros locais continuam disponíveis, mas as funcionalidades dependentes do provedor exibem seu estado de configuração. Modelos e quotas dependem das credenciais e da conta utilizada.
+
+### Configurar Google Calendar
+
+Use um projeto Google com Calendar API e cliente OAuth web habilitados para a conta que participará da demonstração. Configure o retorno autorizado correspondente à instância da aplicação. Para execução local, o código recebe, por exemplo:
+
+```dotenv
+GOOGLE_CALENDAR_CLIENT_ID=seu-client-id
+GOOGLE_CALENDAR_CLIENT_SECRET=seu-client-secret
+GOOGLE_CALENDAR_REDIRECT_URI=http://localhost:5001/api/integracoes/google-agenda/retorno
+```
+
+A URL precisa coincidir com o retorno cadastrado no cliente OAuth. Reinicie o backend e use **Conectar Google Agenda** na seção de reuniões. A autorização acontece na conta Google do assessor. Quando o ambiente de demonstração usar um túnel, configure o retorno para a URL efetivamente utilizada; o túnel não é uma dependência do aplicativo.
+
+A API expõe estado e e-mail da conta, sem retornar tokens. As credenciais OAuth ficam criptografadas na base local. Desconectar remove a autorização local e tenta revogar o token; não remove os eventos já existentes no calendário. Sem credenciais/conexão, a agenda local continua disponível. O fluxo externo OAuth requer credenciais válidas; seus comportamentos são cobertos com provedor simulado nos testes.
 
 ### Desenvolvimento separado
 
@@ -275,6 +297,9 @@ As APIs de dados exigem sessão. Escritas exigem o header `X-CSRF-Token`, obtido
 | `GET /api/clientes/<id>/contexto`, `POST /api/clientes/<id>/contexto/processar` | Contexto e extração. |
 | `POST /api/clientes/<id>/interacoes` | Contato e próximos passos. |
 | `POST /api/clientes/<id>/relacionamento`, `PATCH /api/clientes/<id>/preferencias` | Avaliação manual e preferências. |
+| `GET /api/integracoes/google-agenda`, `POST /api/integracoes/google-agenda/conectar` | Estado e início do OAuth. |
+| `GET /api/integracoes/google-agenda/retorno`, `POST /api/integracoes/google-agenda/desconectar` | Retorno OAuth e desconexão. |
+| `POST /api/reunioes/<id>/sincronizar-google-agenda` | Nova tentativa de sincronização de uma reunião. |
 | `GET /api/reunioes`, `GET/POST /api/clientes/<id>/reunioes` | Agenda geral e por cliente. |
 | `POST /api/reunioes/<id>/preparar`, `/revisar`, `/concluir` | Preparação, revisão e resultado da reunião. |
 | `GET/POST /api/clientes/<id>/lembrancas` | Datas confirmadas e lembretes. |
@@ -297,7 +322,7 @@ npm run build
 
 Os testes cobrem regras de prioridade, precisão financeira, contratos, login/CSRF, fontes versionadas, contexto, conversa, humor, notícias, reuniões, lembretes e repetição sem duplicações. Provedores são simulados nos testes para verificar comportamento sem gastar chamadas externas. Os testes de frontend incluem autenticação, comunicação com a API, formatação e radar.
 
-Após o pull e a integração desta documentação, a verificação local passou com **404 testes de backend**, **24 testes de frontend**, lint e build. Também foram verificadas a leitura do painel, a rota do perfil do assessor e a repetição da importação das fontes atualizadas. Essas contagens registram a versão verificada; não representam cobertura integral de todos os cenários possíveis.
+Antes da última integração Google Calendar, a verificação local passou com 404 testes de backend e 24 testes de frontend, lint e build; a versão com Calendar é validada na consolidação final. Também foram verificadas a leitura do painel, a rota do perfil do assessor e a repetição da importação das fontes atualizadas. Essas contagens registram a versão verificada; não representam cobertura integral de todos os cenários possíveis.
 
 A CI em `.github/workflows/ci.yml` executa pytest no backend e testes, lint e build no frontend. O build também faz a checagem TypeScript. Verificações reais realizadas durante o desenvolvimento incluíram chat, coleta de notícias e atualização automática após inclusão de interesse; no navegador, também foi conferida a recuperação do painel após corrigir a formatação da data de cadastro.
 
@@ -307,7 +332,7 @@ A aplicação é um MVP de demonstração com um assessor e login compartilhado.
 
 A arquitetura considera privacidade e princípios da LGPD ao separar credenciais, manter evidências e permitir correções/feedback. Isso não representa uma certificação de conformidade: uso com dados reais depende de consentimento/base legal aplicável, controle de acesso individual, retenção e exclusão, infraestrutura segura e avaliação do fluxo de dados enviado aos provedores.
 
-Notícias dependem de disponibilidade, atraso, quotas e cobertura da NewsAPI; um interesse salvo pode não ter artigos recentes. O humor é uma hipótese apoiada em trechos. O radar não substitui a análise de risco ou suitability. A incorporação da branch Google Calendar à `main`, o acesso multiassessor, os canais reais e as análises tributárias ficam para a evolução da solução.
+Notícias dependem de disponibilidade, atraso, quotas e cobertura da NewsAPI; um interesse salvo pode não ter artigos recentes. O humor é uma hipótese apoiada em trechos. O radar não substitui a análise de risco ou suitability. O acesso multiassessor, os canais reais, a sincronização bidirecional de calendário e as análises tributárias ficam para a evolução da solução.
 
 ## Apresentação
 
