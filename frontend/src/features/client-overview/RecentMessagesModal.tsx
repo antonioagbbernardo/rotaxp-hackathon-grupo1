@@ -25,7 +25,6 @@ interface MensagemItem {
   origem: string
   texto: string
   data: string
-  proximosPassos?: string | null
   isAudioTranscrito: boolean
 }
 
@@ -67,7 +66,6 @@ export function RecentMessagesModal({ client, isOpen, onClose }: RecentMessagesM
       origem: isAudio ? 'Transcrição de chamada (XP Voice)' : 'Registro do assessor',
       texto: i.texto,
       data: i.ocorrida_em,
-      proximosPassos: i.proximos_passos,
       isAudioTranscrito: isAudio,
     }
   })
@@ -179,17 +177,6 @@ export function RecentMessagesModal({ client, isOpen, onClose }: RecentMessagesM
                 >
                   {msg.texto}
                 </div>
-
-                {msg.proximosPassos && (
-                  <div className="mt-3 rounded-lg border border-brand/20 bg-brand/5 p-2.5">
-                    <p className="text-[10px] font-medium tracking-wide text-brand uppercase">
-                      Próximos passos
-                    </p>
-                    <p className="mt-0.5 text-xs text-ink-muted">
-                      {msg.proximosPassos}
-                    </p>
-                  </div>
-                )}
               </article>
             ))
           )}
