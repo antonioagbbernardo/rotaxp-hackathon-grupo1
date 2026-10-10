@@ -3,7 +3,7 @@ import { DotLabel } from '@/components/ui/DotLabel'
 import { SentimentFace } from '@/components/ui/SentimentFace'
 import { cn } from '@/lib/cn'
 import { formatElapsed } from '@/lib/format'
-import { describeImpact, sentimentTextColor } from '@/lib/sentiment'
+import { sentimentTextColor } from '@/lib/sentiment'
 import type { Client } from '@/types/client'
 
 interface ClientCardProps {
@@ -13,7 +13,7 @@ interface ClientCardProps {
 }
 
 export function ClientCard({ client, isSelected, onSelect }: ClientCardProps) {
-  const impact = describeImpact(client.sentiment, client.pronoun)
+  const impact = `Relacionamento: ${client.relationshipLabel ?? 'Não avaliado'}`
 
   return (
     <button
@@ -37,7 +37,7 @@ export function ClientCard({ client, isSelected, onSelect }: ClientCardProps) {
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium">{client.name}</p>
           <p className="mt-0.5 truncate text-[10px] text-ink-muted">
-            {client.interests.join(' · ')}
+            {client.interests.join(' · ') || 'Sem interesses revisados'}
           </p>
         </div>
         <SentimentFace sentiment={client.sentiment} label={impact} />
@@ -47,6 +47,7 @@ export function ClientCard({ client, isSelected, onSelect }: ClientCardProps) {
         <DotLabel>{impact}</DotLabel>
       </p>
       <p className="mt-1.5 text-[10px] text-ink-muted">
+        Prioridade de atendimento: {client.priority === 'alta' ? 'Alta' : client.priority === 'media' ? 'Média' : 'Baixa'}<br />
         {client.headline} • {formatElapsed(client.updatedMinutesAgo)}
       </p>
     </button>

@@ -10,4 +10,5 @@ export const sentimentTextColor: Record<Sentiment, string> = {
   positive: 'text-positive',
   negative: 'text-negative',
   neutral: 'text-ink-muted',
+  unknown: 'text-ink-muted',
 }

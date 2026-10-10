@@ -1,11 +1,13 @@
 # Documentação da equipe
 
-**Situação atual:** base Flask/Tailwind implementada: clientes, detalhe, interações
+**Situação atual:** painel React/TypeScript/Tailwind integrado ao Flask/SQLite: clientes, detalhe, interações
 manuais, preferências, relacionamento e alertas de vencimento/aniversário.
 Incremento SDD 01 implementa importação de fontes JSON fictícias com versões
 e pendências de identidade. Incremento 02 acrescenta extração Gemini e revisão
-persistida; 125 testes e extração Gemini real de quatro fontes fictícias,
-com sete propostas pendentes. Validação visual completa ainda pendente.
+persistida; extração Gemini real de quatro fontes fictícias com sete propostas
+pendentes na base da demonstração. Incremento 03 adapta o layout XP Pulse à API;
+143 testes backend, cinco frontend, build e lint aprovados. Fluxos principais
+conferidos no navegador; detalhes e limites no registro.
 Conexão real aos canais, NewsAPI e keynotes ainda planejados.
 **Última revisão:** 10/10/2026. Núcleo: consumir fontes existentes, inferir contexto
 e sugerir lembranças sob supervisão humana, incorporando feedback.
@@ -18,6 +20,7 @@ e sugerir lembranças sob supervisão humana, incorporando feedback.
 | [Registro para apresentação](registro-desenvolvimento.md) | Entregas de front/back, evidências, decisões, limitações e roteiro do pitch |
 | [Incremento SDD 01](planejamento/incrementos/01-fontes.md) | Contrato, regras e aceites da entrada de fontes fictícias |
 | [Incremento SDD 02](planejamento/incrementos/02-contexto-revisao.md) | Extração por IA, evidências, revisão e bloqueio por cliente |
+| [Incremento SDD 03](planejamento/incrementos/03-front-pulse.md) | Integração React, dados reais da base, perguntas e execução |
 | [Requisitos](planejamento/requisitos.md) | Consultar comportamentos, critérios de aceite e como implementar por etapa |
 | [Especificação curta](planejamento/spec.md) | Alinhar o fluxo principal e regras básicas |
 | [Contratos](planejamento/contracts.md) | Entidades, rotas `/api`, formato JSON e erros do MVP |
@@ -29,11 +32,13 @@ e sugerir lembranças sob supervisão humana, incorporando feedback.
 
 ## Organização local
 
-Aplicação, testes e ferramentas estão em [backend/](../backend/README.md).
-Executar os comandos de Python e CSS dentro dessa pasta.
+API/testes Python estão em [backend/](../backend/README.md); painel/build em
+[frontend/](../frontend/README.md). Execute `uv` no backend e `npm` no frontend
+(CSS da interface anterior permanece no backend).
 
 ```text
 backend/                      Aplicação Flask, testes e ferramentas de CSS
+frontend/                     Painel React, testes e build Vite
 docs/                         Documentação da equipe, destinada ao GitHub
   README.md                   Índice
   visao-geral.md               Explicação rápida e diagramas

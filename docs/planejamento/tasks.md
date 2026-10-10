@@ -1,6 +1,6 @@
 # Plano de execução — seis pessoas
 
-Status: plano reconciliado em 10/10/2026. Base Flask/Tailwind integrada;
+Status: plano reconciliado em 10/10/2026. React XP Pulse integrado ao Flask/SQLite;
 ingestão JSON fictícia e contexto/revisão implementados; Gemini real testado em
 amostra fictícia. Conexão aos canais, notícias e keynotes ainda pendentes.
 Referências: `spec.md`, `design.md`,
@@ -38,7 +38,13 @@ T09 dividida em incrementos SDD:
   evidências, fatos/hipóteses, revisão, correções e bloqueio por cliente, sem
   perder decisões. 125 testes aprovados com provedor/transporte simulados;
   chamada real com quatro fontes/sete propostas e cache verificado.
-  Fluxo visual completo/celular ainda pendente.
+  Fluxos principais passaram a ser conferidos no painel React do incremento 03;
+  cobertura visual e limites no registro abaixo.
+
+- **T06 — incremento 03 implementado:** layout React com dados/IDs da API,
+  revisão, bloqueio, alertas, contatos, relacionamento, preferências e consulta
+  por templates. 143 testes backend, cinco frontend, build/lint; navegador
+  desktop e viewport móvel de 390 × 844. T08 permanece pendente.
 
 Detalhes em [incremento 01](incrementos/01-fontes.md) e
 [registro para apresentação](../registro-desenvolvimento.md).

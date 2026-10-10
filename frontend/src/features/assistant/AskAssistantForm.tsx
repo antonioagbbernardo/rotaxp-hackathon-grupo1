@@ -4,15 +4,16 @@ import { ArrowRightIcon } from '@/components/ui/icons'
 interface AskAssistantFormProps {
   placeholder: string
   onAsk: (question: string) => void
+  disabled?: boolean
 }
 
-export function AskAssistantForm({ placeholder, onAsk }: AskAssistantFormProps) {
+export function AskAssistantForm({ placeholder, onAsk, disabled }: AskAssistantFormProps) {
   const [question, setQuestion] = useState('')
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const trimmed = question.trim()
-    if (!trimmed) return
+    if (!trimmed || disabled) return
     onAsk(trimmed)
     setQuestion('')
   }
@@ -31,11 +32,14 @@ export function AskAssistantForm({ placeholder, onAsk }: AskAssistantFormProps) 
         onChange={(event) => setQuestion(event.target.value)}
         placeholder={placeholder}
         autoComplete="off"
-        className="flex-1 bg-transparent text-xs outline-none placeholder:text-ink-muted"
+        maxLength={500}
+        disabled={disabled}
+        className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-ink-muted"
       />
       <button
         type="submit"
         aria-label="Enviar pergunta"
+        disabled={disabled || !question.trim()}
         className="flex size-8 items-center justify-center rounded-md text-ink transition-colors hover:bg-surface-raised"
       >
         <ArrowRightIcon className="size-4.5" />

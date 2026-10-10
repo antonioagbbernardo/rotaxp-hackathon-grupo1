@@ -179,3 +179,36 @@ Limites de arrays ficam na instrução e no validador local; o schema enviado n�
 inclui `minItems/maxItems` devido à rejeição observada na chamada real.
 Formato REST: `generationConfig.responseFormat.text.mimeType: APPLICATION_JSON`
 e `schema`; não combinar com `responseMimeType/responseJsonSchema` legados.
+
+## Incremento 03 — visão XP Pulse
+
+`GET /api/pulse`: `{advisor: {name, role}, generatedAt: ISO,
+clients: [...]}`. Ordem de prioridade da base. Cada cliente usa ID decimal como
+string para seleção no React e traz os campos do painel: nome, perfil/tags,
+prioridade (`priority`), status de fila, relacionamento humano (`relationshipLabel`),
+interesses revisados, último contato, carteira, resumo, fontes, contexto e alertas.
+Dinheiro em `portfolio.total` como texto, ou null se não houver posições;
+distribuição vazia quando não cadastrada. `updatedMinutesAgo` considera
+interações, avaliações, extrações e revisões; `lastContactDays` depende só da
+última interação. Campos sem data são null. Interesses revisados podem continuar
+como conhecimento após bloqueio; bloqueio impede uso em contato, não apaga fatos.
+Data de cadastro/telefone/email ausentes ficam null/texto vazio, sem invenção.
+`news` vazio enquanto não houver coleta. `assistant` contém resumo por template,
+insights factuais de alertas/revisão e rascunhos de abertura com fontes textuais.
+`context` mantém o contrato do incremento 02; `sourceDocuments`, `alerts`,
+`interactions`, `preferences` e `summaryFacts` mantêm os campos das rotas da base.
+Sem dados: clients vazio. Não chama provedor de IA.
+
+`POST /api/pulse/clientes/<id>/perguntar`: `{pergunta: texto de 1–500 caracteres}`.
+Retorna `{resposta: texto, fontes: [referências textuais], modo: "consulta_contexto"}`.
+Consulta limitada aos registros existentes; não dispara IA, notícias ou envio.
+Temas: perfil, carteira/vencimentos, contato, preferências, interesses/contexto e
+preparação/resumo. Tema não suportado retorna limite explícito sem fonte inventada.
+Nomes de canal em perguntas de preferência/histórico não implicam pedir número
+de contato. Números/endereço e notícias ausentes retornam ausência.
+Objeto/campos inválidos: 400; cliente inexistente: 404. Não persiste a pergunta.
+
+`GET /` serve `frontend/dist/index.html` quando compilado; `/assets/<arquivo>`
+serve seus assets e `/favicon.svg` o ícone do build. Sem build, `/` usa a interface
+anterior. `/legacy` mantém essa interface. Em desenvolvimento,
+Vite em 127.0.0.1:5173 encaminha `/api` ao Flask em 127.0.0.1:5001.
