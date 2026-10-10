@@ -258,20 +258,6 @@ do assistente). A atualização foi integrada sem conflitos, preservando o resum
 OpenAI. Os cinco testes frontend, lint e build passaram novamente. Backend
 sem alterações neste merge; imagem nova não conferida em navegador.
 
-## Correção: humor e prioridade visíveis no painel (10/10/2026)
-
-- **Problema:** prioridade de atendimento só aparecia no cliente selecionado e o
-  humor (relacionamento) era um ícone cinza sem texto; 4 dos 5 clientes do seed
-  não têm avaliação (`unknown`).
-- **Diagnóstico:** `/api/pulse` entrega `priority` e `sentiment` corretos (verificado
-  com o seed); a falha era de renderização no frontend.
-- **Frontend:** `ClientCard` mostra a prioridade e o humor com texto em português;
-  `ClientSummary` mostra o humor do relacionamento e deriva o tom do badge da
-  prioridade (antes vinha do status); rótulos em `lib/sentiment.ts`.
-- **Backend/contrato:** sem mudança.
-- **Verificação:** build, lint e testes do frontend; pytest do backend (288). Não
-  validado no navegador/celular.
-
 ## Incremento 07 — radar de perfil do investidor (10/10/2026)
 
 - **Problema:** mostrar o perfil (conservador, moderado, arrojado) de forma visual,
@@ -350,6 +336,20 @@ sem alterações neste merge; imagem nova não conferida em navegador.
 
 **Demo sugerida:** interesse revisado → associação → uma coleta → fonte/datas →
 mesmo assunto em outro cliente sem custo adicional → feedback individual.
+
+## Correção: humor e prioridade visíveis no painel (10/10/2026)
+
+- **Problema:** prioridade de atendimento só aparecia no cliente selecionado e o
+  humor (relacionamento) era um ícone cinza sem texto; 4 dos 5 clientes do seed
+  não têm avaliação (`unknown`).
+- **Diagnóstico:** `/api/pulse` entrega `priority` e `sentiment` corretos (verificado
+  com o seed); a falha era de renderização no frontend.
+- **Frontend:** `ClientCard` mostra a prioridade e o humor com texto em português;
+  `ClientSummary` mostra o humor do relacionamento e deriva o tom do badge da
+  prioridade (antes vinha do status); rótulos em `lib/sentiment.ts`.
+- **Backend/contrato:** sem mudança.
+- **Verificação:** build, lint e testes do frontend; pytest do backend (288). Não
+  validado no navegador/celular.
 
 ## Roteiro para a apresentação
 
