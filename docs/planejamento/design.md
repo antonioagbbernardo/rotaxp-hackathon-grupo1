@@ -1,6 +1,7 @@
 # Arquitetura proposta — plataforma de assessores
 
-Status: planejamento somente. Stack, integrações e escopo aguardam definição.
+Status: planejamento somente. NewsAPI.org definido como fonte de notícias;
+stack, demais integrações e escopo aguardam definição.
 
 ## Organização
 
@@ -21,6 +22,7 @@ no prazo de 6h30. Web responsiva não deve ser apresentada como app nativo.
 | Persistência | Guardar clientes, preferências, registros, fontes e decisões |
 | Processamento de eventos | Consultar fontes escolhidas, deduplicar e associar interesses |
 | Resumo | Organizar fatos registrados e indicar evidências e atualidade |
+| Preparação de reunião | Combinar contexto e fontes em pauta versionada; preservar notas manuais |
 
 Sugestão: uma aplicação simples, com responsabilidades separadas internamente,
 sem serviços distribuídos no primeiro recorte.
@@ -38,6 +40,8 @@ sem serviços distribuídos no primeiro recorte.
 | Evento | Assunto, ocorrência, fonte e identificador externo | Pode gerar alertas para vários clientes |
 | Alerta | Motivo, prioridade, evidência e estado | Pertence a cliente; pode apontar para evento ou posição |
 | Avaliação do relacionamento | Estado, justificativa, autor e data | Histórico de avaliações por cliente |
+| Reunião | Objetivo, início/fuso, responsável e estado | Pertence a cliente; pode ter interação de conclusão |
+| Versão da pauta | Conteúdo, fontes, versão dos dados e data de geração/revisão | Pertence a reunião; notas manuais armazenadas separadamente |
 
 Restrições propostas: vínculos válidos, identificação única de evento por fonte,
 deduplicação de alerta por cliente/regra/origem e valores monetários sem ponto
@@ -57,11 +61,19 @@ Consultar um assunto uma vez e reutilizar o resultado entre clientes interessado
 Filtrar por interesse, preferência de contato, atualidade e duplicidade antes
 de qualquer uso de IA. Processar mudanças, evitando reanalisar todo o histórico.
 
-Para demonstrar, eventos simulados e identificados são uma alternativa. Para
-integração real, a equipe precisa escolher fonte, frequência, limites de uso e
-orçamento. Não há fonte ou estimativa de custo aprovada.
+Fonte escolhida: **NewsAPI.org**. Planejar coleta diária por assuntos compartilhados
+e atualização antecipada quando houver reunião próxima, reutilizando cache.
+Plano, horários, orçamento e parâmetros ainda precisam de definição.
+
+O agendador e o coletor são rotinas de backend. Um especialista de IA é opcional
+para analisar resultados filtrados, com entradas e orçamento limitados.
+Detalhamento e fontes oficiais: [busca de notícias](../integracoes/busca-noticias.md).
 
 ## Questões ainda abertas
+
+O agendador prepara reuniões na janela definida. Alterações internas podem renovar
+a pauta sem outra busca externa; mudanças de data ou estado reconciliam disparos.
+Reunião concluída preserva a pauta usada e a interação resultante.
 
 - Fonte das posições financeiras e critérios das análises de risco e tributárias.
 - Captura real ou registro manual por canal; revisão e envio de atas.

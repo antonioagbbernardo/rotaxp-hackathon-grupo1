@@ -2,7 +2,7 @@
 
 Status: proposta documental, sujeita às decisões da equipe. Implementação suspensa
 por solicitação do usuário; esta especificação não autoriza gerar código.
-Referência: `ideia-plataforma-assessores.md` e instruções do evento.
+Detalhamento: [requisitos](requisitos.md). Leitura rápida: [visão geral](../visao-geral.md).
 
 ## Objetivo
 
@@ -11,21 +11,23 @@ fontes e registra o próximo contato em uma interface web utilizável no celular
 
 ## Primeiro fluxo
 
-Listar clientes → abrir cliente → consultar resumo, alertas e fontes → registrar
-interação → consultar histórico atualizado após recarregar.
+Listar clientes → abrir contexto e alertas → preparar reunião com keynotes →
+registrar resultado → consultar histórico atualizado após recarregar.
 
 ## Recorte proposto
 
 - Lista de clientes com busca e filtro de prioridade.
 - Detalhe com perfil, interesses, preferências de contato, posições e histórico.
 - Resumo factual derivado das informações registradas, sem inferir humor.
-- Alertas de vencimento e eventos pessoais fictícios associados a interesses.
+- Alertas de vencimento e notícias via NewsAPI associadas a interesses; dados
+  fictícios identificados para teste e demonstração quando necessário.
 - Registro manual de interações de WhatsApp, e-mail, telefone e presencial.
 - Estado de relacionamento informado pelo assessor com justificativa.
 - Marcar alertas como tratados, com persistência.
 - Visualização de clientes e de prioridades.
+- Reuniões próximas com pauta breve, fontes e observações revisáveis pelo assessor.
 
-Integrações reais, envio de mensagens/atas, aplicação mobile separada e análise
+Integrações de canais, envio de mensagens/atas, aplicação mobile separada e análise
 tributária automatizada ficam pendentes de definição. Propõe-se usar dados
 fictícios identificados na primeira demonstração.
 
@@ -60,6 +62,10 @@ RN10. Dados devem persistir entre recargas e reinicializações do servidor.
 - CA10: o fluxo principal pode ser realizado em tela de celular sem rolagem horizontal da página.
 
 ## Validação
+
+Critérios CA11–CA25, incluindo notícias, reuniões e keynotes, estão em
+[requisitos](requisitos.md). As regras de busca estão em
+[integração NewsAPI](../integracoes/busca-noticias.md).
 
 Testes de regras e persistência/API, seguidos de verificação do fluxo no navegador
 em desktop e celular. Informar separadamente verificações executadas e limitações.

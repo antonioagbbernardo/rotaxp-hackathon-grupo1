@@ -1,7 +1,7 @@
 # Plano de execução — proposta para seis pessoas
 
 Status: planejamento, sem implementação autorizada nesta etapa.
-Referências: `spec.md` e `design.md`. Os responsáveis serão definidos pela equipe.
+Referências: `spec.md`, `requisitos.md` e `design.md`. Os responsáveis serão definidos pela equipe.
 
 ## Sequência de trabalho
 
@@ -13,7 +13,8 @@ Referências: `spec.md` e `design.md`. Os responsáveis serão definidos pela eq
 | T04 — Histórico | Registrar interação e consultar após recarregar | T03 | CA03, CA04 | Pessoa 5 |
 | T05 — Alertas | Vencimentos e eventos aparecem com motivo e fonte | T02 e regras validadas | CA05–CA08 | Pessoa 3 |
 | T06 — Relacionamento | Preferências e avaliação justificada funcionam | T03 | CA07, CA09 | Pessoas 4 e 5 |
-| T07 — Integração | Fluxo completo revisado, inclusive falhas | T04–T06 | Todos | Pessoa 6 + autores |
+| T09 — Reuniões e keynotes | Reunião agendada com pauta, fontes, notas preservadas e conclusão | T04–T06; contratos combinados em T01 | CA19–CA25 | Pessoas 4, 5 e 6 |
+| T07 — Integração | Fluxo completo revisado, inclusive falhas | T04–T06 e T09 | Todos | Pessoa 6 + autores |
 | T08 — Entrega | README, repositório atualizado e pitch de até 5 min | T07 | Demonstração reproduzível | Pessoas 1 e 6 + equipe |
 
 Pessoa 1 mantém a especificação e apoia testes após o alinhamento. Pessoa 6
@@ -24,7 +25,7 @@ sua entrega. A divisão deve acompanhar as competências reais do grupo.
 
 - 0h–0h30: alinhamento, regras, stack, contratos e responsáveis.
 - 0h30–1h15: base executável e primeiro fluxo de consulta integrado.
-- 1h15–3h30: interações, alertas e preferências, com integrações frequentes.
+- 1h15–3h30: interações, alertas, preferências e pauta mínima, com integrações frequentes.
 - 3h30–4h30: testes essenciais e correções.
 - 4h30–5h30: revisão do fluxo completo e documentação de execução.
 - 5h30–6h30: envio final, ensaio e margem para imprevistos.
@@ -48,8 +49,9 @@ Complementar com teste do fluxo completo e da interface no celular.
 1. Explicar a dificuldade de reunir contexto e priorizar contatos.
 2. Abrir um cliente e mostrar resumo com evidências.
 3. Mostrar um vencimento e uma oportunidade de contato por interesse.
-4. Registrar uma interação e conferir o histórico atualizado.
-5. Explicar custo, privacidade, limitações e evolução.
+4. Abrir os keynotes da próxima reunião e revisar fontes e pendências.
+5. Registrar o resultado do encontro e conferir o histórico atualizado.
+6. Explicar custo, privacidade, limitações e evolução.
 
 ## Quando faltar tempo
 
