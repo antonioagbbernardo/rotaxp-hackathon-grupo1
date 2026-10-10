@@ -109,7 +109,4 @@ nos testes e seed com datas relativas a "hoje".
 
 ## Decisões pendentes
 
-- Confirmar com a organização: horário do pitch e se o código pode mudar após o
-  clone das 17h30.
-- Interface: Tailwind via Node (CLI) ou Bootstrap por CDN (ver `design.md`).
 - Controle de acesso antes de uso real ou publicação com dados pessoais.

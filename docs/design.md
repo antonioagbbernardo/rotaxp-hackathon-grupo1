@@ -8,7 +8,7 @@ Status: decisões de 10/10/2026. Integrações externas e IA fora do MVP.
 | --- | --- |
 | Backend | Python 3.13 + Flask + Jinja2, gerenciado com `uv` |
 | Dados | SQLite |
-| Interface | Páginas Jinja responsivas; CSS compilado com Node (Tailwind CLI) |
+| Interface | Página única responsiva (Jinja serve o HTML base) com JS que consome a API JSON; Tailwind CSS compilado com Node (CLI) |
 | Node.js | Somente ferramenta da interface (build de CSS/JS). Não é runtime do backend |
 | Testes | pytest (regras e API); verificação manual no navegador |
 
@@ -24,15 +24,15 @@ Regras de uso:
 ## Organização
 
 Uma aplicação Flask simples, com núcleo de regras puro (prioridade, vencimento,
-aniversário), acesso a dados em módulo separado e rotas finas. Sem serviços
+aniversário), acesso a dados em módulo separado e rotas JSON finas. Sem serviços
 distribuídos. Web responsiva não é app nativo e não deve ser apresentada como tal.
 
 ## Responsabilidades
 
 | Parte | Responsabilidade |
 | --- | --- |
-| Interface | Lista, filtros, detalhe, linha do tempo, registro de interação, tratar alerta |
-| Rotas | Validar entradas, chamar regras, devolver erros padronizados |
+| Interface | Lista, filtros, detalhe, linha do tempo, registro de interação, tratar alerta (via API JSON) |
+| API JSON | Validar entradas, chamar regras, devolver JSON e erros padronizados |
 | Regras | Prioridade (RN11), vencimentos (RN03/04), aniversários (RN12), relógio injetável |
 | Persistência | Clientes, posições, interações, datas importantes, alertas, decisões |
 | Resumo | Organiza fatos registrados com fonte e atualidade (template, sem IA) |

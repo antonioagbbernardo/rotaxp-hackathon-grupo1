@@ -23,21 +23,23 @@ responsáveis de backend e frontend. Mudanças depois disso passam pela equipe.
 | Alerta | `id`, `cliente_id`, `tipo` (`vencimento`\|`vencido`\|`aniversario`), `prioridade` (`alta`\|`media`\|`baixa`), `motivo`, `fonte`, `estado` (`pendente`\|`tratado`), `chave_ocorrencia` |
 
 Canais válidos: `whatsapp`, `email`, `telefone`, `presencial`.
-Estados de relacionamento: `positivo`, `atencao`, `negativo` (a confirmar).
+Estados de relacionamento: `positivo`, `atencao`, `negativo`.
 `DataImportante`: não armazenar nome do familiar nem ano de nascimento.
 
 ## Rotas
 
 ```
-GET  /clientes                  lista (q, prioridade) ordenada por RN11
-GET  /clientes/<id>             detalhe: perfil, resumo, alertas, posições, histórico
-POST /clientes/<id>/interacoes  registra interação
-POST /clientes/<id>/relacionamento  altera estado (exige justificativa)
-POST /alertas/<id>/tratar       marca alerta como tratado
+GET  /api/clientes              lista (q, prioridade) ordenada por RN11
+GET  /api/clientes/<id>         detalhe: perfil, resumo, alertas, posições, histórico
+POST /api/clientes/<id>/interacoes  registra interação
+POST /api/clientes/<id>/relacionamento  altera estado (exige justificativa)
+POST /api/alertas/<id>/tratar   marca alerta como tratado
 ```
 
-## Pendências do contrato
+## Formato JSON
 
-- Confirmar os valores de `estado_relacionamento`.
-- Confirmar se as respostas são HTML (Jinja) ou JSON; se JSON, definir o formato
-  antes de dividir frontend/backend.
+- Respostas `application/json`; sucesso `200` (leitura) ou `201` (criação).
+- Erro: `{"erro": {"codigo": "...", "campo": "...", "mensagem": "..."}}`.
+- Corpo dos `POST` em JSON. Exemplo de `POST /api/clientes/1/interacoes`:
+  `{"canal": "telefone", "texto": "...", "data_hora": "2026-10-10T14:00:00-03:00"}`.
+- `GET /` serve a página base; a interface lê os dados pelas rotas acima.
