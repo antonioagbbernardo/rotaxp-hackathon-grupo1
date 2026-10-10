@@ -36,19 +36,19 @@ export function ClientCard({ client, isSelected, onSelect }: ClientCardProps) {
         <Avatar name={client.name} />
         <div className="min-w-0 flex-1 space-y-1">
           <p className="truncate text-sm font-medium" title={client.name}>{client.name}</p>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             {client.priority && (
               <Badge tone={priorityTone[client.priority]} className="shrink-0 px-1.5 py-0.5 text-[10px] whitespace-nowrap">
                 {priorityLabel[client.priority]}
               </Badge>
             )}
-            <span className="flex min-w-0 items-center gap-1 text-[10px] text-ink-muted">
+            <span className="flex items-center gap-1 text-[10px] whitespace-nowrap text-ink-muted">
               <SentimentFace
                 sentiment={client.sentiment}
                 className="size-4"
                 label={`Humor: ${sentimentLabel[client.sentiment]}`}
               />
-              <span className="truncate">{sentimentLabel[client.sentiment]}</span>
+              <span>{sentimentLabel[client.sentiment]}</span>
             </span>
           </div>
           <p className="truncate text-[10px]">
