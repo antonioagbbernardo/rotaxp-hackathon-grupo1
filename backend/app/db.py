@@ -90,7 +90,11 @@ CREATE TABLE IF NOT EXISTS resumo_ia (
 );
 CREATE TABLE IF NOT EXISTS assessor (
     id INTEGER PRIMARY KEY,
-    nome TEXT NOT NULL
+    nome TEXT NOT NULL,
+    cargo TEXT NOT NULL DEFAULT 'Assessor de investimentos',
+    email TEXT NOT NULL DEFAULT '',
+    telefone TEXT NOT NULL DEFAULT '',
+    escritorio TEXT NOT NULL DEFAULT ''
 );
 CREATE TABLE IF NOT EXISTS cliente (
     id INTEGER PRIMARY KEY,
@@ -206,6 +210,11 @@ def close_db(_exc=None) -> None:
 def init_db() -> None:
     db = get_db()
     db.executescript(SCHEMA)
+    colunas_assessor = {r['name'] for r in db.execute('PRAGMA table_info(assessor)')}
+    for campo, padrao in (('cargo', 'Assessor de investimentos'), ('email', ''), ('telefone', ''), ('escritorio', '')):
+        if campo not in colunas_assessor:
+            db.execute(f"ALTER TABLE assessor ADD COLUMN {campo} TEXT NOT NULL DEFAULT '{padrao}'")
+    db.commit()
     if 'contexto_sugerido' not in {r['name'] for r in db.execute('PRAGMA table_info(chat_turno)')}:
         db.execute("ALTER TABLE chat_turno ADD COLUMN contexto_sugerido TEXT NOT NULL DEFAULT '[]'")
         db.commit()

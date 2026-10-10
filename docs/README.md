@@ -34,6 +34,7 @@ e sugerir lembranças sob supervisão humana, incorporando feedback.
 | [Incremento SDD 06](planejamento/incrementos/06-login.md) | Login no design XP Pulse, proteção de sessão/CSRF e logout |
 | [Incremento SDD 07](planejamento/incrementos/07-agenda-keynotes.md) | Agenda, pautas versionadas, notas, conclusão e atualização automática |
 | [Incremento SDD 08](planejamento/incrementos/08-lembrancas.md) | Confirmação de datas pessoais, fontes e feedback por ocorrência |
+| [Incremento SDD 10](planejamento/incrementos/10-perfil-assessor.md) | Perfil do assessor, edição e persistência dos dados profissionais |
 | [Requisitos](planejamento/requisitos.md) | Consultar comportamentos, critérios de aceite e como implementar por etapa |
 | [Especificação curta](planejamento/spec.md) | Alinhar o fluxo principal e regras básicas |
 | [Contratos](planejamento/contracts.md) | Entidades, rotas `/api`, formato JSON e erros do MVP |

@@ -100,8 +100,8 @@ def consultar_painel():
     db = get_db()
     clientes = [montar_cliente(c) for c in db.execute("SELECT * FROM cliente").fetchall()]
     clientes.sort(key=lambda c: (PRIORIDADES.index(c["priority"]), c["nextDue"] or "9999-12-31", _norm(c["name"])))
-    assessor = db.execute("SELECT nome FROM assessor WHERE id=1").fetchone()
-    return {"advisor": {"name": assessor["nome"] if assessor else "Assessor não cadastrado", "role": "Assessor de investimentos"},
+    assessor = db.execute("SELECT nome, cargo FROM assessor WHERE id=1").fetchone()
+    return {"advisor": {"name": assessor["nome"] if assessor else "Assessor não cadastrado", "role": assessor['cargo'] if assessor else "Assessor de investimentos"},
             "generatedAt": formatar_utc(current_app.config["CLOCK"].agora()), "clients": clientes}
 
 

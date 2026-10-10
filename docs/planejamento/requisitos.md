@@ -480,3 +480,9 @@ centralizado no design XP Pulse e credenciais `admin` / `admin`. Sessão validad
 no backend protege painel e APIs; logout e expiração retiram acesso. Escritas
 exigem CSRF. Sem recuperação de senha ou perfis multiassessor. RN53–RN58 e
 CA79–CA84 definidos antes do código em [incremento 06](incrementos/06-login.md).
+
+## RF32 — perfil do assessor (incremento 10)
+
+Abrir perfil pelo nome/avatar no cabeçalho; editar nome, cargo, e-mail, telefone
+e escritório, salvar no banco e refletir no cabeçalho. CA99–CA102 e RN76–RN78
+em [incremento 10](incrementos/10-perfil-assessor.md). Sem alterar credenciais.

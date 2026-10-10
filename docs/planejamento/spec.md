@@ -266,6 +266,10 @@ testes de API/persistência e verificação do fluxo no navegador (desktop e
 viewport de celular), a partir de um clone limpo. Informar separadamente
 verificações executadas e limitações.
 
+Perfil do assessor autorizado: [incremento 10](incrementos/10-perfil-assessor.md),
+RF32, RN76–RN78 e CA99–CA102. Editar dados do assessor único, com persistência e
+acesso pelo cabeçalho; preserva as credenciais e os vínculos dos clientes.
+
 ## Decisões pendentes
 
 Para a evolução: contrato/acesso à fonte real, qualidade/custo da extração,
