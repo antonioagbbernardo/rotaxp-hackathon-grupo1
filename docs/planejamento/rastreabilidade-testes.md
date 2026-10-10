@@ -1,72 +1,132 @@
 # Rastreabilidade: critérios de aceite × testes
 
-Status: levantamento de 10/10/2026 sobre `main` (7456543) e a branch
-`test/aceite-congelados` (8dc94e6). Os testes **não citam** IDs `CA` no código;
-a ligação abaixo foi feita por leitura do corpo de cada teste.
+Status: levantamento de 10/10/2026 na branch `test/cobertura-ca-base`, com a
+`main` de 75d7898 (inclui T09). Os testes não citam IDs `CA` no código; a ligação abaixo vem
+da leitura do corpo de cada teste. Novos testes: `backend/tests/test_cobertura_ca.py`.
 
-Verificação: `uv run --locked pytest` em `main` → 47 passaram. Na branch de
-aceite → 30 passaram, 1 falhou, 18 com erro (T09 sem implementação).
+Verificação (execução real): `uv run --locked pytest` → **244 passaram** (125 da `main` + 47 de `test_cobertura_ca.py` + 72 de `test_cobertura_t09.py`).
 
-Legenda de situação: **Coberto** (o teste exercita o critério inteiro),
-**Parcial** (falta parte do enunciado), **Sem teste automatizado**,
-**Escrito, não passa** (teste existe só na branch e falha por falta de código).
+## Como foi avaliado
 
-## Base (CA01–CA10, CA34–CA39) — testes em `main`
+- Revisão de fidelidade à spec por dois revisores independentes (Opus e Fable),
+  que não escreveram os testes e não viram o raciocínio do autor.
+- Teste de mutação por dois revisores (Opus: 56 mutantes; Fable: 61 mutantes) sobre
+  a aplicação, com a suíte inteira por mutante.
+- Resultado inicial: 44/56 e 47/61 mutantes mortos (≈ 78%). Os sobreviventes
+  apontaram testes fracos (abaixo), corrigidos nesta branch.
+- Depois das correções, os 28 mutantes que haviam sobrevivido ou eram os mais
+  frágeis (fuso, `date.today()`, intervalo de contato, desempate de RN02, fonte do
+  resumo, relacionamento × prioridade, busca com acento, seed) foram reaplicados:
+  **28/28 mortos**. Isso é evidência de sensibilidade dos testes, não prova de
+  ausência de defeitos.
+- Painel GPT não foi usado: o runtime não está instalado neste notebook.
 
-| CA | Testes (`arquivo::função`) | Situação | Observação |
-| --- | --- | --- | --- |
-| CA01 | `test_api::test_lista_ordenada_por_prioridade_pendencia_e_nome`, `::test_busca_e_filtro` | Coberto | Inclui filtro inválido → 400 |
-| CA02 | `test_api::test_detalhe_somente_dados_do_cliente` | Parcial | Confere `cliente_id` de posições, interações e datas; **não confere preferências** |
-| CA03 | `test_api::test_registrar_interacao_persiste_apos_reiniciar_aplicacao` | Coberto | Reinicia a aplicação sobre o mesmo banco |
-| CA04 | `test_api::test_interacao_invalida_nao_cria_registro` (5 casos), `::test_interacao_cliente_inexistente_404` | Parcial | Canal, texto, ocorrência futura/ilegível: confere que nada foi gravado. Cliente inexistente: só confere o 404 |
-| CA05 | `test_rules::test_classificar_vencimento` (−5, −1, 0, 1, 7, 8, 30), `::test_vencimento_fora_da_janela` (31), `test_alertas::test_limites_de_vencimento_existencia_rotulo_e_prioridade` | Coberto | Existência, rótulo e prioridade nos seis Δ do critério |
-| CA06 | — | Sem teste automatizado | Opcional; fica após T06 |
-| CA07 | `test_rules::test_contato_pessoal_*`, `test_alertas::test_aniversario_sem_permissao_nao_gera_mas_vencimento_permanece`, `::test_aniversario_bloqueado_por_intervalo_mas_nao_sem_historico`, `test_api::test_preferencias_permissao_pessoal_remove_aniversario` | Coberto | Sem permissão, intervalo, sem histórico e alertas financeiros mantidos |
-| CA08 | `test_api::test_tratar_alerta_reduz_pendencias_persiste_e_e_idempotente`, `test_alertas::test_tratado_permanece_tratado_e_nao_conta_para_prioridade` | Coberto | Contagem, persistência após reinício, idempotência e recálculo |
-| CA09 | `test_api::test_relacionamento_exige_justificativa_e_nao_altera_prioridade` | Parcial | Cobre a justificativa. **Sentido oposto do enunciado não testado**: alerta financeiro não alterar o relacionamento (o teste verifica relacionamento → prioridade) |
-| CA10 | `test_api::test_pagina_base` | Sem teste automatizado | Só GET `/` → 200. Celular sem rolagem horizontal exige navegador; **não verificado** |
-| CA34 | `test_alertas::test_prioridade_do_cliente_e_a_maior_pendente`, `test_api::test_prioridade_recalculada_apos_tratar` | Coberto | |
-| CA35 | `test_alertas::test_aniversario_gera_um_alerta_media_com_permissao`, `::test_aniversario_tratado_nao_reaparece_nem_no_proximo_dia_da_mesma_ocorrencia`, `test_rules::test_aniversario_virada_de_ano_e_29_de_fevereiro` | Parcial | Um alerta, RN13 e tratado sem reaparecer: cobertos. **"No ano seguinte é nova ocorrência" não tem teste direto** (só a virada de ano da regra) |
-| CA36 | `test_api::test_historico_ordenado_por_ocorrencia_nao_por_registro` | Parcial | Prova ordenação por `ocorrida_em`, com canais telefone/presencial. Não usa o cenário "reunião ontem cadastrada hoje" literalmente |
-| CA37 | `test_api::test_resumo_com_fontes_e_ausencias` | Coberto | Mensagens de ausência (Eva) e fonte em todo fato (Ana) |
-| CA38 | `test_api::test_resultado_independe_do_dia_real`, `::test_seed_nao_sobrescreve_base_populada` | Coberto | Outro dia injetado no `Clock`; seed não sobrescreve |
-| CA39 | `test_api::test_atualizar_varias_vezes_nao_duplica_alertas`, `test_alertas::test_calculo_e_idempotente_sem_duplicar` | Coberto | |
+Legenda: **Coberto**, **Parcial**, **Sem teste automatizado**,
+**Escrito, não passa** (só na branch `test/aceite-congelados`).
 
-## T09 (CA26–CA33) — testes só em `test/aceite-congelados`
+## Base (CA01–CA10, CA12, CA34–CA39)
 
-Todos dependem de `cliente.ref_externa`, `POST /api/fontes/sincronizar`,
-`GET .../contexto` e `POST .../decisao`, que **não existem em `main`**.
-Arquivo: `backend/tests/aceite/test_t09_contexto.py` (+ `conftest.py`, `fakes.py`).
+| CA | Testes principais | Situação |
+| --- | --- | --- |
+| CA01 | `test_api::test_ca01_busca_e_filtro`, `test_cobertura_ca::test_ca01_*` | Coberto: prefixo, sobrenome, acento, caixa, sem resultado, faixas e busca combinada com filtro |
+| CA02 | `test_cobertura_ca::test_ca02_detalhe_traz_exatamente_os_dados_e_preferencias_do_cliente` | Coberto: ids conferidos contra o banco e preferências do seed |
+| CA03 | `test_api::test_ca03_registrar_interacao_persiste_apos_reiniciar_aplicacao`, `test_cobertura_ca::test_ca03_*` | Coberto, inclusive instantes automáticos |
+| CA04 | `test_api::test_ca04_interacao_invalida_nao_cria_registro`, `test_cobertura_ca::test_ca04_*` | Coberto: erro identifica o campo e nada é criado; cliente inexistente → 404 sem registro |
+| CA05 | `test_rules::test_ca05_classificar_vencimento`, `test_alertas::test_limites_*`, `test_cobertura_ca::test_ca05_*` | Coberto, incluindo vencido há 31 e 400 dias. Ver decisão sobre singular abaixo |
+| CA06 | — | Sem teste automatizado (opcional, T08) |
+| CA07 | `test_rules`, `test_alertas`, `test_cobertura_ca::test_ca07_*` | Coberto de ponta a ponta: contato de hoje, limite 7/6 dias, ocorrência × registro, intervalo das preferências, fuso perto da meia-noite |
+| CA08 | `test_api::test_tratar_alerta_*`, `test_cobertura_ca::test_ca08_*` | Coberto, com contagens absolutas do seed |
+| CA09 | `test_api::test_relacionamento_exige_justificativa_*`, `test_cobertura_ca::test_ca09_*` | Coberto nos dois sentidos (alerta não altera relacionamento; relacionamento não altera prioridade, RN11) |
+| CA10 | `test_api::test_ca10_parcial_pagina_base_responde` (só GET `/` → 200) | **Sem teste automatizado; não verificado em celular** |
+| CA12 | `test_cobertura_ca::test_ca12_*` | Coberto: prioridade, filtros e contagem absoluta (3 → 2) |
+| CA34 | `test_alertas::test_ca34_prioridade_do_cliente_e_a_maior_pendente`, `test_api::test_ca34_prioridade_recalculada_apos_tratar` | Coberto |
+| CA35 | `test_alertas`, `test_cobertura_ca::test_ca35_*` | Coberto: um alerta, RN13, tratado no mesmo ano e nova ocorrência no ano seguinte |
+| CA36 | `test_cobertura_ca::test_ca36_*`, `::test_rn02_*` | Coberto; desempate por registro isolado do id |
+| CA37 | `test_api::test_ca37_resumo_com_fontes_e_ausencias`, `test_cobertura_ca::test_ca37_*` | Coberto: fonte existe e pertence ao cliente; ausência não vira fato; próximos passos e relacionamento |
+| CA38 | `test_api::test_ca38_resultado_independe_do_dia_real`, `test_cobertura_ca::test_ca38_*` | Coberto: outro dia, fuso e seed sobre todas as tabelas. Não há teste do comando CLI `flask seed` |
+| CA39 | `test_cobertura_ca::test_ca39_*`, `test_alertas::test_ca39_calculo_e_idempotente_sem_duplicar` | Coberto: contagens e chaves únicas |
+| RN11 | `test_cobertura_ca::test_rn11_*` | Coberto, incluindo desempate por nome |
+
+## T09 (CA40–CA56): incrementos 01 e 02
+
+Os testes trazem o ID no nome (`test_caNN_...` ou `test_rnNN_...`). Os da
+equipe estão em `test_fontes.py`, `test_contexto.py` e `test_ia_gemini.py`; os
+acrescentados após a revisão estão em `test_cobertura_t09.py`.
+
+Avaliação: dois revisores de fidelidade (Opus e Fable) e dois de mutação (Opus:
+88 mutantes, 54 mortos; Fable: 84 contabilizados, 56 mortos). Os sobreviventes
+e os "mortos pelo motivo errado" viraram testes novos. Reaplicados os 39
+mutantes sobreviventes, **39/39 morreram**. Isso mostra sensibilidade, não
+ausência de defeitos. O provedor Gemini é simulado: a forma real da resposta
+da API não é verificada por pytest.
 
 | CA | Testes | Situação |
 | --- | --- | --- |
-| CA26 | `test_sincronizar_importa_e_reimportar_nao_duplica`, `test_nova_versao_do_mesmo_registro_e_importada_sem_duplicar_o_anterior`, `test_registro_sem_vinculo_seguro_fica_pendente` | Escrito, não passa |
-| CA27 | `test_cada_item_aponta_para_evidencia_real_do_proprio_cliente`, `test_item_com_evidencia_de_outro_cliente_ou_trecho_inexistente_e_rejeitado`, `test_inferencia_aparece_como_hipotese_nao_confirmada` | Escrito, não passa |
-| CA28 | `test_conflito_entre_formulario_e_conversa_e_sinalizado` | Escrito, não passa |
-| CA29 | `test_data_de_familiar_nao_vira_aniversario_do_cliente_nem_lembrete_confirmado` | Escrito, não passa |
-| CA30 | `test_decisao_persiste_apos_reiniciar_e_nao_envia_mensagem` (aprovar, descartar, adiar), `test_edicao_preserva_valor_original_e_exige_valor`, `test_decisao_invalida_nao_altera_nada` | Escrito, não passa |
-| CA31 | `test_irrelevante_nesta_ocasiao_mantem_interesse_e_nao_repete_sugestao` | Escrito, não passa |
-| CA32 | `test_bloquear_assunto_afeta_apenas_o_cliente_escolhido`, `test_ausencia_de_resposta_nao_e_aprovacao_nem_rejeicao` | Escrito, não passa |
-| CA33 | `test_reprocessar_preserva_correcao_e_evidencia_conflitante_pede_revisao` | Escrito, não passa |
-| (CA14/RN13) | `test_preferencia_somente_financeiro_exclui_sugestoes_pessoais` | Escrito, não passa |
-| (contrato 503) | `test_fonte_indisponivel_mantem_contexto_e_sinaliza` | Escrito, não passa |
+| CA40 | `test_fontes::test_ca40_*`, `test_cobertura_t09::test_ca40_*` | Coberto: tipos, isolamento, ordenação decrescente, conteúdo preservado |
+| CA41 | `test_fontes::test_ca41_*`, `test_cobertura_t09::test_ca41_*` | Coberto: reimportação, reinício e chaves do formulário em outra ordem |
+| CA42 | `test_fontes::test_ca42_*`, `test_cobertura_t09::test_ca42_*` | Coberto: pendência, reuso e referência preservada |
+| CA43 | `test_fontes::test_ca43_*`, `test_cobertura_t09::test_ca43_*` | Coberto: v1, v3, v2 e registro preservado |
+| CA44 | `test_fontes::test_ca44_*`, `test_cobertura_t09::test_ca44_*` | Coberto: 409 com campo exato e sem gravação parcial |
+| CA45 | `test_fontes::test_ca45_*`, `test_cobertura_t09::test_ca45_*` | Coberto, inclusive limites e marca fictícia |
+| CA46 | `test_fontes::test_ca40_importa_formulario_*`, `test_cobertura_t09::test_ca46_*` | Coberto: interações manuais comparadas campo a campo |
+| CA47 | — | **Sem teste automatizado** (interface) |
+| CA48 | `test_contexto::test_ca48_*` | Coberto |
+| CA49 | `test_contexto::test_ca49_*`, `test_cobertura_t09::test_ca49_*` | Coberto: cache por estado e modelo, só documento novo enviado |
+| CA50 | `test_contexto::test_ca50_*`, `test_ia_gemini::test_ca50_*`, `test_cobertura_t09::test_ca50_*` | Coberto: limites 30/5/80/500, literalidade e campo certo do erro |
+| CA51 | `test_contexto::test_ca51_*`, `test_cobertura_t09::test_ca51_*` | Coberto: histórico completo e correção preservada |
+| CA52 | `test_contexto::test_ca52_*`, `test_cobertura_t09::test_ca52_*` | Coberto: sujeito, conflito e evidência atual isolados como causa |
+| CA53 | `test_contexto::test_ca53_*`, `test_cobertura_t09::test_ca53_*` | Coberto: isolamento entre clientes e descarte só do item |
+| CA54 | `test_contexto::test_ca54_*`, `test_ia_gemini::test_ca54_*`, `test_cobertura_t09::test_ca54_*` | Coberto, com ressalva: contrato real do Gemini não verificado |
+| CA55 | `test_contexto::test_ca55_*`, `test_cobertura_t09::test_ca55_*` | Coberto: campo do erro, 404 com corpo válido e tentativa substituída |
+| CA56 | — | **Sem teste automatizado** (interface) |
+| RN27 | `test_contexto::test_rn27_*`, `test_cobertura_t09::test_rn27_*` | Coberto: fronteira de 2 minutos e concorrência sem recursão |
+| RN31 | `test_contexto::test_rn31_*` | Coberto |
+| RN32 | `test_cobertura_t09::test_rn32_*` | Coberto: resumo, alertas e datas inalterados após aprovar |
 
-## Critérios sem teste e sem implementação
+Divergência a decidir pela equipe: `contracts.md` diz que `elegivel_contato`
+exige permissão e intervalo pessoal, mas `contexto.py` só aplica isso às
+categorias `interesse`, `data_importante` e `preferencia`; `objetivo`,
+`compromisso` e `ponto_atencao` ficam livres. Nenhum documento descreve a exceção.
+
+## Síntese OpenAI (CA65–CA71): incremento 04
+
+Integração na `main` com a base `52eb841`: `uv run --locked pytest -q` →
+**288 aprovados** (262 anteriores + 26 de `test_resumo_ia.py`). Transporte OpenAI
+simulado nos testes; duas chamadas reais fictícias registradas separadamente
+em [registro de desenvolvimento](../registro-desenvolvimento.md).
+
+| CA | Testes em `test_resumo_ia.py` | Evidência |
+| --- | --- | --- |
+| CA65 | `test_get_sem_chamada_fatos_separados_cache_persistente` | Linhas/plural cobertos; layout e fontes conferidos manualmente antes do merge |
+| CA66 | `test_get_sem_chamada_fatos_separados_cache_persistente` | GET, reuso por POST e cache após recriar a aplicação |
+| CA67 | `test_mudancas_invalidam_cache`, `test_mudanca_durante_chamada_nao_persiste_e_permite_retry`, `test_selecao_nao_envia_propostas_bloqueios_terceiros_transcricoes` | Contato, preferência, vencimento, data/modelo e correção de contexto; alteração durante geração |
+| CA68 | `test_saida_invalida_nao_persiste` | Formato, tamanho, fontes, ausência de saída persistida |
+| CA69 | `test_selecao_nao_envia_propostas_bloqueios_terceiros_transcricoes` | Cliente, revisão, hipóteses, bloqueio, conflito, fonte antiga e elegibilidade |
+| CA70 | `test_configuracao_entrada_grande_e_corpo_sem_chamada`, `test_transporte_*` | Configuração, limite, schema, timeout, HTTP 401/429, recusa e saída incompleta |
+| CA71 | `test_requisicao_concorrente_e_retomada_de_tentativa`, `test_tentativa_antiga_nao_sobrescreve_a_retomada` | Concorrência, retomada e preservação do resultado mais recente |
+
+## Sem teste e sem implementação
 
 | CA | Tema | Tarefa |
 | --- | --- | --- |
-| CA11 | Resumo mostra nova conversa como fonte | T09 |
-| CA12 | Tratar a última pendência alta recalcula filtros e contagens | Base (comportamento existe; sem teste com esse enunciado) |
+| CA11 | Resumo mostra nova conversa importada como fonte | T09 |
 | CA13 | Evento repetido mantém um alerta | T08/CA06 |
-| CA14 | Preferência financeira retira sugestões pessoais | Base (alertas: coberto por CA07) e T09 (contexto: teste na branch) |
-| CA15 | Falha ao salvar preserva o texto na tela | Interface (verificação manual) |
-| CA16–CA25 | NewsAPI, reuniões, keynotes | T08 |
+| CA15 | Falha ao salvar preserva o texto (interface) | Verificação manual/E2E |
+| CA16–CA25 | NewsAPI, reuniões, keynotes | T08 (sem contrato de rotas) |
 
-## Pendências para fechar a tabela
+## Decisões pendentes da equipe (não resolvidas por teste)
 
-1. CA10 e CA15: verificação manual no navegador (celular).
-2. Acrescentar teste direto para CA09 (alerta financeiro não altera relacionamento) e CA35 (ano seguinte).
-3. Mergear a branch de aceite só depois de conferir os 17 testes removidos
-   no commit "reduz a suíte ao essencial" (47 em `main` contra 30 na branch).
-4. Nomear os testes ou marcá-los com o ID do CA (`@pytest.mark.ca("CA05")`)
-   para a rastreabilidade deixar de depender de leitura.
+1. **Singular em rótulos:** a spec escreve "Vencido há N dias"; a implementação
+   gera "Vencido há 1 dia" / "Vence em 1 dia". Os testes assumem o singular.
+2. **RN08:** `data_referencia` é `None` nos fatos de perfil e de contagem de
+   posições. A spec lista o campo em toda fonte; decidir se `None` é aceitável.
+3. **Canal padrão:** RN13 diz que o canal preferido é o padrão ao registrar
+   interação, mas a API exige `canal`. Sem teste, aguardando decisão.
+
+## Pendências
+
+1. CA10 e CA15 em navegador (celular).
+2. Testar o comando `flask seed` via `test_cli_runner` (CA38).
+3. Antes de mergear `test/aceite-congelados`, conferir os 17 testes removidos no
+   commit "reduz a suíte ao essencial".
+4. Marcar os testes com o ID do CA para a rastreabilidade não depender de leitura.

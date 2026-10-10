@@ -19,6 +19,8 @@ def create_app(config: dict | None = None) -> Flask:
     app.config.update(
         GEMINI_API_KEY=os.environ.get("GEMINI_API_KEY", locais.get("GEMINI_API_KEY", "")),
         GEMINI_MODEL=os.environ.get("GEMINI_MODEL", locais.get("GEMINI_MODEL", "gemini-3.5-flash-lite")),
+        OPENAI_API_KEY=os.environ.get("OPENAI_API_KEY", locais.get("OPENAI_API_KEY", "")),
+        OPENAI_MODEL=os.environ.get("OPENAI_MODEL", locais.get("OPENAI_MODEL", "gpt-4.1-mini")),
     )
     if config:
         app.config.update(config)

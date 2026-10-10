@@ -14,7 +14,7 @@ def envelope(itens=None, fim="STOP"):
         {"text": json.dumps({"itens": itens or []})}]}}]}).encode()
 
 
-def test_rest_usa_header_schema_timeout_sem_ferramentas():
+def test_ca54_rest_usa_header_schema_timeout_sem_ferramentas():
     def transporte(req, timeout):
         assert timeout == 30 and req.get_header("X-goog-api-key") == "chave-ficticia"
         assert "chave-ficticia" not in req.full_url
@@ -41,7 +41,7 @@ def test_rest_usa_header_schema_timeout_sem_ferramentas():
 @pytest.mark.parametrize("falha,status", [(TimeoutError("segredo"), 503), (URLError("segredo"), 503),
     (HTTPError("https://x", 429, "segredo", {}, None), 503),
     (HTTPError("https://x", 403, "segredo", {}, None), 503)])
-def test_falha_http_sem_expor_resposta_bruta(falha, status):
+def test_ca54_falha_http_sem_expor_resposta_bruta(falha, status):
     def transporte(*a, **k):
         raise falha
     with pytest.raises(ErroContexto) as info:
@@ -51,13 +51,13 @@ def test_falha_http_sem_expor_resposta_bruta(falha, status):
 
 @pytest.mark.parametrize("bruto", [b"nao json", b"{}", envelope(fim="MAX_TOKENS"),
                                    b"x" * 1_000_001])
-def test_resposta_invalida_truncada_ou_grande(bruto):
+def test_ca50_resposta_invalida_truncada_ou_grande(bruto):
     with pytest.raises(ErroContexto) as info:
         GeminiExtractor("chave-ficticia", transporte=lambda *a, **k: BytesIO(bruto)).extrair([])
     assert info.value.status == 502
 
 
-def test_chave_ausente_nem_chama_transporte():
+def test_ca54_chave_ausente_nem_chama_transporte():
     def nao_chamar(*a, **k):
         pytest.fail("Provedor não deve ser chamado sem chave")
     with pytest.raises(ErroContexto) as info:

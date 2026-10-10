@@ -34,37 +34,37 @@ def por_nome(client, prefixo):
 
 
 # ---- lista / detalhe
-def test_lista_ordenada_por_prioridade_pendencia_e_nome(client):
+def test_ca01_lista_ordenada_por_prioridade_pendencia_e_nome(client):
     lista = clientes(client)
     assert [c["nome"].split()[0] for c in lista] == ["Bruno", "Ana", "Carla", "Diego", "Eva"]
     assert [c["prioridade"] for c in lista] == ["alta", "alta", "alta", "media", "baixa"]
 
 
-def test_busca_e_filtro(client):
+def test_ca01_busca_e_filtro(client):
     assert [c["nome"].split()[0] for c in clientes(client, q="ana")] == ["Ana"]
     assert [c["nome"].split()[0] for c in clientes(client, prioridade="baixa")] == ["Eva"]
     assert client.get("/api/clientes?prioridade=urgente").status_code == 400
 
 
-def test_detalhe_somente_dados_do_cliente(client):
+def test_ca02_detalhe_somente_dados_do_cliente(client):
     d = client.get("/api/clientes/1").get_json()
     assert d["cliente"]["id"] == 1
     assert all(p["cliente_id"] == 1 for p in d["posicoes"] + d["interacoes"] + d["datas_importantes"])
 
 
-def test_cliente_inexistente_404(client):
+def test_ca02_cliente_inexistente_404(client):
     r = client.get("/api/clientes/999")
     assert r.status_code == 404 and r.get_json()["erro"]["codigo"] == "nao_encontrado"
 
 
-def test_posicao_com_delta_31_nao_gera_alerta_e_aniversario_sem_permissao_some(client):
+def test_ca05_posicao_com_delta_31_nao_gera_alerta_e_aniversario_sem_permissao_some(client):
     ana = client.get("/api/clientes/1").get_json()
     assert not any(a["entidade_origem_id"] == 2 and a["regra"] == "vencimento" for a in ana["alertas"])  # LCI Δ31
     bruno = client.get("/api/clientes/2").get_json()
     assert not any(a["regra"] == "aniversario" for a in bruno["alertas"])  # permite = 0
 
 
-def test_resumo_com_fontes_e_ausencias(client):
+def test_ca37_resumo_com_fontes_e_ausencias(client):
     eva = client.get("/api/clientes/5").get_json()["resumo"]
     assert set(eva["ausencias"]) >= {"Nenhuma posição cadastrada", "Nenhuma interação registrada", "Não avaliado"}
     ana = client.get("/api/clientes/1").get_json()["resumo"]
@@ -72,7 +72,7 @@ def test_resumo_com_fontes_e_ausencias(client):
 
 
 # ---- interações
-def test_registrar_interacao_persiste_apos_reiniciar_aplicacao(app, client, tmp_path):
+def test_ca03_registrar_interacao_persiste_apos_reiniciar_aplicacao(app, client, tmp_path):
     r = client.post("/api/clientes/5/interacoes", json={"canal": "email", "texto": " Olá "})
     assert r.status_code == 201
     app2 = create_app({"TESTING": True, "DATABASE": app.config["DATABASE"], "CLOCK": relogio_fixo(AGORA)})
@@ -90,17 +90,17 @@ def test_registrar_interacao_persiste_apos_reiniciar_aplicacao(app, client, tmp_
         {"canal": "email", "texto": "x", "ocorrida_em": "ontem"},
     ],
 )
-def test_interacao_invalida_nao_cria_registro(client, corpo):
+def test_ca04_interacao_invalida_nao_cria_registro(client, corpo):
     r = client.post("/api/clientes/5/interacoes", json=corpo)
     assert r.status_code == 400
     assert client.get("/api/clientes/5").get_json()["interacoes"] == []
 
 
-def test_interacao_cliente_inexistente_404(client):
+def test_ca04_interacao_cliente_inexistente_404(client):
     assert client.post("/api/clientes/999/interacoes", json={"canal": "email", "texto": "x"}).status_code == 404
 
 
-def test_historico_ordenado_por_ocorrencia_nao_por_registro(client):
+def test_ca36_historico_ordenado_por_ocorrencia_nao_por_registro(client):
     client.post("/api/clientes/5/interacoes", json={"canal": "telefone", "texto": "hoje",
                                                     "ocorrida_em": "2026-10-10T09:00:00-03:00"})
     client.post("/api/clientes/5/interacoes", json={"canal": "presencial", "texto": "ontem",
@@ -115,7 +115,7 @@ def alerta_pendente(client, cid):
     return next(a for a in d["alertas"] if a["estado"] == "pendente")
 
 
-def test_tratar_alerta_reduz_pendencias_persiste_e_e_idempotente(app, client):
+def test_ca08_tratar_alerta_reduz_pendencias_persiste_e_e_idempotente(app, client):
     antes = por_nome(client, "Bruno")["alertas_pendentes"]
     a = alerta_pendente(client, 2)
     corpo = {"cliente_id": 2, "chave_ocorrencia": a["chave_ocorrencia"]}
@@ -130,7 +130,7 @@ def test_tratar_alerta_reduz_pendencias_persiste_e_e_idempotente(app, client):
         assert get_db().execute("SELECT COUNT(*) FROM tratamento_alerta").fetchone()[0] == 1
 
 
-def test_prioridade_recalculada_apos_tratar(client):
+def test_ca34_prioridade_recalculada_apos_tratar(client):
     carla = client.get("/api/clientes/3").get_json()
     altas = [a for a in carla["alertas"] if a["prioridade"] == "alta"]
     assert carla["prioridade"] == "alta" and len(altas) == 1
@@ -138,14 +138,14 @@ def test_prioridade_recalculada_apos_tratar(client):
     assert client.get("/api/clientes/3").get_json()["prioridade"] == "media"
 
 
-def test_tratar_chave_inexistente_ou_de_outro_cliente(client):
+def test_ca08_tratar_chave_inexistente_ou_de_outro_cliente(client):
     chave_ana = alerta_pendente(client, 1)["chave_ocorrencia"]
     assert client.post("/api/alertas/tratar", json={"cliente_id": 2, "chave_ocorrencia": chave_ana}).status_code == 404
     assert client.post("/api/alertas/tratar", json={"cliente_id": 999, "chave_ocorrencia": "x"}).status_code == 404
     assert client.post("/api/alertas/tratar", json={"cliente_id": "1"}).status_code == 400
 
 
-def test_atualizar_varias_vezes_nao_duplica_alertas(client):
+def test_ca39_atualizar_varias_vezes_nao_duplica_alertas(client):
     n = len(client.get("/api/clientes/1").get_json()["alertas"])
     for _ in range(5):
         client.get("/api/clientes")
@@ -153,7 +153,7 @@ def test_atualizar_varias_vezes_nao_duplica_alertas(client):
 
 
 # ---- relacionamento e preferências
-def test_relacionamento_exige_justificativa_e_nao_altera_prioridade(client):
+def test_ca09_relacionamento_exige_justificativa_e_nao_altera_prioridade(client):
     antes = client.get("/api/clientes/1").get_json()
     assert client.post("/api/clientes/1/relacionamento", json={"estado": "negativo", "justificativa": " "}).status_code == 400
     assert client.post("/api/clientes/1/relacionamento", json={"estado": "otimo", "justificativa": "x"}).status_code == 400
@@ -164,7 +164,7 @@ def test_relacionamento_exige_justificativa_e_nao_altera_prioridade(client):
     assert depois["prioridade"] == antes["prioridade"]
 
 
-def test_preferencias_permissao_pessoal_remove_aniversario(client):
+def test_ca14_preferencias_permissao_pessoal_remove_aniversario(client):
     antes = client.get("/api/clientes/1").get_json()["alertas"]
     assert any(a["regra"] == "aniversario" for a in antes)
     r = client.patch("/api/clientes/1/preferencias", json={"permite_assuntos_pessoais": False})
@@ -174,14 +174,14 @@ def test_preferencias_permissao_pessoal_remove_aniversario(client):
     assert any(a["regra"] == "vencimento" for a in depois)  # alertas financeiros permanecem
 
 
-def test_preferencias_validam_entrada(client):
+def test_rn13_preferencias_validam_entrada(client):
     assert client.patch("/api/clientes/1/preferencias", json={"intervalo_minimo_dias": 10}).status_code == 400
     assert client.patch("/api/clientes/1/preferencias", json={"canal_preferido": "sms"}).status_code == 400
     assert client.patch("/api/clientes/1/preferencias", json={"permite_assuntos_pessoais": "sim"}).status_code == 400
 
 
 # ---- relógio e seed
-def test_resultado_independe_do_dia_real(tmp_path):
+def test_ca38_resultado_independe_do_dia_real(tmp_path):
     outro = datetime(2031, 3, 1, 12, 0, tzinfo=TZ)
     app = create_app({"TESTING": True, "DATABASE": str(tmp_path / "x.db"), "CLOCK": relogio_fixo(outro)})
     with app.app_context():
@@ -191,7 +191,7 @@ def test_resultado_independe_do_dia_real(tmp_path):
     assert nomes == ["Bruno", "Ana", "Carla", "Diego", "Eva"]
 
 
-def test_seed_nao_sobrescreve_base_populada(app):
+def test_ca38_seed_nao_sobrescreve_base_populada(app):
     with app.app_context():
         db = get_db()
         db.execute("UPDATE cliente SET nome = 'Alterado' WHERE id = 1")
@@ -201,5 +201,5 @@ def test_seed_nao_sobrescreve_base_populada(app):
         assert db.execute("SELECT COUNT(*) FROM cliente").fetchone()[0] == 5
 
 
-def test_pagina_base(client):
+def test_ca10_parcial_pagina_base_responde(client):
     assert client.get("/").status_code == 200

@@ -48,7 +48,7 @@ def fontes(client, cid=1):
     return r.get_json()["fontes"]
 
 
-def test_importa_formulario_e_conversa_sem_alterar_decisoes_humanas(client):
+def test_ca40_importa_formulario_e_conversa_sem_alterar_decisoes_humanas(client):
     antes = client.get("/api/clientes/1").get_json()
     form = documento(registro_id="formulario-01", tipo="formulario",
                      conteudo={"aniversario": "12/10", "canal_preferido": "email"})
@@ -68,7 +68,7 @@ def test_importa_formulario_e_conversa_sem_alterar_decisoes_humanas(client):
     assert set(i["id"] for i in antes["interacoes"]).issubset(i["id"] for i in depois["interacoes"])
 
 
-def test_reimportacao_idempotente_apos_reinicio(app, client):
+def test_ca41_reimportacao_idempotente_apos_reinicio(app, client):
     assert importar(client, lote()).status_code == 200
     antes = client.get("/api/clientes/1").get_json()["interacoes"]
     nova = create_app({"TESTING": True, "DATABASE": app.config["DATABASE"],
@@ -81,7 +81,7 @@ def test_reimportacao_idempotente_apos_reinicio(app, client):
 
 
 @pytest.mark.parametrize("cid", [None, 999])
-def test_identidade_nao_resolvida_fica_pendente_sem_interacao(client, cid):
+def test_ca42_identidade_nao_resolvida_fica_pendente_sem_interacao(client, cid):
     antes = client.get("/api/clientes/1").get_json()
     r = importar(client, lote(documento(cliente_id=cid, conteudo="Sou Ana Souza, dados fictícios.")))
     assert r.status_code == 200 and r.get_json()["pendentes"] == 1
@@ -94,14 +94,14 @@ def test_identidade_nao_resolvida_fica_pendente_sem_interacao(client, cid):
     assert importar(client, lote(documento(cliente_id=cid, conteudo="Sou Ana Souza, dados fictícios."))).get_json()["reutilizados"] == 1
 
 
-def test_fontes_isoladas_por_cliente(client):
+def test_ca40_fontes_isoladas_por_cliente(client):
     assert importar(client, lote(documento(), documento(registro_id="outra", cliente_id=2))).status_code == 200
     assert {f["cliente_id"] for f in fontes(client)} == {1}
     assert {f["cliente_id"] for f in fontes(client, 2)} == {2}
     assert client.get("/api/clientes/999/fontes").status_code == 404
 
 
-def test_nova_versao_preserva_evidencia_sem_duplicar_interacao(client):
+def test_ca43_nova_versao_preserva_evidencia_sem_duplicar_interacao(client):
     importar(client, lote())
     id_interacao = fontes(client)[0]["interacao_id"]
     original = next(i for i in client.get("/api/clientes/1").get_json()["interacoes"] if i["id"] == id_interacao)
@@ -117,7 +117,7 @@ def test_nova_versao_preserva_evidencia_sem_duplicar_interacao(client):
     assert atual["registrada_em"] == original["registrada_em"]
 
 
-def test_versao_antiga_chegando_depois_nao_reverte_historico(client):
+def test_ca43_versao_antiga_chegando_depois_nao_reverte_historico(client):
     importar(client, lote(documento(versao=2, conteudo="Texto atual fictício")))
     assert importar(client, lote()).status_code == 200
     docs = fontes(client)
@@ -128,7 +128,7 @@ def test_versao_antiga_chegando_depois_nao_reverte_historico(client):
 
 @pytest.mark.parametrize("campos", [{"conteudo": "mudou sem versão"}, {"cliente_id": 2, "versao": 2},
                                    {"tipo": "formulario", "canal": None, "conteudo": {"a": "b"}, "versao": 2}])
-def test_conflito_nao_grava_parte_do_lote(client, campos):
+def test_ca44_conflito_nao_grava_parte_do_lote(client, campos):
     importar(client, lote())
     antes = client.get("/api/clientes/1").get_json()["interacoes"]
     r = importar(client, lote(documento(registro_id="nao-deve-gravar"), documento(**campos)))
@@ -150,7 +150,7 @@ def test_conflito_nao_grava_parte_do_lote(client, campos):
     ({"tipo": "desconhecido"}, "tipo"), ({"nome": "Ana"}, "nome"),
     ({"registro_id": ""}, "registro_id"),
 ])
-def test_documento_invalido_nao_persiste_lote(client, campos, campo):
+def test_ca45_documento_invalido_nao_persiste_lote(client, campos, campo):
     r = importar(client, lote(documento(registro_id="valido"), documento(**campos)))
     assert r.status_code == 400
     assert r.get_json()["erro"]["campo"] == f"documentos[1].{campo}"
@@ -163,19 +163,19 @@ def test_documento_invalido_nao_persiste_lote(client, campos, campo):
     ({"origem": "teste", "ficticio": True, "documentos": []}, "documentos"),
     ({"origem": "teste", "ficticio": True, "documentos": [documento()] * 101}, "documentos"),
 ])
-def test_lote_invalido(client, corpo, campo):
+def test_ca45_lote_invalido(client, corpo, campo):
     r = importar(client, corpo)
     assert r.status_code == 400 and r.get_json()["erro"]["campo"] == campo
 
 
-def test_formulario_recusa_resposta_nao_textual(client):
+def test_ca45_formulario_recusa_resposta_nao_textual(client):
     doc = documento(tipo="formulario", conteudo={"idade": 30})
     doc.pop("canal")
     r = importar(client, lote(doc))
     assert r.status_code == 400 and r.get_json()["erro"]["campo"] == "documentos[0].conteudo"
 
 
-def test_mock_e_cli_com_tres_clientes_e_pendencias(app, client):
+def test_ca40_mock_e_cli_com_tres_clientes_e_pendencias(app, client):
     arquivo = Path(__file__).resolve().parents[1] / "dados" / "fonte-demo.json"
     dados = json.loads(arquivo.read_text())
     assert dados["ficticio"] is True
@@ -187,7 +187,7 @@ def test_mock_e_cli_com_tres_clientes_e_pendencias(app, client):
     assert segundo.exit_code == 0 and '"importados": 0' in segundo.output
 
 
-def test_reset_demo_remove_fontes_sem_quebrar_chaves_estrangeiras(app):
+def test_rn16_reset_demo_remove_fontes_sem_quebrar_chaves_estrangeiras(app):
     importar(app.test_client(), lote())
     resultado = app.test_cli_runner().invoke(args=["reset-demo"])
     assert resultado.exit_code == 0, resultado.output
@@ -195,7 +195,7 @@ def test_reset_demo_remove_fontes_sem_quebrar_chaves_estrangeiras(app):
         assert get_db().execute("SELECT COUNT(*) FROM documento_fonte").fetchone()[0] == 0
 
 
-def test_cli_json_invalido_nao_grava(app, tmp_path):
+def test_ca45_cli_json_invalido_nao_grava(app, tmp_path):
     arquivo = tmp_path / "invalido.json"
     arquivo.write_text("{JSON inválido")
     resultado = app.test_cli_runner().invoke(args=["importar-fontes", str(arquivo)])
@@ -203,7 +203,7 @@ def test_cli_json_invalido_nao_grava(app, tmp_path):
     assert fontes(app.test_client()) == []
 
 
-def test_base_vazia_exige_seed_sem_erro_de_banco(tmp_path):
+def test_rn16_base_vazia_exige_seed_sem_erro_de_banco(tmp_path):
     app = create_app({"TESTING": True, "DATABASE": str(tmp_path / "vazia.db"),
                       "CLOCK": relogio_fixo(AGORA)})
     r = importar(app.test_client(), lote())

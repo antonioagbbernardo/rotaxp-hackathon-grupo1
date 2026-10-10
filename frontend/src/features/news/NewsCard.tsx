@@ -1,6 +1,5 @@
 import { Badge, type BadgeTone } from '@/components/ui/Badge'
 import { Panel } from '@/components/ui/Panel'
-import { SentimentFace } from '@/components/ui/SentimentFace'
 import { cn } from '@/lib/cn'
 import { formatElapsed } from '@/lib/format'
 import { sentimentTextColor } from '@/lib/sentiment'
@@ -28,7 +27,6 @@ export function NewsCard({ news, pronoun }: NewsCardProps) {
           <Badge tone={badge.tone} uppercase className="rounded-sm py-1.5 text-[10px]">
             {badge.label}
           </Badge>
-          <SentimentFace sentiment={news.sentiment} className="size-6.5" />
         </header>
 
         <h3 className="mt-3 text-lg">{news.title}</h3>

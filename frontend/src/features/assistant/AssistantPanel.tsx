@@ -1,8 +1,6 @@
 import { useState } from 'react'
-import { Badge } from '@/components/ui/Badge'
 import { Panel } from '@/components/ui/Panel'
-import { SparkleIcon } from '@/components/ui/icons'
-import { getInitials } from '@/lib/format'
+import wave from '@/assets/onda-pulse.png'
 import type { Client } from '@/types/client'
 import { AskAssistantForm } from './AskAssistantForm'
 import { InsightCard } from './InsightCard'
@@ -10,12 +8,14 @@ import { OpeningSuggestion } from './OpeningSuggestion'
 import { UserMessage } from './UserMessage'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
+import { ClientBriefing } from './ClientBriefing'
 
 interface AssistantPanelProps {
   client: Client
+  onUpdated: () => Promise<void>
 }
 
-export function AssistantPanel({ client }: AssistantPanelProps) {
+export function AssistantPanel({ client, onUpdated }: AssistantPanelProps) {
   const [followUps, setFollowUps] = useState<{ question: string; answer?: string; sources?: string[]; error?: string }[]>([])
   const [busy, setBusy] = useState(false)
   const { assistant } = client
@@ -37,34 +37,19 @@ export function AssistantPanel({ client }: AssistantPanelProps) {
   return (
     <Panel className="flex min-h-0 flex-1 flex-col px-5 pt-5 pb-3" aria-labelledby="assistant-title">
       <header className="flex items-start gap-4 border-b border-line px-2 pb-3.5">
-        <SparkleIcon className="mt-1 size-5 text-brand" />
+        <img src={wave} alt="" aria-hidden className="mt-0.5 h-5 w-auto shrink-0" />
         <div>
           <h2 id="assistant-title" className="text-base font-semibold">
             Assistente do assessor
           </h2>
-          <p className="mt-1 text-[11px] text-ink-muted">Consulta aos registros de {firstName} · IA na extração revisável</p>
+          <p className="mt-1 text-[11px] text-ink-muted">Prepare o atendimento de {firstName} com contexto e fontes.</p>
         </div>
       </header>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Badge className="w-38 text-[11px]">
-          {getInitials(client.name)} {client.name}
-        </Badge>
-        <Badge tone="positive" withDot className="w-38 text-[11px]">
-          {client.context?.fontes_novas ? 'Fontes novas para analisar' : client.context?.itens.some((i) => i.estado === 'pendente') ? 'Contexto para revisar' : 'Registros consultados'}
-        </Badge>
-      </div>
-
-      <div className="-mx-1 mt-3.5 min-h-0 flex-1 space-y-3.5 overflow-y-auto px-1 pb-1">
+      <div className="-mx-1 mt-4 min-h-0 flex-1 space-y-3.5 overflow-y-auto px-1 pb-1">
         <UserMessage>{assistant.question}</UserMessage>
 
-        <div>
-          <p className="flex items-center gap-1 text-xs font-semibold">
-            <span aria-hidden>✦</span> XP Pulse
-          </p>
-          <p className="mt-2 text-[13px] leading-relaxed">{assistant.summary}</p>
-          <details className="mt-2 text-[10px] text-ink-muted"><summary className="cursor-pointer">Fontes do resumo</summary><ul className="mt-2">{assistant.summarySources?.map((s) => <li key={s}>{s}</li>)}</ul></details>
-        </div>
+        <ClientBriefing client={client} onUpdated={onUpdated} />
 
         <ol className="space-y-3">
           {assistant.insights.map((insight, index) => (
@@ -74,7 +59,7 @@ export function AssistantPanel({ client }: AssistantPanelProps) {
           ))}
         </ol>
 
-        <OpeningSuggestion openings={assistant.openings} sources={assistant.sources ?? []} />
+        <OpeningSuggestion openings={assistant.openings} />
 
         {followUps.map((entry, index) => (
           <div key={index} className="space-y-2">

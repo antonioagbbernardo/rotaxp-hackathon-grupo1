@@ -60,6 +60,23 @@ export interface AssistantBrief {
   openings: OpeningMessage[]
   sources?: string[]
   summarySources?: string[]
+  summaryItems?: string[]
+  aiSummary?: { configurado: boolean; modelo: string; assinatura: string; resumo: ResumoIA | null }
+}
+
+export interface TrechoResumoIA {
+  texto: string
+  fontes: string[]
+}
+
+export interface ResumoIA {
+  visao_geral: TrechoResumoIA
+  pontos_atencao: TrechoResumoIA[]
+  antes_contato: TrechoResumoIA[]
+  modelo: string
+  gerado_em: string
+  assinatura: string
+  uso: { input_tokens?: number; output_tokens?: number; total_tokens?: number }
 }
 
 export interface Client {

@@ -9,6 +9,8 @@ from .clock import TZ, formatar_utc, parse_instante
 from .db import get_db
 from .fontes import consultar_fontes
 from .resumo import montar_resumo
+from . import resumo_ia
+from .resumo_ia_rules import apresentar_fato
 
 
 def referencia(fonte):
@@ -18,7 +20,7 @@ def referencia(fonte):
     return f"{fonte['tipo_fonte']} #{ids}" + (f" · {fonte['data_referencia']}" if fonte.get("data_referencia") else "")
 
 
-def montar_cliente(c):
+def montar_cliente(c, incluir_resumo_ia=True):
     # Mesma leitura/regras das rotas existentes, sem outra lógica de prioridade.
     from .api import _contexto, _preferencias, _relacionamento
     db, clock = get_db(), current_app.config["CLOCK"]
@@ -54,7 +56,8 @@ def montar_cliente(c):
     instantes += [i["gerado_em"] for i in revisao["itens"]]
     instantes += [r["revisada_em"] for i in revisao["itens"] for r in i["historico_revisoes"]]
     atualizado = max(instantes, default=None)
-    return {
+    linhas_resumo = [apresentar_fato(f['texto']) for f in resumo['fatos']] + resumo['ausencias']
+    cliente = {
         "id": str(c["id"]), "name": c["nome"], "pronoun": "este cliente",
         "status": "attention" if ctx["prioridade"] in ("alta", "media") else "stable",
         "priority": ctx["prioridade"], "nextDue": ctx["proxima_pendencia"],
@@ -73,13 +76,16 @@ def montar_cliente(c):
         "portfolio": {"total": format(sum((Decimal(p["valor"]) for p in ctx["posicoes"]), Decimal("0")), ".2f") if ctx["posicoes"] else None,
                       "goal": next((valor(i) for i in confirmados if i["categoria"] == "objetivo"), "Objetivo ainda não revisado"), "allocation": []},
         "news": [], "assistant": {"question": "O que preciso revisar antes do contato?",
-          "summary": " ".join([f["texto"] for f in resumo["fatos"]] + resumo["ausencias"]),
+          "summary": "\n".join(linhas_resumo), "summaryItems": linhas_resumo,
           "insights": insights, "openings": aberturas, "sources": fontes_abertura,
           "summarySources": fontes_resumo},
         "context": revisao, "sourceDocuments": consultar_fontes(c["id"]), "alerts": ctx["alertas"],
         "interactions": ctx["interacoes"], "preferences": _preferencias(c), "positions": ctx["posicoes"],
         "summaryFacts": resumo["fatos"], "relationshipHistory": ctx["avaliacoes"],
     }
+    if incluir_resumo_ia:
+        cliente['assistant']['aiSummary'] = resumo_ia.consultar(cliente)
+    return cliente
 
 
 def consultar_painel():

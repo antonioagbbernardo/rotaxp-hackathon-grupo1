@@ -6,6 +6,8 @@ from . import alertas as alertas_mod
 from . import contexto as contexto_ia
 from . import pulse
 from .contexto_rules import ErroContexto
+from .resumo_ia_rules import ErroResumoIA
+from . import resumo_ia
 from .clock import TZ, formatar_utc, parse_instante
 from .db import get_db
 from .fontes import consultar_fontes, importar_lote
@@ -33,6 +35,7 @@ def _erro(e: ErroApi):
 
 @bp.errorhandler(ErroFonte)
 @bp.errorhandler(ErroContexto)
+@bp.errorhandler(ErroResumoIA)
 def _erro_fonte(e: ErroFonte):
     return _erro(e)
 
@@ -94,6 +97,14 @@ def perguntar_pulse(cliente_id):
     if len(pergunta) > 500:
         raise ErroApi("entrada_invalida", "Pergunta deve ter até 500 caracteres.", campo="pergunta")
     return jsonify(pulse.responder(pulse.montar_cliente(c), pergunta))
+
+
+@bp.post("/pulse/clientes/<int:cliente_id>/resumo-ia")
+def gerar_resumo_ia(cliente_id):
+    c = _cliente_ou_404(get_db(), cliente_id)
+    if request.get_data():
+        raise ErroApi("entrada_invalida", "Esta rota não recebe corpo; dados e modelo vêm do backend.", campo="resumo_ia")
+    return jsonify(resumo_ia.gerar(pulse.montar_cliente(c, incluir_resumo_ia=False)))
 
 
 def _clock():
