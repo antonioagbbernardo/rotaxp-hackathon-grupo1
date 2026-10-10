@@ -1,3 +1,4 @@
+from client_autenticado import cliente_autenticado
 """Testes dos critérios de aceite que a suíte principal cobria só em parte.
 
 Rastreabilidade: docs/planejamento/rastreabilidade-testes.md. As expectativas
@@ -28,7 +29,7 @@ def app(tmp_path):
 
 @pytest.fixture
 def client(app):
-    return app.test_client()
+    return cliente_autenticado(app)
 
 
 def app_em(caminho_banco: str, instante: datetime):
@@ -103,7 +104,7 @@ def test_ca09_cliente_nao_avaliado_continua_sem_avaliacao_apos_alertas_e_passage
     alerta = next(a for a in ana["alertas"] if a["estado"] == "pendente" and a["regra"] == "vencimento")
     assert client.post("/api/alertas/tratar", json={"cliente_id": 1, "chave_ocorrencia": alerta["chave_ocorrencia"]}
                        ).status_code == 201
-    depois_do_tempo = app_em(app.config["DATABASE"], AGORA + timedelta(days=45)).test_client()
+    depois_do_tempo = cliente_autenticado(app_em(app.config["DATABASE"], AGORA + timedelta(days=45)))
     d = depois_do_tempo.get("/api/clientes/1").get_json()
     assert d["relacionamento"] is None and d["historico_avaliacoes"] == []
     assert contar(app, "avaliacao_relacionamento", 1) == 0
@@ -138,7 +139,7 @@ def test_ca35_aniversario_tratado_volta_como_nova_ocorrencia_pendente_no_ano_seg
     assert client.post("/api/alertas/tratar", json={"cliente_id": 1, "chave_ocorrencia": aniv["chave_ocorrencia"]}
                        ).status_code == 201
 
-    ano_seguinte = app_em(app.config["DATABASE"], datetime(2027, 10, 12, 12, 0, tzinfo=TZ)).test_client()
+    ano_seguinte = cliente_autenticado(app_em(app.config["DATABASE"], datetime(2027, 10, 12, 12, 0, tzinfo=TZ)))
     alertas = [a for a in ano_seguinte.get("/api/clientes/1").get_json()["alertas"]
                if a["regra"] == "aniversario" and a["entidade_origem_id"] == aniv["entidade_origem_id"]]
     assert len(alertas) == 1
@@ -152,8 +153,8 @@ def test_ca35_aniversario_tratado_volta_como_nova_ocorrencia_pendente_no_ano_seg
 # ---- CA36 / RN02: ordenação do histórico por ocorrência, depois por registro, depois por id
 def test_ca36_reuniao_de_ontem_cadastrada_hoje_nao_fica_acima_de_conversa_de_hoje(app):
     banco = app.config["DATABASE"]
-    conversa = app_em(banco, datetime(2026, 10, 10, 10, 0, tzinfo=TZ)).test_client()
-    reuniao = app_em(banco, datetime(2026, 10, 10, 15, 0, tzinfo=TZ)).test_client()  # cadastrada depois
+    conversa = cliente_autenticado(app_em(banco, datetime(2026, 10, 10, 10, 0, tzinfo=TZ)))
+    reuniao = cliente_autenticado(app_em(banco, datetime(2026, 10, 10, 15, 0, tzinfo=TZ)))  # cadastrada depois
     assert conversa.post("/api/clientes/5/interacoes", json={
         "canal": "telefone", "texto": "conversa de hoje", "ocorrida_em": "2026-10-10T09:00:00-03:00"}).status_code == 201
     assert reuniao.post("/api/clientes/5/interacoes", json={
@@ -170,20 +171,20 @@ def test_rn02_empate_de_ocorrencia_desempata_por_registro_mais_recente_e_nao_pel
     mesma_ocorrencia = "2026-10-09T08:00:00-03:00"
 
     def registrar(instante, texto):
-        c = app_em(banco, instante).test_client()
+        c = cliente_autenticado(app_em(banco, instante))
         r = c.post("/api/clientes/5/interacoes", json={"canal": "email", "texto": texto, "ocorrida_em": mesma_ocorrencia})
         assert r.status_code == 201
 
     registrar(datetime(2026, 10, 10, 11, 0, tzinfo=TZ), "registrada-as-11h")  # id menor, registro mais recente
     registrar(datetime(2026, 10, 10, 10, 0, tzinfo=TZ), "registrada-as-10h")  # id maior, registro mais antigo
 
-    itens = app_em(banco, AGORA).test_client().get("/api/clientes/5").get_json()["interacoes"]
+    itens = cliente_autenticado(app_em(banco, AGORA)).get("/api/clientes/5").get_json()["interacoes"]
     assert [i["texto"] for i in itens] == ["registrada-as-11h", "registrada-as-10h"]
 
 
 def test_rn02_empate_total_desempata_pelo_id_mais_recente(app):
     banco = app.config["DATABASE"]
-    c = app_em(banco, AGORA).test_client()
+    c = cliente_autenticado(app_em(banco, AGORA))
     for texto in ("primeira", "segunda"):
         assert c.post("/api/clientes/5/interacoes", json={
             "canal": "email", "texto": texto, "ocorrida_em": "2026-10-09T08:00:00-03:00"}).status_code == 201
@@ -330,7 +331,7 @@ def test_ca07_intervalo_das_preferencias_e_aplicado_e_financeiros_permanecem(cli
     ("2026-10-04T22:00:00-03:00", False),  # 6 dias
 ])
 def test_ca07_dia_do_ultimo_contato_e_o_dia_local_perto_da_meia_noite(app, ocorrida, aniversario_aparece):
-    noite = app_em(app.config["DATABASE"], datetime(2026, 10, 10, 23, 30, tzinfo=TZ)).test_client()
+    noite = cliente_autenticado(app_em(app.config["DATABASE"], datetime(2026, 10, 10, 23, 30, tzinfo=TZ)))
     registrar(noite, 1, ocorrida_em=ocorrida)
     assert ("aniversario" in regras_do_cliente(noite, 1)) is aniversario_aparece
 
@@ -377,7 +378,7 @@ def test_rn11_empate_de_faixa_e_data_desempata_pelo_nome(app, client):
 def test_ca35_aniversario_tratado_continua_tratado_dias_depois_no_mesmo_ano(app, client):
     aniv = next(a for a in client.get("/api/clientes/1").get_json()["alertas"] if a["regra"] == "aniversario")
     client.post("/api/alertas/tratar", json={"cliente_id": 1, "chave_ocorrencia": aniv["chave_ocorrencia"]})
-    dois_dias_depois = app_em(app.config["DATABASE"], AGORA + timedelta(days=2)).test_client()
+    dois_dias_depois = cliente_autenticado(app_em(app.config["DATABASE"], AGORA + timedelta(days=2)))
     mesmo = next(a for a in dois_dias_depois.get("/api/clientes/1").get_json()["alertas"]
                  if a["chave_ocorrencia"] == aniv["chave_ocorrencia"])
     assert mesmo["estado"] == "tratado"
@@ -446,7 +447,7 @@ def test_ca38_detalhe_e_tratamento_independem_do_dia_real(tmp_path):
     with app.app_context():
         init_db()
         seed_db(outro.date(), outro)
-    c = app.test_client()
+    c = cliente_autenticado(app)
     venc = [a for a in c.get("/api/clientes/2").get_json()["alertas"] if a["regra"] == "vencimento"]
     assert [a["rotulo"] for a in venc] == ["Vencido há 2 dias", "Vence hoje"]
     r = c.post("/api/alertas/tratar", json={"cliente_id": 2, "chave_ocorrencia": venc[0]["chave_ocorrencia"]})

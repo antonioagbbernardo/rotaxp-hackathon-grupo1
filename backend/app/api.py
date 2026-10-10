@@ -8,6 +8,8 @@ from . import pulse
 from .contexto_rules import ErroContexto
 from .resumo_ia_rules import ErroResumoIA
 from . import resumo_ia
+from . import noticias
+from .noticias_rules import ErroNoticias
 from .clock import TZ, formatar_utc, parse_instante
 from .db import get_db
 from .fontes import consultar_fontes, importar_lote
@@ -36,6 +38,7 @@ def _erro(e: ErroApi):
 @bp.errorhandler(ErroFonte)
 @bp.errorhandler(ErroContexto)
 @bp.errorhandler(ErroResumoIA)
+@bp.errorhandler(ErroNoticias)
 def _erro_fonte(e: ErroFonte):
     return _erro(e)
 
@@ -105,6 +108,33 @@ def gerar_resumo_ia(cliente_id):
     if request.get_data():
         raise ErroApi("entrada_invalida", "Esta rota não recebe corpo; dados e modelo vêm do backend.", campo="resumo_ia")
     return jsonify(resumo_ia.gerar(pulse.montar_cliente(c, incluir_resumo_ia=False)))
+
+
+@bp.get('/clientes/<int:cliente_id>/noticias')
+def noticias_cliente(cliente_id):
+    _cliente_ou_404(get_db(), cliente_id)
+    return jsonify(noticias.consultar(cliente_id))
+
+
+@bp.post('/clientes/<int:cliente_id>/noticias/vinculos')
+def vincular_noticias(cliente_id):
+    _cliente_ou_404(get_db(), cliente_id)
+    dados, status = noticias.vincular(cliente_id, request.get_json(silent=True))
+    return jsonify(dados), status
+
+
+@bp.post('/clientes/<int:cliente_id>/noticias/atualizar')
+def atualizar_noticias(cliente_id):
+    _cliente_ou_404(get_db(), cliente_id)
+    if request.get_data():
+        raise ErroApi('entrada_invalida', 'Esta rota não recebe corpo; consultas vêm do backend.', campo='noticias')
+    return jsonify(noticias.atualizar(cliente_id))
+
+
+@bp.post('/clientes/<int:cliente_id>/noticias/descartar')
+def descartar_noticias(cliente_id):
+    _cliente_ou_404(get_db(), cliente_id)
+    return jsonify(noticias.descartar(cliente_id, request.get_json(silent=True)))
 
 
 def _clock():

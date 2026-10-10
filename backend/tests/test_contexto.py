@@ -1,3 +1,4 @@
+from client_autenticado import cliente_autenticado, renovar_acesso
 from copy import deepcopy
 from datetime import datetime
 
@@ -39,7 +40,7 @@ def ambiente(tmp_path):
                       "CLOCK": relogio_fixo(AGORA), "EXTRATOR_IA": extrator, "GEMINI_API_KEY": ""})
     with app.app_context():
         seed_db(AGORA.date(), AGORA)
-    c = app.test_client()
+    c = cliente_autenticado(app)
     assert c.post("/api/fontes/importar", json=lote()).status_code == 200
     return app, c, extrator
 
@@ -83,7 +84,7 @@ def test_ca49_cache_novidades_e_correcao_persistem_apos_reinicio(ambiente):
     c.post("/api/fontes/importar", json=lote(documento(registro_id="nova", conteudo="Prefiro acompanhar futebol.")))
     assert processar(c).get_json()["documentos_processados"] == 1
     assert len(e.chamadas) == 2
-    nova = create_app({**app.config, "DATABASE": app.config["DATABASE"]}).test_client()
+    nova = cliente_autenticado(create_app({**app.config, "DATABASE": app.config["DATABASE"]}))
     antigo = next(i for i in contexto(nova) if i["id"] == item["id"])
     assert antigo["estado"] == "corrigido" and antigo["valor_revisado"].startswith("Acompanha")
     assert antigo["valor_original"] == documento()["conteudo"]
@@ -130,6 +131,7 @@ def test_ca51_acoes_humanas_e_adiamento(ambiente, acao, extras, estado):
     assert contexto(c)[0]["estado"] == estado
     if acao == "adiar":
         app.config["CLOCK"] = relogio_fixo(datetime(2026, 10, 11, 0, tzinfo=TZ))
+        renovar_acesso(c)
         assert contexto(c)[0]["estado"] == "pendente"
         assert len(contexto(c)[0]["historico_revisoes"]) == 1
 
@@ -250,6 +252,7 @@ def test_ca53_bloqueio_auditado_e_reset_isolado(ambiente):
         assert all(r["assessor_id"] == 1 for r in rows)
     resultado = app.test_cli_runner().invoke(args=["reset-demo"])
     assert resultado.exit_code == 0, resultado.output
+    renovar_acesso(c)
     assert contexto(c) == []
 
 
@@ -261,6 +264,7 @@ def test_rn31_elegibilidade_exige_revisao_permissao_intervalo_e_assunto_livre(am
     revisar(c, item)
     assert not contexto(c)[0]["elegivel_contato"]  # Último contato ontem.
     app.config["CLOCK"] = relogio_fixo(datetime(2026, 10, 16, 15, tzinfo=TZ))
+    renovar_acesso(c)
     assert contexto(c)[0]["elegivel_contato"]  # Limite inclusivo de sete dias.
     c.patch("/api/clientes/1/preferencias", json={"permite_assuntos_pessoais": False})
     assert not contexto(c)[0]["elegivel_contato"]

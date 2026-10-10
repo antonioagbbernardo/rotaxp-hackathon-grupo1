@@ -11,7 +11,7 @@ equipe.
 - Dinheiro em `Decimal`; serializado como string.
 - Identificadores: inteiro.
 - Erros: inexistente → 404; entrada inválida → 400; nenhum registro persistido
-  em caso de erro. Não há `403` no MVP (sem autenticação).
+  em caso de erro. Incremento 06: sessão ausente/vencida → 401; CSRF inválido → 403.
 
 ## Entidades (campos mínimos)
 
@@ -64,7 +64,7 @@ O alerta não tem `id` persistido; a rota de tratamento recebe
 - Corpo dos `POST` em JSON. Exemplo de `POST /api/clientes/1/interacoes`:
   `{"canal": "telefone", "texto": "...", "ocorrida_em": "2026-10-10T14:00:00-03:00", "proximos_passos": "..."}`
   (`ocorrida_em` omitido = agora; futuro → 400).
-- `GET /` serve a página base; a interface lê os dados pelas rotas acima.
+- `GET /` serve a página base após login; a interface lê os dados pelas rotas acima.
 
 ## Incremento 01 — contrato de fontes fictícias
 
@@ -236,3 +236,88 @@ registros originais e sem envio de contato.
 serve seus assets e `/favicon.svg` o ícone do build. Sem build, `/` usa a interface
 anterior. `/legacy` mantém essa interface. Em desenvolvimento,
 Vite em 127.0.0.1:5173 encaminha `/api` ao Flask em 127.0.0.1:5001.
+
+## Incremento 05 — notícias NewsAPI
+
+`GET /api/clientes/<id>/noticias`: `{configurado, catalogo, interesses, vinculos,
+assuntos, artigos, limite_diario, chamadas_hoje}`. Catálogo: `{id, nome}`;
+interesses elegíveis: `{id, revisao, valor, fontes: [texto]}`;
+vínculos atuais: `{id, item_id, revisao, assunto, interesse, fontes}`.
+Assuntos: `{id, nome, estado: nunca|atualizado|desatualizado|falhou|processando,
+ultima_coleta: ISO|null, ultima_tentativa: ISO|null, erro: null|{codigo,mensagem}}`.
+Sem coleta: artigos vazio; GET nunca consulta NewsAPI. O adaptador Pulse inclui
+`news` com artigos e `newsState` com os demais campos desta consulta.
+
+Artigo adaptado: `{id: URL normalizada, sentiment: "unknown", title,
+whyItMatters, relevance, scenario: "NewsAPI", updatedMinutesAgo,
+url, source, publishedAt, collectedAt, topic, description}`. Link não comprova
+o conteúdo; descrição é apenas o trecho recebido. Até três notícias elegíveis,
+com fonte e publicação nos últimos sete dias; feedback ocultado por cliente.
+
+`POST /api/clientes/<id>/noticias/vinculos`: `{item_id: inteiro positivo,
+assunto: id do catálogo}`. Resposta 201 `{vinculo_id}`; repetições do vínculo
+ativo/revisão retornam 200 e mesmo ID. Vínculos anteriores permanecem como
+histórico. 400 (campo inválido/extra/item inelegível), 404 (cliente/item alheio).
+
+`POST /api/clientes/<id>/noticias/atualizar`, **sem corpo**: resposta 200
+`{resultados: [{assunto, estado: atualizado|reutilizado|erro,
+erro?: {codigo,campo,mensagem,status}}]}`. Cada assunto é independente; falha
+parcial é visível e preserva cache. Sem vínculos elegíveis: 400. Erros por assunto:
+409 (processando/intervalo), 502 (saída inválida), 503 (chave/provedor/cota).
+Nenhuma consulta arbitrária/chave é aceita do navegador.
+
+`POST /api/clientes/<id>/noticias/descartar`: `{artigo_id: URL recebida,
+motivo: texto 1–1000}`. Resposta 200 `{descartado: true}`. Artigo deve estar
+na seleção atual do cliente; repetição de descarte já próprio é idempotente.
+404 se artigo alheio/inexistente, 400 para entrada inválida. Registro com assessor
+e data; nenhuma alteração automática em contexto, alerta ou relacionamento.
+
+Configuração: `NEWSAPI_API_KEY`, `NEWSAPI_LIMITE_DIARIO` (1–100, padrão 20).
+Novas tabelas: `vinculo_noticia` (histórico de associação/revisão),
+`coleta_noticia` (tentativas/versão/estado/erros), `artigo_noticia` (URL única),
+`coleta_artigo_noticia` (fontes da coleta), `descarte_noticia` (cliente/URL única).
+CLI diário usa o mesmo serviço; instalação de agendador e antecipação por reunião
+permanecem pendentes. Contagem conservadora considera toda reserva com chave.
+
+Perguntas básicas sobre notícias passam a listar apenas artigos da seleção atual
+do cliente, com publicação/link/estado da coleta, sem HTTP adicional. Não respondem
+resultados esportivos nem análise de mercado em tempo real. Sem artigos, mantém
+ausência explícita. Notícias ainda não integram a síntese OpenAI do incremento 04.
+
+## Incremento 06 — login e sessão
+
+[Regras/aceites](incrementos/06-login.md). `/login` serve a interface React pública;
+`/` e `/legacy` redirecionam para `/login` sem sessão. `/login` com sessão válida
+redireciona para `/`. Compilar `frontend/dist` para disponibilizar a tela no Flask.
+
+```
+GET  /api/auth/sessao  estado atual e token CSRF (público, 200)
+POST /api/auth/login   credenciais em JSON + X-CSRF-Token (200)
+POST /api/auth/logout  sessão válida + X-CSRF-Token (200)
+```
+
+Sessão: `{"autenticado": false, "usuario": null, "csrf_token": "..."}`; com
+acesso, `autenticado: true` e `usuario: "admin"`. GET não retorna senha, cookie
+ou chave de assinatura. Cookie HttpOnly/SameSite=Lax; expiração absoluta de oito
+horas e revogação no servidor. HTML/APIs usam `Cache-Control: no-store`.
+
+Login aceita apenas `{"usuario": "admin", "senha": "admin"}`; campos obrigatórios
+textuais (usuário 1–80 após trim; senha 1–256 sem trim). Login bem-sucedido retorna
+estado autenticado e novo `csrf_token`. Logout revoga a sessão e retorna estado
+anônimo com novo token, sem apagar dados de clientes.
+
+Toda escrita `/api/...` exige header `X-CSRF-Token` obtido em GET de sessão ou
+login. APIs de dados, inclusive rotas não existentes, primeiro validam sessão;
+sem acesso retornam 401 sem executar regra/serviço. Leitura não exige CSRF.
+
+| Status | `erro.codigo` | `erro.campo` | Caso |
+| --- | --- | --- | --- |
+| 400 | `entrada_invalida` | `corpo`, `usuario`, `senha` ou campo extra | Entrada inválida no login |
+| 401 | `credenciais_invalidas` | null | Usuário ou senha incorretos (mensagem genérica) |
+| 401 | `sessao_necessaria` | null | API protegida sem sessão válida |
+| 403 | `csrf_invalido` | `csrf_token` | Escrita sem token correspondente à sessão |
+
+`SECRET_KEY` pode ser definido no `.env`/ambiente. Ausente, gerar chave aleatória
+em `session.key`, ao lado do banco local, permissão 0600 e fora do Git. SQLite
+armazena `sessao_acesso(token_hash, expira_em)`; somente hash do identificador.
+CLI permanece disponível sem login. Não há perfis/permissões multiassessor.

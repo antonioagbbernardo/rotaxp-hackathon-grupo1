@@ -7,10 +7,13 @@ e pendências de identidade. Incremento 02 acrescenta extração Gemini e revis�
 persistida; extração Gemini real de quatro fontes fictícias com sete propostas
 pendentes na base da demonstração. Incremento 03 adapta o layout XP Pulse à API;
 Incremento 04 acrescenta síntese OpenAI com fontes/cache, separada dos fatos.
-288 testes backend (incluindo a cobertura adicional da equipe), cinco frontend,
+Incremento 05 integra NewsAPI com associação humana, cache diário compartilhado,
+cota e feedback de relevância por cliente. Coleta real compartilhada demonstrada.
+Incremento 06 acrescenta login local, sessão/CSRF, painel protegido e logout.
+352 testes backend (incluindo a cobertura adicional da equipe), 11 frontend,
 build e lint aprovados. Fluxos principais
 conferidos no navegador; detalhes e limites no registro.
-Conexão real aos canais, NewsAPI e keynotes ainda planejados.
+Conexão real aos canais, agendamento automático, reuniões e keynotes ainda planejados.
 **Última revisão:** 10/10/2026. Núcleo: consumir fontes existentes, inferir contexto
 e sugerir lembranças sob supervisão humana, incorporando feedback.
 
@@ -24,6 +27,8 @@ e sugerir lembranças sob supervisão humana, incorporando feedback.
 | [Incremento SDD 02](planejamento/incrementos/02-contexto-revisao.md) | Extração por IA, evidências, revisão e bloqueio por cliente |
 | [Incremento SDD 03](planejamento/incrementos/03-front-pulse.md) | Integração React, dados reais da base, perguntas e execução |
 | [Incremento SDD 04](planejamento/incrementos/04-resumo-openai.md) | Síntese OpenAI em três seções, fontes, cache e limites |
+| [Incremento SDD 05](planejamento/incrementos/05-noticias-newsapi.md) | NewsAPI, associação de interesses, custo compartilhado e feedback |
+| [Incremento SDD 06](planejamento/incrementos/06-login.md) | Login no design XP Pulse, proteção de sessão/CSRF e logout |
 | [Requisitos](planejamento/requisitos.md) | Consultar comportamentos, critérios de aceite e como implementar por etapa |
 | [Especificação curta](planejamento/spec.md) | Alinhar o fluxo principal e regras básicas |
 | [Contratos](planejamento/contracts.md) | Entidades, rotas `/api`, formato JSON e erros do MVP |

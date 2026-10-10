@@ -10,6 +10,7 @@ from io import BytesIO
 from urllib.error import HTTPError
 
 import pytest
+from client_autenticado import renovar_acesso
 
 from app.clock import TZ, formatar_utc, relogio_fixo
 from app.contexto_rules import ErroContexto
@@ -302,6 +303,7 @@ def test_ca51_item_pendente_nao_e_elegivel_nem_com_intervalo_cumprido(ambiente):
     e.transformar = lambda itens: _item(itens, categoria="objetivo")
     processar(c)
     app.config["CLOCK"] = relogio_fixo(SEIS_DIAS_DEPOIS)
+    renovar_acesso(c)
     item = contexto(c)[0]
     assert item["estado"] == "pendente" and item["elegivel_contato"] is False
     assert revisar(c, item).status_code == 200
@@ -315,6 +317,7 @@ def test_ca52_so_item_sobre_o_cliente_pode_ser_elegivel(ambiente, sujeito, esper
     e.transformar = lambda itens: _item(itens, categoria="objetivo", sujeito=sujeito)
     processar(c)
     app.config["CLOCK"] = relogio_fixo(SEIS_DIAS_DEPOIS)
+    renovar_acesso(c)
     item = contexto(c)[0]
     assert item["sujeito"] == sujeito
     assert revisar(c, item).status_code == 200
@@ -338,6 +341,7 @@ def test_ca52_conflito_tira_a_elegibilidade_ate_o_descarte(ambiente):
     e.transformar = lambda itens: [i | {"categoria": "objetivo"} for i in itens]
     processar(c)
     app.config["CLOCK"] = relogio_fixo(SEIS_DIAS_DEPOIS)
+    renovar_acesso(c)
     for item in contexto(c):
         assert revisar(c, item).status_code == 200
     todos = contexto(c)
@@ -353,6 +357,7 @@ def test_ca52_evidencia_desatualizada_tira_a_elegibilidade(ambiente):
     e.transformar = lambda itens: _item(itens, categoria="objetivo")
     processar(c)
     app.config["CLOCK"] = relogio_fixo(SEIS_DIAS_DEPOIS)
+    renovar_acesso(c)
     revisar(c, contexto(c)[0])
     assert contexto(c)[0]["elegivel_contato"] is True
     c.post("/api/fontes/importar", json=lote(documento(versao=2, conteudo="Mudou de ideia.")))

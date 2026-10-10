@@ -5,11 +5,38 @@ from flask import Flask, current_app, g
 
 # Dinheiro: TEXT com Decimal (nunca float). Datas: YYYY-MM-DD. Instantes: UTC ISO 8601.
 # O alerta NÃO é persistido (calculado sob demanda); só o tratamento (tratamento_alerta).
-TABELAS = ("resumo_ia", "historico_assunto", "preferencia_assunto", "revisao_contexto", "item_contexto", "processamento_contexto",
+TABELAS = ("sessao_acesso", "descarte_noticia", "coleta_artigo_noticia", "artigo_noticia", "coleta_noticia", "vinculo_noticia",
+           "resumo_ia", "historico_assunto", "preferencia_assunto", "revisao_contexto", "item_contexto", "processamento_contexto",
            "documento_fonte", "tratamento_alerta", "avaliacao_relacionamento", "interacao", "data_importante",
            "posicao", "cliente", "assessor")
 
 SCHEMA = """
+CREATE TABLE IF NOT EXISTS sessao_acesso (
+    token_hash TEXT PRIMARY KEY, expira_em INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS vinculo_noticia (
+    id INTEGER PRIMARY KEY, cliente_id INTEGER NOT NULL REFERENCES cliente(id),
+    item_id INTEGER NOT NULL REFERENCES item_contexto(id), revisao INTEGER NOT NULL,
+    assunto TEXT NOT NULL, assessor_id INTEGER NOT NULL REFERENCES assessor(id), criada_em TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS vinculo_noticia_cliente ON vinculo_noticia(cliente_id,item_id);
+CREATE TABLE IF NOT EXISTS coleta_noticia (
+    id INTEGER PRIMARY KEY, assunto TEXT NOT NULL, consulta_versao TEXT NOT NULL,
+    estado TEXT NOT NULL CHECK (estado IN ('em_processamento','concluido','falhou')),
+    inicio_em TEXT NOT NULL, fim_em TEXT, erro_codigo TEXT, erro_mensagem TEXT
+);
+CREATE INDEX IF NOT EXISTS coleta_noticia_assunto ON coleta_noticia(assunto,consulta_versao,id);
+CREATE TABLE IF NOT EXISTS artigo_noticia (url TEXT PRIMARY KEY);
+CREATE TABLE IF NOT EXISTS coleta_artigo_noticia (
+    coleta_id INTEGER NOT NULL REFERENCES coleta_noticia(id),
+    artigo_id TEXT NOT NULL REFERENCES artigo_noticia(url), dados TEXT NOT NULL,
+    PRIMARY KEY (coleta_id,artigo_id)
+);
+CREATE TABLE IF NOT EXISTS descarte_noticia (
+    cliente_id INTEGER NOT NULL REFERENCES cliente(id), artigo_id TEXT NOT NULL REFERENCES artigo_noticia(url),
+    motivo TEXT NOT NULL CHECK (length(trim(motivo))>0), assessor_id INTEGER NOT NULL REFERENCES assessor(id),
+    descartada_em TEXT NOT NULL, PRIMARY KEY (cliente_id,artigo_id)
+);
 CREATE TABLE IF NOT EXISTS resumo_ia (
     cliente_id INTEGER PRIMARY KEY REFERENCES cliente(id),
     assinatura TEXT NOT NULL, tentativa TEXT NOT NULL,

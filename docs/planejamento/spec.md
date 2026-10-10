@@ -4,9 +4,10 @@ Status: base funcional Flask/Tailwind integrada em 10/10/2026, com regras da
 branch da equipe preservadas. A direção atual do produto inclui consumo de
 fontes existentes, inferência e feedback. Importação de JSON fictício está
 implementada; extração Gemini e revisão humana implementadas com testes simulados.
-Extração real validada em uma amostra fictícia; fonte real, notícias e reuniões
-seguem planejadas. Qualidade geral e fluxo visual completo ainda não validados.
-Detalhamento: [requisitos](requisitos.md) (RF01–RF30 e CA11–CA33), [contratos](contracts.md),
+Extração real validada em uma amostra fictícia; notícias via NewsAPI com coleta
+manual/CLI e cache implementadas no incremento 05. Fonte real, agendador e reuniões
+seguem planejados. Qualidade geral e fluxo visual completo ainda não validados.
+Detalhamento: [requisitos](requisitos.md) (RF01–RF31 e CA11–CA33), [contratos](contracts.md),
 [arquitetura](design.md). Leitura rápida: [visão geral](../visao-geral.md).
 Nas divergências sobre regras de alerta, prioridade, preferências e acesso, vale
 este documento (decisões de 10/10/2026).
@@ -45,6 +46,8 @@ com keynotes → atualizar o contexto após novos registros.
 - Importar fonte JSON fictícia: formulário e conversas versionados, histórico
   integrado, fontes consultáveis e identidades não resolvidas em pendência.
   Regras e aceites em [incremento 01](incrementos/01-fontes.md).
+- Notícias: associação humana a interesse revisado, coleta NewsAPI compartilhada,
+  cache diário, cota e feedback individual ([incremento 05](incrementos/05-noticias-newsapi.md)).
 
 ## Direção do produto — estágios de entrega
 
@@ -53,8 +56,9 @@ Esclarecido pelo usuário e preservado neste merge:
 - Consumo da fonte existente e formulário, extração de fatos/hipóteses,
   revisão humana e feedback (RF03, RF05, RF16, RF25–RF30): JSON fictício e
   contexto revisável implementados; lembretes derivados ainda pendentes.
-- Notícias via NewsAPI.org por assunto compartilhado, com cache e atualização
-  diária (RF17–RF20).
+- Notícias via NewsAPI.org por assunto compartilhado: coleta manual/CLI, cache
+  e cota implementados; atualização agendada e antecipação por reunião pendentes
+  (RF17–RF20).
 - Reuniões próximas com pauta (keynotes), fontes e observações revisáveis
   (RF21–RF24).
 
@@ -62,10 +66,10 @@ Critérios CA16–CA25 e regras de busca: [requisitos](requisitos.md) e
 [integração NewsAPI](../integracoes/busca-noticias.md). O agendador serve só à
 busca de notícias e às reuniões; alertas continuam calculados sob demanda (RN14).
 
-Fora da entrega atual: conexão à fonte real, lembretes derivados, notícias e
+Fora da entrega atual: conexão à fonte real, lembretes derivados, agendador e
 reuniões. Estes itens continuam planejados em requisitos. Construir captura
-dos canais e formulário, envio de mensagens/atas, app nativo, análises tributárias
-e autenticação não fazem parte desta integração.
+dos canais e formulário, envio de mensagens/atas, app nativo e análises tributárias
+não fazem parte desta integração. Login local autorizado no incremento 06.
 
 Alertas calculados da base só têm pendente/tratado (RN15). Ações de adiar ou
 descartar itens inferidos pertencem à revisão de contexto do incremento 02,
@@ -74,7 +78,8 @@ sem alterar a regra de tratamento desses alertas. Lembretes derivados são futur
 Demonstração com um assessor fictício único, dados fictícios identificados,
 somente em ambiente local (`127.0.0.1`). **Proibido usar dados reais de
 investidores.** O MVP não tem segurança adequada para publicação ou para dados
-financeiros pessoais reais; autenticação, autorização e acesso multiassessor são
+financeiros pessoais reais. Login de demonstração definido no
+[incremento 06](incrementos/06-login.md); autorização e acesso multiassessor são
 requisitos posteriores.
 
 ## Regras
@@ -231,6 +236,13 @@ RN33–RN39 e CA57–CA64. Layout XP Pulse, dados persistidos e ações explíci
 Síntese OpenAI autorizada: [incremento 04](incrementos/04-resumo-openai.md),
 RN40–RN45 e CA65–CA71. Melhora a redação com fontes, cache e revisão humana;
 o resumo factual RN08 e as regras determinísticas continuam independentes.
+
+Próximo recorte de T08: [incremento 05](incrementos/05-noticias-newsapi.md),
+RN46–RN52 e CA72–CA78. Notícias por consultas compartilhadas, vínculo humano,
+cache diário, cota e feedback por cliente. Agenda e keynotes são outro recorte.
+
+Incremento 06: [login](incrementos/06-login.md), RF31, RN53–RN58 e CA79–CA84.
+Login de demonstração substitui o recorte anterior sem autenticação.
 
 CA11–CA25 (notícias, reuniões e keynotes) estão em [requisitos](requisitos.md);
 CA26–CA33 de inferência/feedback continuam em requisitos; CA34–CA39 acima

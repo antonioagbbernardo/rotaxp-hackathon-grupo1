@@ -13,6 +13,7 @@ htmlcov/
 
 # Banco local e arquivos de execução
 instance/
+session.key
 *.db
 *.db-*
 *.sqlite

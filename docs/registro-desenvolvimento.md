@@ -26,7 +26,7 @@ respeitando como ele quer se relacionar e aprendendo com a revisão do profissio
 | Fatos, hipóteses e origem separados | Assessor consegue conferir e corrigir o que será usado no atendimento | Incremento 02 implementado com testes simulados; qualidade real pendente |
 | Preferências e pertinência pessoal | Lembrar de algo só é útil se fizer sentido para aquele investidor | Permissão/intervalo da base e bloqueio individual implementados |
 | Feedback com alcance explícito | Corrigir ou descartar uma sugestão não apaga um interesse nem afeta outros clientes | Revisão/correção/bloqueio persistidos e testados |
-| Preparação de reunião com custo compartilhado | Reaproveita contexto e notícias por assunto em vez de repetir trabalho por cliente | NewsAPI, cache e keynotes planejados, ainda não demonstrados |
+| Notícias com custo compartilhado | Reaproveita uma consulta entre clientes e evita chamadas em recargas | Incremento 05: dois clientes fictícios compartilharam uma chamada real; keynotes ainda planejados |
 
 Essa combinação é a **hipótese de diferenciação**, não prova de exclusividade.
 Não afirmar “único no mercado” sem comparação documentada com concorrentes.
@@ -54,7 +54,8 @@ persistidas; não é retreinamento automático do modelo.
 | Organização | React em `frontend/`; build pode ser servido pelo Flask | API/testes/lockfiles Python em `backend/`; documentos em `docs/` | Base organizada em `7456543`; execução atual no README |
 | Incremento 01: fontes | Importação JSON, resultado/erro, pendências de identidade, versões e origem no detalhe/histórico | Validação pura, transação SQLite, documentos versionados e API/CLI compartilhados | Implementado: 34 testes novos + 47 anteriores = 81 aprovados; CSS e sintaxe JS verificados; visual parcial |
 | Incremento 02: contexto e feedback | Processamento, fila, evidências, quatro ações e bloqueio por cliente | Gemini REST, validação literal, cache, controle de concorrência, revisão/auditoria | 44 testes novos, total 125; testes simulados + extração real de 4 fontes/7 propostas. Visual completo pendente |
-| Notícias e reuniões | Notícias pertinentes e keynotes | NewsAPI compartilhada, cache, preparação de pauta | Planejado, não implementado |
+| Incremento 05: notícias | Associação de interesse, coleta, fontes/datas, estado do cache e feedback individual | NewsAPI REST, cache diário compartilhado, cota, lease e descarte persistente | 41 testes novos; uma consulta real compartilhada por dois clientes fictícios; limites visuais abaixo |
+| Reuniões e keynotes | Agenda e pauta | Agendamento, preparação de pauta e conclusão | Planejado, não implementado |
 | Incremento 03: XP Pulse integrado | Layout React recebido da equipe; clientes, resumo, carteira, percepção, fontes, revisão, alertas e registros conectados | Adaptador `/api/pulse`, perguntas por templates, assets no Flask; SQLite e regras anteriores preservados | 143 testes backend + cinco frontend, build/lint aprovados; fluxos no navegador e viewport móvel, com limites abaixo |
 
 ## Registro SDD por incremento
@@ -257,6 +258,65 @@ do assistente). A atualização foi integrada sem conflitos, preservando o resum
 OpenAI. Os cinco testes frontend, lint e build passaram novamente. Backend
 sem alterações neste merge; imagem nova não conferida em navegador.
 
+## Incremento 05 — notícias com pertinência humana e custo compartilhado
+
+- SDD: [especificação 05](planejamento/incrementos/05-noticias-newsapi.md)
+  e contrato publicados localmente antes do código. RF17/RF20 e feedback RF29;
+  RN46–RN52, CA72–CA78. Primeira execução do teste falhou com 404 (rota ausente).
+  Consulta de notícias no assistente também teve teste observado falhando antes
+  de substituir a mensagem antiga de ausência por leitura do cache.
+- Backend: `noticias_rules.py` separa catálogo/elegibilidade/URL/validação;
+  `newsapi.py` usa REST com chave em cabeçalho e sem redirecionamento; `noticias.py`
+  coordena vínculo humano, tentativas, orçamento, cache e feedback. Schema aditivo
+  preserva dados anteriores. Artigos por URL única, snapshots por coleta e
+  vínculos/revisões anteriores guardados; reset explícito respeita dependências.
+- Pertinência: o assessor associa interesse revisado a Fórmula 1, Palmeiras ou
+  Corinthians. Sem inferir a consulta do texto. Revisão nova, hipótese, terceiro,
+  fonte antiga/conflitante, bloqueio e preferências/intervalo impedem uso.
+  Notícias são sugestões para revisar; nunca avaliação de humor, alerta ou
+  recomendação financeira. Síntese OpenAI continua usando só seus fatos internos.
+- Custo: uma consulta por assunto/dia após sucesso, inclusive resultado vazio.
+  Primeira página de dez artigos; até três exibidos por cliente. Padrão local
+  20 tentativas/dia, configurável entre 1 e 100; erros e reservas contam.
+  GET não coleta. CLI `coletar-noticias` reutiliza a mesma rotina; agendador
+  automático e antecipação por reunião não instalados. Sem retries automáticos.
+- Falhas: timeout 15 s e saída até 1 MB, intervalo 15 min após falha, 429 bloqueia
+  por 30 min e cota externa pelo dia local. Lease de dois minutos e transações
+  curtas; tentativa antiga não sobrescreve a nova. Última coleta bem-sucedida
+  permanece consultável com datas e estado de falha/desatualização.
+- Frontend: associação explícita, botão Buscar notícias, estados de erro/espera,
+  fonte/link/publicação/coleta e motivo da seleção. Feedback com motivo oculta
+  URL só para o cliente escolhido, preservando interesse e resultados dos demais.
+  Perguntas básicas leem o mesmo cache com fontes, sem outra chamada.
+- Validação real: **uma chamada NewsAPI**, assunto Fórmula 1, em 10/10/2026 às
+  14h32 local. Três artigos mostrados para Ana e Carla fictícias; a segunda
+  atualização retornou `reutilizado`. Consulta sem nome/carteira/conversas.
+  Fixture separada para interesse/revisão, sem chamada Gemini/OpenAI neste lote;
+  banco de trabalho anterior não teve decisões humanas alteradas.
+- CLI também conferida sobre o cache real: saída `reutilizado`, exit 0, total
+  mantido em uma chamada. Aplicação recriada preservou cache e feedback individual.
+  Servidor de trabalho reiniciado na 5001; cinco clientes e síntese OpenAI anterior
+  de Bruno preservados, novas rotas disponíveis e chave NewsAPI local reconhecida.
+- Navegador desktop: associação idempotente, busca reutilizada e feedback
+  preenchido/salvo. Artigo descartado saiu de Ana e permaneceu para Carla;
+  próxima notícia da coleta ocupou o lugar, sem outra chamada. Fonte e datas
+  conferidas nos cartões. Viewport **390 × 844**, DOM medido: viewport 390 e
+  `document.documentElement.scrollWidth` 390. A inspeção visual móvel dos cartões
+  ficou parcial por falhas `noWindowsAvailable` do controle nativo; sem teste em
+  aparelho físico. Falhas externas/retry têm cobertura de API, sem simulação
+  visual de todos os estados.
+- Validação automatizada: **329 testes backend** (288 anteriores + 41 notícias),
+  cinco frontend, lint e build. Cache/reinício, isolamento, fonte/revisão, limite,
+  dia local, concorrência/retomada, HTTP/timeout, URLs e erro sem dados parciais.
+- Limites: catálogo inicial de três assuntos, sem resumo de artigo por IA,
+  notícias financeiras, agrupamento semântico de eventos ou publicação automática.
+  Resultados podem ser irrelevantes (a coleta real incluiu conteúdo patrocinado),
+  daí a seleção final e o feedback do assessor. Orçamento local não mede outros
+  sistemas usando a mesma chave. Não alegar economia de tempo/qualidade medida.
+
+**Demo sugerida:** interesse revisado → associação → uma coleta → fonte/datas →
+mesmo assunto em outro cliente sem custo adicional → feedback individual.
+
 ## Roteiro para a apresentação
 
 | Tempo sugerido | Mostrar e explicar |
@@ -282,3 +342,27 @@ sem alterações neste merge; imagem nova não conferida em navegador.
 A cada incremento, registrar problema, RF/CA, decisão, alteração de frontend,
 alteração de backend, testes executados, roteiro de demonstração e limitações.
 Atualizar status da tabela e não apagar decisões/limites ainda aplicáveis.
+
+## Incremento 06 — login XP Pulse (10/10/2026)
+
+- Pedido explícito: `/login`, `admin` / `admin`, logo centralizado no design da
+  equipe, sem recuperação de senha. Substitui a decisão anterior sem login.
+- SDD: RF31, RN53–RN58, CA79–CA84 e contrato registrados antes do código.
+  TDD registrou 23 falhas backend e cinco frontend esperadas antes da implementação.
+- Frontend: composição escura/amarela, campos com labels, senha mascarada,
+  alternância de visibilidade, envio com Enter, erro e estado de envio. Verificar
+  sessão antes de consultar clientes; logout e 401 removem o painel da interface.
+- Backend: cookie assinado HttpOnly/SameSite=Lax, sessão opaca de oito horas
+  revogável no SQLite, chave aleatória local 0600 e CSRF em todas as escritas.
+  `/` e `/legacy` redirecionam sem sessão; APIs retornam 401 antes dos serviços.
+  Logout não apaga clientes; CLI continua disponível. Interface anterior envia CSRF.
+- Validação: **352 backend + 11 frontend**, lint/build aprovados. Desktop com logo
+  centralizado, senha mascarada e erro de credenciais observado; painel autenticado
+  preserva cinco clientes e síntese OpenAI anterior. Não houve chamadas externas.
+- A pedido do usuário, conferência visual adicional de logout/celular adiada para
+  acelerar as demandas SDD. Logout/expiração/reinício cobertos por testes HTTP.
+- Limites: acesso único local de demonstração, sem recuperação/multiassessor.
+  Reuniões, keynotes e agendamento continuam como próximos incrementos.
+
+**Demo:** tela de entrada → entrar → contexto do cliente → Sair. O profissional
+continua decidindo como usar as fontes e abordar o investidor.
