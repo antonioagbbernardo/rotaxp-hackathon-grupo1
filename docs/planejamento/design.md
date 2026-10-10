@@ -137,6 +137,11 @@ Detalhes: [contexto e feedback](../integracoes/contexto-investidor.md).
 ## Questões abertas para a evolução
 
 - Fonte real das posições (Open Finance etc.) e análises de risco/tributárias.
+- Classificação de perfil de risco por machine learning: adiada. Não há modelo
+  público leve e validado para os dados disponíveis (sem renda, patrimônio,
+  horizonte ou questionário de suitability) e a base fictícia não permite treino.
+  Exige dados apropriados, validação e integração ao processo de suitability
+  (CVM 30). Enquanto isso, só heurística explícita e rotulada sobre posições.
 - Autenticação, autorização e acesso multiassessor, gestor/investidor.
 - Contrato/acesso à fonte existente e custo/qualidade real do Gemini configurado.
 - Armazenamento, correção, exclusão e retenção de dados pessoais.
