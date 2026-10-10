@@ -35,8 +35,8 @@ class ErroNoticias(Exception):
         return {'codigo': self.codigo, 'campo': self.campo, 'mensagem': self.mensagem, 'status': self.status}
 
 
-def versao_consulta(assunto):
-    parametros = {'q': CATALOGO[assunto]['q'], 'language': 'pt', 'sortBy': 'publishedAt',
+def versao_consulta(assunto, catalogo=None):
+    parametros = {'q': (catalogo or CATALOGO)[assunto]['q'], 'language': 'pt', 'sortBy': 'publishedAt',
                   'searchIn': 'title,description', 'dias': 7, 'pageSize': 10, 'page': 1, 'versao': 1}
     return hashlib.sha256(json.dumps(parametros, sort_keys=True).encode()).hexdigest()
 

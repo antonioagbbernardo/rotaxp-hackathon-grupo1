@@ -89,7 +89,7 @@ export function NewsSection({ client, onUpdated }: NewsSectionProps) {
       <p className="mt-3 text-[10px] leading-relaxed text-ink-muted">NewsAPI pode disponibilizar artigos com atraso conforme o plano. Coleta recente não garante notícia em tempo real. O humor é inferido das interações; as notícias não são recomendações de investimento.</p>
       {state && <div className="mt-3 space-y-3">
         {!state.configurado && <p className="text-xs text-ink-muted">A busca de notícias precisa de configuração no backend.</p>}
-        {state.assuntos.some((a) => a.id === 'mercado') && <p className="text-xs text-ink-muted">Sem assunto pessoal identificado no catálogo, mostramos notícias gerais do mercado financeiro.</p>}
+        {state.assuntos.some((a) => a.id === 'mercado') && <p className="text-xs text-ink-muted">Sem interesse pessoal identificado, mostramos notícias gerais do mercado financeiro.</p>}
         <ul className="space-y-2 text-[11px] leading-relaxed text-ink-muted">
           {state.assuntos.map((t) => <li key={t.id}>
             <span className="font-medium">{t.nome}</span> · {statusLabel[t.estado]}{t.ultima_coleta && ` · Última coleta ${formatDate(t.ultima_coleta)}`}
