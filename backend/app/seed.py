@@ -53,10 +53,10 @@ def seed_db(hoje: date, agora: datetime) -> bool:
         # Cliente 1 - Ana Souza (intervalo mínimo: 7 dias)
         (1, "telefone",
          "[Transcrição de Áudio — XP Voice · Duração: 03:45]\nAssessor: 'Olá, Ana! Tudo bem? Estou te ligando para alinharmos o vencimento do seu CDB de R$ 50.000, previsto para daqui a alguns dias.'\nAna: 'Oi! Tudo ótimo por aqui. Que bom que me ligou, na correria eu nem lembrava da data exata. O que você recomenda para reaplicar esse valor?'\nAssessor: 'Pelo seu perfil moderado e com foco na aposentadoria, selecionei duas alternativas: um CDB indexado ao IPCA e uma LCI isenta de Imposto de Renda. Posso te enviar as simulações detalhadas?'\nAna: 'Com certeza! Pode mandar sim. E a propósito, minha filha faz aniversário mês que vem, então quero manter uma pequena reserva caso façamos uma viagem.'\nAssessor: 'Excelente lembrança, Ana! Já vou reservar essa liquidez no nosso planejamento. Te envio as opções hoje mesmo.'\nAna: 'Combinado, muito obrigada pela atenção!'",
-         8, "Enviar lâmina comparativa de LCI isenta e CDB IPCA+."),
+         10, "Enviar lâmina comparativa de LCI isenta e CDB IPCA+."),
         (1, "whatsapp",
          "Ana: 'Oi! Vi o resumo que você mandou sobre a LCI IPCA+. A taxa de 6,8% me pareceu excelente para o vencimento do meu CDB!'\nAssessor: 'Olá, Ana! Que bom que gostou. Como o seu objetivo é a aposentadoria, essa taxa garante ganho real protegido da inflação. Quer que eu faça a alocação hoje?'\nAna: 'Pode alocar sim, por favor!'",
-         10, "Confirmar aplicação de R$ 50.000 em LCI IPCA+ 6,8%."),
+         12, "Confirmar aplicação de R$ 50.000 em LCI IPCA+ 6,8%."),
         (1, "email",
          "De: Ana Souza <ana.souza@exemplo.com>\nPara: assessor@xp.com.br\nAssunto: Extrato e planejamento mensal\n\n'Olá! Poderia me encaminhar o extrato consolidado com a posição atualizada da minha carteira? Gostaria de analisar a rentabilidade deste trimestre antes de decidirmos os próximos aportes. Um abraço, Ana.'",
          15, "Extrato trimestral consolidado enviado por e-mail."),
