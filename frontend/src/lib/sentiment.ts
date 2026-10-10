@@ -12,3 +12,14 @@ export const sentimentTextColor: Record<Sentiment, string> = {
   neutral: 'text-ink-muted',
   unknown: 'text-ink-muted',
 }
+
+export const sentimentLabel: Record<Sentiment, string> = {
+  positive: 'positivo',
+  negative: 'negativo',
+  neutral: 'neutro',
+  unknown: 'sem avaliação',
+}
+
+export const priorityLabel = { alta: 'Alta', media: 'Média', baixa: 'Baixa' } as const
+
+export const priorityTone = { alta: 'negative', media: 'brand', baixa: 'neutral' } as const

@@ -1,5 +1,7 @@
 import { Avatar } from '@/components/ui/Avatar'
+import { Badge } from '@/components/ui/Badge'
 import { SentimentFace } from '@/components/ui/SentimentFace'
+import { priorityLabel, priorityTone, sentimentLabel } from '@/lib/sentiment'
 import { cn } from '@/lib/cn'
 import type { Client } from '@/types/client'
 
@@ -35,6 +37,11 @@ export function ClientCard({ client, isSelected, onSelect }: ClientCardProps) {
           <Avatar name={client.name} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">{client.name}</p>
+            {client.priority && (
+              <Badge tone={priorityTone[client.priority]} className="mt-1 px-1.5 py-0.5 text-[10px]">
+                Prioridade {priorityLabel[client.priority]}
+              </Badge>
+            )}
             <div className="mt-1 flex flex-wrap items-center gap-2">
               {hasPositiveNews && (
                 <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-positive">
@@ -56,11 +63,14 @@ export function ClientCard({ client, isSelected, onSelect }: ClientCardProps) {
             </div>
           </div>
         </div>
-        <SentimentFace
-          sentiment={client.sentiment}
-          className="size-6 shrink-0"
-          label={`Emoção: ${client.sentiment}`}
-        />
+        <div className="flex shrink-0 flex-col items-center gap-0.5">
+          <SentimentFace
+            sentiment={client.sentiment}
+            className="size-6"
+            label={`Humor: ${sentimentLabel[client.sentiment]}`}
+          />
+          <span className="text-[9px] text-ink-muted">{sentimentLabel[client.sentiment]}</span>
+        </div>
       </div>
     </button>
   )
