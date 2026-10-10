@@ -1,5 +1,6 @@
 """Associação humana, coletas compartilhadas, orçamento e feedback persistente."""
 import json
+import re
 from datetime import datetime, time, timedelta
 
 import click
@@ -43,6 +44,18 @@ def _valor(item):
     return item['valor_revisado'] or item['valor_original']
 
 
+def _catalogo():
+    catalogo = dict(CATALOGO)
+    for r in get_db().execute("SELECT DISTINCT assunto FROM item_contexto WHERE categoria='interesse' "
+                             "AND sujeito='cliente' AND estado IN ('confirmado','corrigido')"):
+        assunto = r['assunto']
+        if re.fullmatch(r'[a-z0-9-]{1,80}', assunto) and assunto not in catalogo:
+            termo = assunto.replace('-', ' ').strip()
+            if termo:
+                catalogo[assunto] = {'nome': termo.capitalize(), 'q': f'"{termo}"'}
+    return catalogo
+
+
 def _vinculos(cid, interesses):
     rows = get_db().execute('SELECT * FROM vinculo_noticia WHERE cliente_id=? AND id IN '
                             '(SELECT MAX(id) FROM vinculo_noticia WHERE cliente_id=? GROUP BY item_id) ORDER BY id', (cid, cid))
@@ -62,7 +75,9 @@ def _assuntos_automaticos(cid, itens=None):
             for i in itens if i['id'] not in ids_legados and i['categoria'] == 'interesse' and i['tipo'] == 'fato' and i['sujeito'] == 'cliente'
             and i['estado'] in ('pendente', 'confirmado', 'corrigido') and i['evidencia_atual']
             and not i['conflitos'] and not i['bloqueado']
-            for assunto in assuntos_do_interesse(_valor(i))]
+            for assunto in (assuntos_do_interesse(_valor(i)) or
+                ([i['assunto']] if i['estado'] in ('confirmado', 'corrigido') and i['assunto'] not in CATALOGO and i['assunto'] in _catalogo()
+                 and not re.search(r'\b(?:não|nao|deixou|parou)\b', _valor(i).casefold()) else []))]
     return encontrados or [{'id': 'automatico-mercado', 'item_id': None, 'revisao': 0,
         'assunto': 'mercado', 'interesse': 'Notícias gerais do mercado financeiro', 'fontes': [],
         'automatico': True, 'geral': True}]
@@ -100,7 +115,7 @@ def vincular(cid, corpo):
 
 def _coletas(assunto):
     return [dict(r) for r in get_db().execute('SELECT * FROM coleta_noticia WHERE assunto=? AND consulta_versao=? ORDER BY id DESC',
-                                            (assunto, versao_consulta(assunto)))]
+                                            (assunto, versao_consulta(assunto, _catalogo())))]
 
 
 def _chamadas_hoje():
@@ -112,6 +127,7 @@ def _chamadas_hoje():
 
 def consultar(cid, itens=None):
     db, clock = get_db(), current_app.config['CLOCK']
+    catalogo = _catalogo()
     interesses = _interesses(cid, itens)
     vinculos = _assuntos_automaticos(cid, itens)
     assuntos, artigos = [], {}
@@ -127,7 +143,7 @@ def consultar(cid, itens=None):
             estado = 'processando'
         elif ultima and ultima['estado'] == 'falhou':
             estado, erro = 'falhou', {'codigo': ultima['erro_codigo'], 'mensagem': ultima['erro_mensagem']}
-        assuntos.append({'id': assunto, 'nome': CATALOGO[assunto]['nome'], 'estado': estado,
+        assuntos.append({'id': assunto, 'nome': catalogo[assunto]['nome'], 'estado': estado,
                          'ultima_coleta': sucesso['fim_em'] if sucesso else None,
                          'ultima_tentativa': ultima['inicio_em'] if ultima else None, 'erro': erro})
         if not sucesso:
@@ -140,7 +156,7 @@ def consultar(cid, itens=None):
             artigos.setdefault(a['url'], {**a, 'id': a['url'], 'sentiment': 'unknown', 'scenario': 'NewsAPI',
                 'whyItMatters': ('Notícia geral do mercado financeiro para preparação do assessor; não representa um interesse pessoal inferido.'
                     if vinculo.get('geral') else f"Sugestão automática pelo interesse identificado: {vinculo['interesse']} · " + '; '.join(vinculo['fontes'])),
-                'relevance': 'Sugestão de assunto para o assessor revisar.', 'topic': CATALOGO[assunto]['nome'],
+                'relevance': 'Sugestão de assunto para o assessor revisar.', 'topic': catalogo[assunto]['nome'],
                 'collectedAt': sucesso['fim_em'],
                 'updatedMinutesAgo': max(0, int((clock.agora() - parse_instante(sucesso['fim_em'])).total_seconds() // 60))})
     recentes = sorted(artigos.values(), key=lambda a: (a['publishedAt'], a['url']), reverse=True)
@@ -160,7 +176,7 @@ def consultar(cid, itens=None):
         limite = _limite()
     except ErroNoticias:
         limite = None
-    return {'configurado': _configurado(), 'catalogo': [{'id': k, 'nome': v['nome']} for k, v in CATALOGO.items()],
+    return {'configurado': _configurado(), 'catalogo': [{'id': k, 'nome': v['nome']} for k, v in catalogo.items()],
             'interesses': [{'id': i['id'], 'revisao': i['revisao'], 'valor': _valor(i), 'fontes': _fontes(i)} for i in interesses.values()],
             'vinculos': vinculos, 'assuntos': assuntos, 'artigos': saida, 'limite_diario': limite, 'chamadas_hoje': _chamadas_hoje()}
 
@@ -197,7 +213,7 @@ def _coletar(assunto, max_idade=None):
         db.execute("UPDATE coleta_noticia SET estado='falhou',fim_em=?,erro_codigo='coleta_abandonada',erro_mensagem='Coleta antiga substituída.' WHERE assunto=? AND estado='em_processamento'",
                    (formatar_utc(agora), assunto))
         cur = db.execute("INSERT INTO coleta_noticia (assunto,consulta_versao,estado,inicio_em) VALUES (?,?,'em_processamento',?)",
-                         (assunto, versao_consulta(assunto), formatar_utc(agora)))
+                         (assunto, versao_consulta(assunto, _catalogo()), formatar_utc(agora)))
         pid = cur.lastrowid
         db.commit()
     except Exception:
@@ -205,7 +221,7 @@ def _coletar(assunto, max_idade=None):
         raise
     try:
         coletor = current_app.config.get('COLETOR_NOTICIAS') or NewsAPI(current_app.config['NEWSAPI_API_KEY'])
-        artigos = validar_artigos(coletor.buscar({'q': CATALOGO[assunto]['q']}, agora), agora)
+        artigos = validar_artigos(coletor.buscar({'q': _catalogo()[assunto]['q']}, agora), agora)
         db.execute('BEGIN IMMEDIATE')
         tentativa = db.execute('SELECT estado FROM coleta_noticia WHERE id=?', (pid,)).fetchone()
         if not tentativa or tentativa['estado'] != 'em_processamento':

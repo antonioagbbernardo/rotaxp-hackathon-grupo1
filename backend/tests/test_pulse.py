@@ -40,7 +40,7 @@ def test_lista_real_ordenada_sem_ia_e_ausencias_explicitas(ambiente):
     assert dados['advisor']['name'] == 'Assessor Fictício'
     assert [i['id'] for i in dados['clients']] == [str(i['id']) for i in c.get('/api/clientes').get_json()['clientes']]
     ana = next(i for i in dados['clients'] if i['id'] == '1')
-    assert ana['portfolio']['total'] == '80000.00' and ana['portfolio']['allocation'] == []
+    assert ana['portfolio']['total'] == '80000.00' and ana['portfolio']['allocation'] == [{'asset': 'fixedIncome', 'percent': 100}]
     assert ana['clientSince'] is None and ana['whatsapp'] == '' and ana['email'] == ''
     assert ana['news'] == [] and ana['sentiment'] == 'unknown'
     assert ana['relationshipLabel'] == 'Não avaliado' and ana['lastContactDays'] == 10
@@ -149,3 +149,17 @@ def test_build_servido_pelo_flask_e_legacy_preservado(ambiente, tmp_path):
 def test_base_vazia_nao_faz_fallback_mock(tmp_path):
     app = create_app({'TESTING': True, 'DATABASE': str(tmp_path / 'vazia.db')})
     assert clientes(cliente_autenticado(app)) == []
+
+
+def test_carteira_agrupa_valores_e_usa_objetivo_do_formulario():
+    from app.pulse import montar_carteira
+    carteira = montar_carteira([{'ativo': 'CRA Exemplo', 'valor': '80000.00'},
+                               {'ativo': 'LCA Exemplo', 'valor': '15000.00'}], 'Arrojado', [],
+                              [{'atual': True, 'tipo': 'formulario', 'conteudo': {'objetivo': 'Dados fictícios: organizar investimentos'}}])
+    assert carteira == {'total': '95000.00', 'profile': 'Arrojado', 'goal': 'organizar investimentos',
+                        'allocation': [{'asset': 'fixedIncome', 'percent': 100}]}
+    carteira = montar_carteira([{'ativo': 'Ativo desconhecido', 'valor': '1.00'},
+                               {'ativo': 'Fundo Exemplo', 'valor': '2.00'}], '', [], [])
+    assert sum(s['percent'] for s in carteira['allocation']) == 100
+    assert carteira['allocation'][0] == {'asset': 'other', 'percent': 33}
+    assert carteira['goal'] == 'Não informado'

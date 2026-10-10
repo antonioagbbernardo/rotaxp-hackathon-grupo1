@@ -1,5 +1,6 @@
 """Adaptador do painel React; consulta registros sem chamar IA ou enviar contato."""
 from decimal import Decimal
+import re
 import unicodedata
 
 from flask import current_app
@@ -21,6 +22,38 @@ def referencia(fonte):
     return f"{fonte['tipo_fonte']} #{ids}" + (f" · {fonte['data_referencia']}" if fonte.get("data_referencia") else "")
 
 
+def montar_carteira(posicoes, perfil, itens, fontes):
+    valores = {}
+    for p in posicoes:
+        ativo = ''.join(ch for ch in unicodedata.normalize('NFD', p['ativo'].casefold()) if unicodedata.category(ch) != 'Mn')
+        classe = ('fixedIncome' if re.search(r'\b(cdb|lci|lca|cra|cri|tesouro|debenture|renda fixa)\b', ativo)
+                  else 'funds' if re.search(r'\b(fundo|fundos|fii|etf)\b', ativo)
+                  else 'stocks' if re.search(r'\b(acao|acoes)\b', ativo) else 'other')
+        valores[classe] = valores.get(classe, Decimal('0')) + Decimal(p['valor'])
+    total = sum(valores.values(), Decimal('0'))
+    alocacao = []
+    if total > 0:
+        percentuais = {k: v * 100 / total for k, v in valores.items() if v > 0}
+        inteiros = {k: int(v) for k, v in percentuais.items()}
+        for k in sorted(percentuais, key=lambda k: percentuais[k] - inteiros[k], reverse=True)[:100 - sum(inteiros.values())]:
+            inteiros[k] += 1
+        alocacao = [{'asset': k, 'percent': v} for k, v in inteiros.items()]
+    objetivos = [i for i in itens if i['categoria'] == 'objetivo' and i['tipo'] == 'fato'
+                 and i['sujeito'] == 'cliente' and i['estado'] in ('confirmado', 'corrigido', 'pendente')
+                 and i['evidencia_atual'] and not i['conflitos'] and not i['bloqueado']]
+    objetivos.sort(key=lambda i: (i['estado'] != 'pendente', i['gerado_em']), reverse=True)
+    objetivo = next((i['valor_revisado'] or i['valor_original'] for i in objetivos), None)
+    if not objetivo:
+        objetivo = next((f['conteudo']['objetivo'] for f in fontes if f['atual'] and f['tipo'] == 'formulario'
+                         and isinstance(f['conteudo'], dict) and isinstance(f['conteudo'].get('objetivo'), str)
+                         and f['conteudo']['objetivo'].strip()), None)
+    if not objetivo and 'objetivo:' in (perfil or '').casefold():
+        objetivo = re.split(r'objetivo:', perfil, flags=re.IGNORECASE)[1].strip()
+    objetivo = re.sub(r'^Dados fictícios:\s*', '', objetivo or 'Não informado', flags=re.IGNORECASE)
+    return {'total': format(total, '.2f') if posicoes else None, 'goal': objetivo,
+            'profile': (perfil or '').split(';')[0].strip() or 'Não informado', 'allocation': alocacao}
+
+
 def montar_cliente(c, incluir_resumo_ia=True):
     # Mesma leitura/regras das rotas existentes, sem outra lógica de prioridade.
     from .api import _contexto, _preferencias, _relacionamento
@@ -33,6 +66,7 @@ def montar_cliente(c, incluir_resumo_ia=True):
     resumo = montar_resumo(dict(c), ctx["posicoes"], ctx["ultima"],
                           ctx["avaliacoes"][0] if ctx["avaliacoes"] else None, clock.hoje(), ctx["ultima_data"])
     revisao = contexto.consultar(c["id"])
+    fontes_cliente = consultar_fontes(c["id"])
     novidades = noticias.consultar(c['id'], revisao['itens'])
     confirmados = [i for i in revisao["itens"] if i["estado"] in ("confirmado", "corrigido")
                    and i["sujeito"] == "cliente" and i["evidencia_atual"] and not i["conflitos"]]
@@ -78,14 +112,13 @@ def montar_cliente(c, incluir_resumo_ia=True):
                         "sentiment": {"positivo": "positive", "negativo": "negative", "atencao": "neutral"}[r["estado"]],
                         "label": {"positivo": "Positivo", "negativo": "Negativo", "atencao": "Atenção"}[r["estado"]],
                         "reason": r["justificativa"], "date": r["avaliada_em"]} for r in reversed(ctx["avaliacoes"])],
-        "portfolio": {"total": format(sum((Decimal(p["valor"]) for p in ctx["posicoes"]), Decimal("0")), ".2f") if ctx["posicoes"] else None,
-                      "goal": next((valor(i) for i in confirmados if i["categoria"] == "objetivo"), "Objetivo ainda não revisado"), "allocation": []},
+        "portfolio": montar_carteira(ctx['posicoes'], c['perfil'], revisao['itens'], fontes_cliente),
         "news": novidades['artigos'], "newsState": {k: v for k, v in novidades.items() if k != 'artigos'},
         "assistant": {"question": "O que preciso revisar antes do contato?",
           "summary": "\n".join(linhas_resumo), "summaryItems": linhas_resumo,
           "insights": insights, "openings": aberturas, "sources": fontes_abertura,
           "summarySources": fontes_resumo},
-        "context": revisao, "sourceDocuments": consultar_fontes(c["id"]), "alerts": ctx["alertas"],
+        "context": revisao, "sourceDocuments": fontes_cliente, "alerts": ctx["alertas"],
         "interactions": ctx["interacoes"], "preferences": _preferencias(c), "positions": ctx["posicoes"],
         "summaryFacts": resumo["fatos"], "relationshipHistory": ctx["avaliacoes"],
         "advisorNotes": notas(c['id']),
