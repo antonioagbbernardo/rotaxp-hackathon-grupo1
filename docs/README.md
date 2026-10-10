@@ -22,7 +22,11 @@ e sugerir lembranças sob supervisão humana, incorporando feedback.
 
 ## Organização local
 
+Aplicação, testes e ferramentas estão em [backend/](../backend/README.md).
+Executar os comandos de Python e CSS dentro dessa pasta.
+
 ```text
+backend/                      Aplicação Flask, testes e ferramentas de CSS
 docs/                         Documentação da equipe, destinada ao GitHub
   README.md                   Índice
   visao-geral.md               Explicação rápida e diagramas

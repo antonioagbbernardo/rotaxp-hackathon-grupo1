@@ -15,6 +15,8 @@ registrar contatos. Idioma de código, commits e documentação: **português do
 Python 3.13 + Flask + SQLite (gerenciado com `uv`); interface em JS puro com
 Tailwind compilado via Node (só ferramenta de build). Sem Django e sem Docker.
 
+Executar os comandos dentro de `backend/` (a partir da raiz: `cd backend`).
+
 ```bash
 uv sync --locked                      # dependências Python
 uv run --locked pytest                # testes
@@ -29,17 +31,17 @@ Nunca use `pip` ou `python` direto no host: use `uv run`.
 ## Estrutura
 | Caminho | Papel |
 | --- | --- |
-| `app/rules.py` | Regras puras (vencimento, prioridade, aniversário, preferências) |
-| `app/alertas.py` | Cálculo de alertas sob demanda |
-| `app/resumo.py` | Resumo por template com fontes |
-| `app/clock.py` | `Clock` único (America/Sao_Paulo) |
-| `app/api.py`, `app/db.py`, `app/seed.py` | Rotas JSON, schema SQLite, dados fictícios |
-| `app/static/js/app.js`, `app/templates/` | Interface |
-| `tests/` | pytest |
+| `backend/app/rules.py` | Regras puras (vencimento, prioridade, aniversário, preferências) |
+| `backend/app/alertas.py` | Cálculo de alertas sob demanda |
+| `backend/app/resumo.py` | Resumo por template com fontes |
+| `backend/app/clock.py` | `Clock` único (America/Sao_Paulo) |
+| `backend/app/api.py`, `backend/app/db.py`, `backend/app/seed.py` | Rotas JSON, schema SQLite, dados fictícios |
+| `backend/app/static/js/app.js`, `backend/app/templates/` | Interface |
+| `backend/tests/` | pytest |
 
 ## Regras que não podem ser quebradas
 - **Tempo:** toda regra recebe a data do `Clock`. Nunca chame `date.today()` ou
-  `datetime.now()` fora de `app/clock.py`. Testes injetam `relogio_fixo(...)`.
+  `datetime.now()` fora de `backend/app/clock.py`. Testes injetam `relogio_fixo(...)`.
 - **Alertas** são calculados a cada consulta; só o tratamento é persistido
   (`tratamento_alerta`). Não crie tabela ou cópia de alerta, nem cron/worker
   para esses alertas. Agendamento de notícias/reuniões é evolução separada (T08).

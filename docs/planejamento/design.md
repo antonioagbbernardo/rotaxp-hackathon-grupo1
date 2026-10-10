@@ -19,11 +19,15 @@ Regras de uso:
 - O CSS compilado é versionado, para que o clone da organização rode só com
   Python (sem `npm install`).
 - Versões de Python/Node/Flask são conferidas na ferramenta instalada e fixadas
-  em `pyproject.toml`/`uv.lock`, `.python-version` e `.nvmrc`; não presumir
+  em `backend/pyproject.toml`/`backend/uv.lock`, `backend/.python-version` e `backend/.nvmrc`; não presumir
   patches não verificados.
 - Sem Django e sem Docker.
 
 ## Organização
+
+A aplicação e suas ferramentas ficam em `backend/`: `app/`, `tests/`, `src/`,
+lockfiles Python/Node e versões de runtime. Executar `uv` e `npm` nessa pasta;
+a documentação compartilhada permanece em `docs/`. Guia: [backend](../../backend/README.md).
 
 Uma aplicação Flask simples, com núcleo de regras puro (prioridade, vencimento,
 aniversário), acesso a dados em módulo separado e rotas JSON finas. Sem serviços
