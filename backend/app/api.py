@@ -168,10 +168,11 @@ def vincular_noticias(cliente_id):
 
 @bp.post('/clientes/<int:cliente_id>/noticias/atualizar')
 def atualizar_noticias(cliente_id):
+    from datetime import timedelta
     _cliente_ou_404(get_db(), cliente_id)
     if request.get_data():
         raise ErroApi('entrada_invalida', 'Esta rota não recebe corpo; consultas vêm do backend.', campo='noticias')
-    return jsonify(noticias.atualizar(cliente_id))
+    return jsonify(noticias.atualizar(cliente_id, max_idade=timedelta(minutes=2)))
 
 
 @bp.post('/clientes/<int:cliente_id>/noticias/descartar')

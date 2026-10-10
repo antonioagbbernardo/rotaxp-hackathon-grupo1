@@ -194,8 +194,9 @@ def test_releitura_oculta_vinculo_e_noticia_inelegiveis(ambiente, mudanca):
         assert consultar(c)['artigos'] and consultar(c)['vinculos']
         assert c.post('/api/clientes/1/noticias/atualizar').status_code == 200
         return
-    assert consultar(c)['artigos'] == [] and consultar(c)['vinculos'] == []
-    assert c.post('/api/clientes/1/noticias/atualizar').status_code == 400
+    assert consultar(c)['artigos'] == []
+    assert {v['assunto'] for v in consultar(c)['vinculos']} == {'mercado'}
+    assert c.post('/api/clientes/1/noticias/atualizar').status_code == 200
 
 
 def test_item_alheio_rotas_cliente_inexistente_e_corpo_indevido(ambiente):
@@ -214,11 +215,24 @@ def test_vazio_e_sucesso_cli_reutiliza_e_novo_dia_coleta(ambiente):
     assert atualizar(c)['estado'] == 'atualizado'
     assert consultar(c)['assuntos'][0]['estado'] == 'atualizado' and consultar(c)['artigos'] == []
     r = app.test_cli_runner().invoke(args=['coletar-noticias'])
-    assert r.exit_code == 0 and len(g.chamadas) == 1
+    assert r.exit_code == 0 and len(g.chamadas) == 2  # F1 e mercado geral compartilhados.
     app.config['CLOCK'] = relogio_fixo(AGORA + timedelta(days=1))
     renovar_acesso(c)
     assert consultar(c)['assuntos'][0]['estado'] == 'desatualizado'
-    assert atualizar(c)['estado'] == 'atualizado' and len(g.chamadas) == 2
+    assert atualizar(c)['estado'] == 'atualizado' and len(g.chamadas) == 3
+
+
+def test_busca_sem_interesse_usa_mercado_e_cache_manual_curto(ambiente):
+    app, c, g = ambiente
+    dados = consultar(c, 2)
+    assert dados['vinculos'][0]['geral'] and dados['vinculos'][0]['item_id'] is None
+    assert not dados['interesses'] and not g.chamadas
+    assert atualizar(c, 2)['estado'] == 'atualizado'
+    assert 'mercado financeiro' in g.chamadas[0][0]['q']
+    assert 'não representa um interesse pessoal' in consultar(c, 2)['artigos'][0]['whyItMatters']
+    assert atualizar(c, 2)['estado'] == 'reutilizado' and len(g.chamadas) == 1
+    app.config['CLOCK'] = relogio_fixo(AGORA + timedelta(minutes=3))
+    assert atualizar(c, 2)['estado'] == 'atualizado' and len(g.chamadas) == 2
 
 
 def test_deduplicacao_limite_janela_e_artigos_removidos(ambiente):

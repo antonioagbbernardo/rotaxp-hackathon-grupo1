@@ -52,7 +52,7 @@ export interface NewsState {
   configurado: boolean
   catalogo: { id: string; nome: string }[]
   interesses: { id: number; revisao: number; valor: string; fontes: string[] }[]
-  vinculos: { id: number | string; item_id: number; revisao: number; assunto: string; interesse: string; fontes: string[]; automatico?: boolean }[]
+  vinculos: { id: number | string; item_id: number | null; revisao: number; assunto: string; interesse: string; fontes: string[]; automatico?: boolean; geral?: boolean }[]
   assuntos: { id: string; nome: string; estado: 'nunca' | 'atualizado' | 'desatualizado' | 'falhou' | 'processando'; ultima_coleta: string | null; ultima_tentativa: string | null; erro: { codigo: string; mensagem: string } | null }[]
   limite_diario: number | null
   chamadas_hoje: number

@@ -28,7 +28,7 @@ export function NewsSection({ client, onUpdated }: NewsSectionProps) {
       const updated = result.resultados.filter((r) => r.estado === 'atualizado').length
       const reused = result.resultados.filter((r) => r.estado === 'reutilizado').length
       if (failures.length) setError(failures.map((r) => `${state?.catalogo.find((t) => t.id === r.assunto)?.nome ?? r.assunto}: ${r.erro?.mensagem ?? 'Coleta não concluída.'}`).join(' '))
-      if (updated || reused) setNotice(`${updated} coleta(s) atualizada(s) · ${reused} reutilizada(s) do cache.`)
+      if (updated || reused) setNotice(updated ? 'Busca concluída. As notícias disponíveis foram atualizadas.' : 'As notícias já foram consultadas nos últimos dois minutos. Exibindo o resultado mais recente; o provedor pode não ter novos artigos.')
     } catch (e) { setError(e instanceof Error ? e.message : 'Coleta não concluída.') }
     finally { setBusy(false) }
   }
@@ -49,15 +49,15 @@ export function NewsSection({ client, onUpdated }: NewsSectionProps) {
             Selecionadas automaticamente pelos interesses identificados. Remova as que não forem pertinentes.
           </p>
         </div>
-        <Button onClick={() => void collect()} disabled={busy || !state?.configurado || !state.vinculos.length}>
+        <Button onClick={() => void collect()} disabled={busy || !state?.configurado}>
           {busy ? 'Aguarde…' : 'Buscar notícias'}
         </Button>
       </div>
 
-      <p className="mt-3 text-[10px] leading-relaxed text-ink-muted">NewsAPI pode disponibilizar artigos com atraso conforme o plano. Coleta recente não garante notícia em tempo real. O humor é inferido das interações, separado das notícias ou recomendação de investimento.</p>
+      <p className="mt-3 text-[10px] leading-relaxed text-ink-muted">NewsAPI pode disponibilizar artigos com atraso conforme o plano. Coleta recente não garante notícia em tempo real. O humor é inferido das interações; as notícias não são recomendações de investimento.</p>
       {state && <div className="mt-3 space-y-3">
         {!state.configurado && <p className="text-xs text-ink-muted">A busca de notícias precisa de configuração no backend.</p>}
-        {!state.vinculos.length && <p className="text-xs text-ink-muted">Nenhum interesse identificado corresponde ao catálogo atual: Fórmula 1, Palmeiras e Corinthians.</p>}
+        {state.assuntos.some((a) => a.id === 'mercado') && <p className="text-xs text-ink-muted">Sem assunto pessoal identificado no catálogo, mostramos notícias gerais do mercado financeiro.</p>}
         <ul className="space-y-2 text-[11px] leading-relaxed text-ink-muted">
           {state.assuntos.map((t) => <li key={t.id}>
             <span className="font-medium">{t.nome}</span> · {statusLabel[t.estado]}{t.ultima_coleta && ` · Última coleta ${formatDate(t.ultima_coleta)}`}

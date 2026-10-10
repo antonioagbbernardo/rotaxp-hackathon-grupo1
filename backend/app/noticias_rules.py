@@ -9,6 +9,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from .clock import formatar_utc
 
 CATALOGO = {
+    'mercado': {'nome': 'Mercado financeiro · notícias gerais', 'q': '"mercado financeiro" OR "taxa Selic" OR "economia brasileira"'},
     'formula-1': {'nome': 'Fórmula 1', 'q': '"Fórmula 1" OR "Formula 1" OR F1'},
     'palmeiras': {'nome': 'Palmeiras', 'q': 'Palmeiras AND futebol'},
     'corinthians': {'nome': 'Corinthians', 'q': 'Corinthians AND futebol'},

@@ -57,12 +57,15 @@ def _assuntos_automaticos(cid, itens=None):
     ids_legados = {v['item_id'] for v in legados}
     # Ler notícias não é contatar o cliente: a cadência não impede a preparação.
     # Propostas com evidência literal podem sugerir notícias, sem confirmar o contexto.
-    return legados + [{'id': f"automatico-{i['id']}-{assunto}", 'item_id': i['id'], 'revisao': i['revisao'],
+    encontrados = legados + [{'id': f"automatico-{i['id']}-{assunto}", 'item_id': i['id'], 'revisao': i['revisao'],
              'assunto': assunto, 'interesse': _valor(i), 'fontes': _fontes(i), 'automatico': True}
             for i in itens if i['id'] not in ids_legados and i['categoria'] == 'interesse' and i['tipo'] == 'fato' and i['sujeito'] == 'cliente'
             and i['estado'] in ('pendente', 'confirmado', 'corrigido') and i['evidencia_atual']
             and not i['conflitos'] and not i['bloqueado']
             for assunto in assuntos_do_interesse(_valor(i))]
+    return encontrados or [{'id': 'automatico-mercado', 'item_id': None, 'revisao': 0,
+        'assunto': 'mercado', 'interesse': 'Notícias gerais do mercado financeiro', 'fontes': [],
+        'automatico': True, 'geral': True}]
 
 
 def vincular(cid, corpo):
@@ -135,7 +138,8 @@ def consultar(cid, itens=None):
             if a['url'] in descartadas or parse_instante(a['publishedAt']) < clock.agora() - timedelta(days=7):
                 continue
             artigos.setdefault(a['url'], {**a, 'id': a['url'], 'sentiment': 'unknown', 'scenario': 'NewsAPI',
-                'whyItMatters': f"Sugestão automática pelo interesse identificado: {vinculo['interesse']} · " + '; '.join(vinculo['fontes']),
+                'whyItMatters': ('Notícia geral do mercado financeiro para preparação do assessor; não representa um interesse pessoal inferido.'
+                    if vinculo.get('geral') else f"Sugestão automática pelo interesse identificado: {vinculo['interesse']} · " + '; '.join(vinculo['fontes'])),
                 'relevance': 'Sugestão de assunto para o assessor revisar.', 'topic': CATALOGO[assunto]['nome'],
                 'collectedAt': sucesso['fim_em'],
                 'updatedMinutesAgo': max(0, int((clock.agora() - parse_instante(sucesso['fim_em'])).total_seconds() // 60))})
