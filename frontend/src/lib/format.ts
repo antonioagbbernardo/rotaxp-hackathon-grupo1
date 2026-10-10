@@ -23,9 +23,11 @@ export function formatDate(iso: string) {
   return new Date(iso).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })
 }
 
-/** "2023-09" -> "set. 2023" */
+/** Aceita mês ISO ou data ISO completa e apresenta mês/ano. */
 export function formatMonth(isoMonth: string) {
-  return monthYear.format(new Date(`${isoMonth}-01T00:00:00Z`)).replace(' de ', ' ')
+  const month = /^(\d{4})-(0[1-9]|1[0-2])(?:$|-[0-3]\d(?:$|T))/.exec(isoMonth)
+  if (!month) return 'Data não informada'
+  return monthYear.format(new Date(`${month[1]}-${month[2]}-01T00:00:00Z`)).replace(' de ', ' ')
 }
 
 export function capitalize(text: string) {

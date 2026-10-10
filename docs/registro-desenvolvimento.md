@@ -507,3 +507,20 @@ o processo aberto e usar um vínculo de interesse já revisado pelo assessor.
   Perfil fictício original restaurado após a verificação. Porta local 5004.
 - Limites: sem aparelho físico ou suíte backend completa. Sem chamadas a
   provedores durante a verificação. Commit local solicitado pelo usuário; sem push.
+
+## Integração na main — perfil, Todos e Pulse IA (10/10/2026)
+
+- Envio à main autorizado pelo usuário. Integrados os 13 commits remotos até
+  `6b9d8ae`, preservando notícias, fotos, comunicações recentes e painel da equipe.
+- Conflito único no título do chat: mantido `Pulse IA`, conforme pedido.
+  Perfil editável e cabeçalho preservam textos salvos sem a substituição de
+  nomes usada na apresentação dos demais dados; teste frontend de regressão.
+- Ajustado o teste da última interação de Ana para oito dias, conforme o novo
+  seed remoto de comunicações (o teste ainda esperava dez). Regra sem alteração.
+- Build, lint e 24 testes frontend aprovados. Lote backend: 57 aprovados, uma
+  expectativa desatualizada identificada e corrigida; caso corrigido aprovado
+  na repetição. Total: 58 casos aprovados. Teste POSIX 0600 excluído por
+  incompatibilidade conhecida com Windows. Suíte completa não executada.
+- Edge: salvar/recarregar perfil, cabeçalho, cancelar, erro/retry, validação e
+  retorno ao cliente aprovados; celular 390/320 px sem rolagem horizontal.
+  Perfil fictício original restaurado. Backend atualizado na porta 5004.

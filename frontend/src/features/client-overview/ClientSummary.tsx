@@ -8,6 +8,8 @@ import type { Client, ClientStatus } from '@/types/client'
 import { useState } from 'react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
+import { MessageSquare } from 'lucide-react'
+import { RecentMessagesModal } from './RecentMessagesModal'
 
 const statusBadge: Record<ClientStatus, { label: string; tone: BadgeTone }> = {
   opportunity: { label: "Oportunidade", tone: "positive" },
@@ -24,6 +26,8 @@ export function ClientSummary({ client, onUpdated }: ClientSummaryProps) {
   const status = statusBadge[client.status];
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [showMessagesModal, setShowMessagesModal] = useState(false)
+  const totalMensagens = (client.interactions?.length ?? 0) + (client.sourceDocuments?.filter((f) => f.tipo === 'interacao').length ?? 0)
   async function atualizarHumor(revisar = false) {
     setBusy(true); setError('')
     try {
@@ -36,7 +40,7 @@ export function ClientSummary({ client, onUpdated }: ClientSummaryProps) {
   return (
     <Panel className="px-6 pt-6 pb-4">
       <div className="flex items-start gap-4">
-        <Avatar name={client.name} size="lg" />
+        <Avatar name={client.name} src={client.photoUrl} size="lg" />
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -75,16 +79,37 @@ export function ClientSummary({ client, onUpdated }: ClientSummaryProps) {
         </div>
       </div>
 
-      <dl className="mt-4 grid grid-cols-1 gap-2 border-t border-line pt-3.5 text-[11px] sm:grid-cols-2 sm:items-center">
-        <div className="text-ink-muted">
-          <dt className="inline">WhatsApp </dt>
-          <dd className="inline">{client.whatsapp || 'não informado'}</dd>
-        </div>
-        <div className="text-ink-muted">
-          <dt className="sr-only">E-mail</dt>
-          <dd>{client.email || 'E-mail não informado'}</dd>
-        </div>
-      </dl>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3.5 text-[11px]">
+        <dl className="flex flex-wrap items-center gap-x-6 gap-y-1 text-ink-muted">
+          <div>
+            <dt className="inline font-medium">WhatsApp: </dt>
+            <dd className="inline">{client.whatsapp || 'não informado'}</dd>
+          </div>
+          <div>
+            <dt className="inline font-medium">E-mail: </dt>
+            <dd className="inline">{client.email || 'E-mail não informado'}</dd>
+          </div>
+        </dl>
+        <Button
+          onClick={() => setShowMessagesModal(true)}
+          variant="secondary"
+          className="flex h-8 items-center gap-1.5 px-3 text-xs text-ink hover:border-brand/50 hover:text-brand"
+        >
+          <MessageSquare className="size-3.5 text-brand" />
+          <span>Mensagens recentes</span>
+          {totalMensagens > 0 && (
+            <span className="rounded-full bg-surface px-1.5 py-0.5 text-[10px] font-medium text-ink-muted">
+              {totalMensagens}
+            </span>
+          )}
+        </Button>
+      </div>
+
+      <RecentMessagesModal
+        client={client}
+        isOpen={showMessagesModal}
+        onClose={() => setShowMessagesModal(false)}
+      />
     </Panel>
   );
 }

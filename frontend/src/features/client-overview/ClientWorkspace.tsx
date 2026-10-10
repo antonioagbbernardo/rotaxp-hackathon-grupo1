@@ -1,27 +1,13 @@
 import { Panel } from '@/components/ui/Panel'
 import { controlClass, MutationForm } from '@/components/ui/MutationForm'
 import { api } from '@/lib/api'
-import { formatCurrency, formatDate } from '@/lib/format'
+import { formatDate } from '@/lib/format'
 import type { Client } from '@/types/client'
 
 export function ClientWorkspace({ client, onUpdated }: { client: Client; onUpdated: () => Promise<void> }) {
   const pref = client.preferences
   return <div id={`registros-${client.id}`} className="min-w-0 space-y-4">
-    <Panel className="p-5">
-      <h2 className="text-sm font-medium">Alertas e vencimentos</h2>
-      <ul className="mt-3 space-y-3">{client.alerts?.map((a) => <li key={a.chave_ocorrencia} className="rounded-lg border border-line p-3">
-        <p className="text-xs font-medium">{a.rotulo} · {a.estado === 'tratado' ? 'Tratado' : 'Pendente'}</p>
-        <p className="mt-1 text-[11px] text-ink-muted">{a.motivo}</p>
-        <p className="mt-1 text-[10px] text-ink-muted">Fonte: {a.fonte.tipo_fonte} #{String(a.fonte.id_fonte)}</p>
-        {a.estado !== 'tratado' && <MutationForm label="Marcar como tratado" onSave={async () => {
-          await api('/api/alertas/tratar', { method: 'POST', body: { cliente_id: Number(client.id), chave_ocorrencia: a.chave_ocorrencia } }); await onUpdated()
-        }}>{null}</MutationForm>}
-      </li>)}</ul>
-      {!client.alerts?.length && <p className="mt-3 text-xs text-ink-muted">Nenhum alerta elegível.</p>}
-      <details className="mt-4"><summary className="cursor-pointer text-xs">Posições e fontes</summary>
-        {client.positions?.length ? client.positions.map((p) => <p key={p.id} className="mt-2 text-[11px]">{p.ativo} · {formatCurrency(p.valor)} · vence {p.vencimento}<br /><span className="text-ink-muted">Fonte: posição #{p.id} · {p.fonte}</span></p>) : <p className="mt-2 text-xs text-ink-muted">Nenhuma posição cadastrada.</p>}
-      </details>
-    </Panel>
+
     <Panel className="p-5"><details><summary className="cursor-pointer text-sm font-medium">Formulário e conversas originais ({client.sourceDocuments?.length ?? 0})</summary>
       {client.sourceDocuments?.map((f) => <details key={f.id} className="mt-3 rounded-lg border border-line p-3">
         <summary className="cursor-pointer text-xs">{f.tipo === 'formulario' ? 'Formulário' : f.tipo === 'nota_assessor' ? 'Informação registrada pelo chat' : f.canal} · {f.registro_id} v{f.versao} · {f.atual ? 'atual' : 'anterior'}</summary>

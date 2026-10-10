@@ -192,3 +192,37 @@ def test_gravacao_automatica_atomica_e_retry_sem_duplicar(ambiente, monkeypatch)
     assert perguntar(c, 'Cliente gosta de Palmeiras.', request_id=rid).get_json()['nota_id'] == turno['nota_id']
     assert len(c.get('/api/pulse/clientes/1/chat').get_json()['notas']) == 1
     assert len(c.get('/api/clientes/1/contexto').get_json()['itens']) == 1
+
+
+def test_futebol_digitado_em_noticias_salva_sem_ia_e_seleciona_assunto(ambiente):
+    app, c, fake = ambiente
+    rid = str(uuid4())
+    corpo = {'pergunta': 'Adicionar interesse do cliente: futebol', 'interesse': 'futebol', 'request_id': rid}
+    r = c.post('/api/pulse/clientes/2/chat', json=corpo)
+    assert r.status_code == 200 and r.get_json()['nota_id']
+    assert fake.chamadas == []
+    cliente = next(r for r in c.get('/api/pulse').get_json()['clients'] if r['id'] == '2')
+    assert 'futebol' in cliente['interests']
+    assert {a['id'] for a in cliente['newsState']['assuntos']} == {'futebol'}
+    assert c.post('/api/pulse/clientes/2/chat', json=corpo).get_json()['nota_id'] == r.get_json()['nota_id']
+
+
+def test_declaracao_gosta_de_cafe_salva_mesmo_se_ia_omite_nota(ambiente):
+    app, c, fake = ambiente
+    turno = perguntar(c, 'O BRUNO GOSTA DE CAFE', cid=2).get_json()
+    assert turno['nota_id'] and turno['contexto_sugerido'][0]['categoria'] == 'interesse'
+    cliente = next(r for r in c.get('/api/pulse').get_json()['clients'] if r['id'] == '2')
+    assert {a['id'] for a in cliente['newsState']['assuntos']} == {'cafe'}
+    fake.saida = {'resposta': 'Não tenho essa informação.', 'fontes': [], 'nota_sugerida': None}
+    assert perguntar(c, 'Ele gosta de café?', cid=2).get_json()['nota_id'] is None
+
+
+def test_campo_noticias_entende_frase_e_lista_sem_buscar_frase_inteira(ambiente):
+    _, c, fake = ambiente
+    for mensagem, esperados in [('Ele gosta de uva', {'uva'}), ('ciclismo, chocolate', {'uva', 'ciclismo', 'chocolate'})]:
+        r = c.post('/api/pulse/clientes/2/chat', json={'pergunta': f'Adicionar interesse do cliente: {mensagem}',
+                   'interesse': mensagem, 'request_id': str(uuid4())})
+        assert r.status_code == 200 and r.get_json()['nota_id']
+        cliente = next(i for i in c.get('/api/pulse').get_json()['clients'] if i['id'] == '2')
+        assert {a['id'] for a in cliente['newsState']['assuntos']} == esperados
+    assert not fake.chamadas

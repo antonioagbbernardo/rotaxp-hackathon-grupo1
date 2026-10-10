@@ -3,10 +3,10 @@ import { Panel } from '@/components/ui/Panel'
 import wave from '@/assets/onda-pulse.png'
 import type { Client } from '@/types/client'
 import { AskAssistantForm } from './AskAssistantForm'
-import { InsightCard } from './InsightCard'
 import { OpeningSuggestion } from './OpeningSuggestion'
 import { UserMessage } from './UserMessage'
 import { api } from '@/lib/api'
+import { atualizarNoticias } from '@/lib/noticias'
 import { Button } from '@/components/ui/Button'
 import { ClientBriefing } from './ClientBriefing'
 import { useApiResource } from '@/hooks/useApiResource'
@@ -29,6 +29,7 @@ interface AssistantPanelProps {
 export function AssistantPanel({ client, onUpdated }: AssistantPanelProps) {
   const [followUps, setFollowUps] = useState<ChatTurn[]>([])
   const [busy, setBusy] = useState(false)
+  const [newsNotice, setNewsNotice] = useState('')
   const { data: chat, error: chatError, loading, refresh } = useApiResource<ChatView>(
     `/api/pulse/clientes/${client.id}/chat`, (client.sourceDocuments ?? []).map((d) => `${d.id}:${d.versao}`).join('|'))
   const turns = [...(chat?.mensagens.filter((m) => !followUps.some((f) => f.request_id === m.request_id)) ?? []), ...followUps]
@@ -37,15 +38,23 @@ export function AssistantPanel({ client, onUpdated }: AssistantPanelProps) {
 
   async function handleAsk(question: string, retryIndex?: number) {
     if (busy) return
-    setBusy(true)
+    setBusy(true); setNewsNotice('')
     const index = retryIndex ?? followUps.length
     const requestId = retryIndex === undefined ? crypto.randomUUID() : followUps[index].request_id
     const pending: ChatTurn = { id: 0, request_id: requestId, pergunta: question, resposta: '', fontes: [], nota_sugerida: null, nota_id: null }
     setFollowUps((current) => retryIndex === undefined ? [...current, pending] : current.map((entry, n) => n === index ? pending : entry))
     try {
-      const result = await api<ChatTurn>(`/api/pulse/clientes/${client.id}/chat`, { method: 'POST', body: { pergunta: question, request_id: requestId } })
+      const result = await api<ChatTurn>(`/api/pulse/clientes/${client.id}/chat`, { method: 'POST', signal: AbortSignal.timeout(60_000), body: { pergunta: question, request_id: requestId } })
       setFollowUps((current) => current.map((entry, n) => n === index ? result : entry))
-      if (result.nota_id) { await refresh().catch(() => {}); await onUpdated() }
+      if (result.nota_id) {
+        await refresh().catch(() => {}); await onUpdated()
+        if (result.contexto_sugerido?.some((item) => item.categoria === 'interesse')) {
+          setNewsNotice('Interesses salvos. Atualizando notícias…')
+          const collectionError = await atualizarNoticias(client.id)
+          await onUpdated()
+          setNewsNotice(collectionError || 'Interesses e notícias atualizados automaticamente.')
+        }
+      }
     } catch (e) {
       setFollowUps((current) => current.map((entry, n) => n === index ? { ...pending, error: e instanceof Error ? e.message : 'Consulta não concluída.' } : entry))
     } finally { setBusy(false) }
@@ -59,7 +68,7 @@ export function AssistantPanel({ client, onUpdated }: AssistantPanelProps) {
           <h2 id="assistant-title" className="text-base font-semibold">
             Pulse IA
           </h2>
-          <p className="mt-1 text-[11px] text-ink-muted">Prepare o atendimento de {firstName} com contexto e fontes.</p>
+          <p className="mt-1 text-[11px] text-ink-muted">Seu assistente de relacionamento · Prepare o atendimento de {firstName}.</p>
         </div>
       </header>
 
@@ -67,14 +76,6 @@ export function AssistantPanel({ client, onUpdated }: AssistantPanelProps) {
         <UserMessage>{assistant.question}</UserMessage>
 
         <ClientBriefing client={client} onUpdated={onUpdated} />
-
-        <ol className="space-y-3">
-          {assistant.insights.map((insight, index) => (
-            <li key={insight.title}>
-              <InsightCard insight={insight} position={index + 1} />
-            </li>
-          ))}
-        </ol>
 
         <OpeningSuggestion openings={assistant.openings} />
 
@@ -101,6 +102,7 @@ export function AssistantPanel({ client, onUpdated }: AssistantPanelProps) {
       </div>
 
       <div className="mt-3">
+        {newsNotice && <p role="status" className="mb-2 text-xs text-ink-muted">{newsNotice}</p>}
         <AskAssistantForm placeholder="Converse, peça ajuda ou informe algo novo…" onAsk={(q) => void handleAsk(q)} disabled={busy || loading || !chat?.configurado} />
         <p className="mt-2 text-[9px] text-ink-muted">
           Informe interesses, preferências e contexto aqui · Salvos automaticamente
