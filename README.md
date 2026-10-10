@@ -104,6 +104,7 @@ Consultas de leitura (`GET`) não chamam os provedores de IA ou notícias. As at
 | **Python 3.13 + Flask 3** | API, regras, integração com provedores e comandos de operação; estrutura pequena e rápida de implementar no prazo. |
 | **SQLite** | Persistência local de clientes, interações, carteira, contexto, reuniões, sessões, caches e feedback; dispensa um servidor de banco adicional. |
 | **uv + `uv.lock`** | Ambiente e dependências Python reproduzíveis. |
+| **python-dotenv + tzdata** | Configuração local por `.env` e suporte consistente aos fusos utilizados pelo backend. |
 | **React 19 + TypeScript** | Componentes do painel e contratos tipados, facilitando divisão do frontend e integração com a API. |
 | **Tailwind CSS 4 + Vite 8** | Estilização consistente, desenvolvimento rápido e geração do frontend para ser servido pelo Flask. |
 | **Node.js + npm** | Ferramentas de build e testes do frontend; Node.js não é o servidor principal do backend. |
@@ -322,7 +323,7 @@ npm run build
 
 Os testes cobrem regras de prioridade, precisão financeira, contratos, login/CSRF, fontes versionadas, contexto, conversa, humor, notícias, reuniões, lembretes e repetição sem duplicações. Provedores são simulados nos testes para verificar comportamento sem gastar chamadas externas. Os testes de frontend incluem autenticação, comunicação com a API, formatação e radar.
 
-Antes da última integração Google Calendar, a verificação local passou com 404 testes de backend e 24 testes de frontend, lint e build; a versão com Calendar é validada na consolidação final. Também foram verificadas a leitura do painel, a rota do perfil do assessor e a repetição da importação das fontes atualizadas. Essas contagens registram a versão verificada; não representam cobertura integral de todos os cenários possíveis.
+A verificação local após a integração Google Calendar passou com **409 testes de backend e 24 testes de frontend**, além de lint e build. Também foram verificadas a leitura do painel com dez clientes, a rota do perfil do assessor, o estado da integração Google Calendar e a repetição da importação das fontes atualizadas. Os testes de Calendar usam um provedor simulado; a conexão OAuth real depende da configuração e autorização da conta. Essas contagens registram a versão verificada; não representam cobertura integral de todos os cenários possíveis.
 
 A CI em `.github/workflows/ci.yml` executa pytest no backend e testes, lint e build no frontend. O build também faz a checagem TypeScript. Verificações reais realizadas durante o desenvolvimento incluíram chat, coleta de notícias e atualização automática após inclusão de interesse; no navegador, também foi conferida a recuperação do painel após corrigir a formatação da data de cadastro.
 
