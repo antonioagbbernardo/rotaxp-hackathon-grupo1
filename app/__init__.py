@@ -1,14 +1,8 @@
-from datetime import date, datetime
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 from flask import Flask, render_template
 
-TZ = ZoneInfo("America/Sao_Paulo")
-
-
-def hoje_sp() -> date:
-    return datetime.now(TZ).date()
+from .clock import Clock
 
 
 def create_app(config: dict | None = None) -> Flask:
@@ -16,7 +10,7 @@ def create_app(config: dict | None = None) -> Flask:
     Path(app.instance_path).mkdir(exist_ok=True)
     app.config.update(
         DATABASE=str(Path(app.instance_path) / "app.db"),
-        HOJE=hoje_sp,  # relógio injetável: callable que devolve a data de hoje
+        CLOCK=Clock(),  # relógio único e injetável (America/Sao_Paulo)
     )
     if config:
         app.config.update(config)
@@ -25,6 +19,8 @@ def create_app(config: dict | None = None) -> Flask:
 
     db.init_app(app)
     seed.init_app(app)
+    with app.app_context():
+        db.init_db()  # CREATE IF NOT EXISTS: a API não falha em base nova
     app.register_blueprint(api.bp)
 
     @app.get("/")

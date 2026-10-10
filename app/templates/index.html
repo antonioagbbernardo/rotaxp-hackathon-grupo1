@@ -6,12 +6,12 @@
   <title>Assessor do Futuro</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
-<body class="bg-slate-50 text-slate-900">
+<body class="bg-slate-50 text-slate-900 break-words">
   <header class="p-4 bg-slate-900 text-white">
-    <h1 class="text-lg font-semibold">Assessor do Futuro</h1>
-    <p class="text-xs text-slate-300">Dados fictícios para demonstração</p>
+    <a href="#/" class="text-lg font-semibold">Assessor do Futuro</a>
+    <p class="text-xs text-slate-300">Dados fictícios para demonstração · uso local</p>
   </header>
-  <main id="app" class="p-4 max-w-3xl mx-auto"></main>
+  <main id="app" class="p-4 max-w-3xl mx-auto" aria-live="polite"></main>
   <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
 </body>
 </html>

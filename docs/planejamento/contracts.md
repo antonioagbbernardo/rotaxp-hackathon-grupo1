@@ -33,8 +33,12 @@ Canais: `whatsapp`, `email`, `telefone`, `presencial`.
 
 ### Resumo (RN08)
 
+`id_fonte` é inteiro ou, em fatos agregados (ex.: "2 posições cadastradas"),
+lista de ids. Ausências vão em `ausencias` (sem fonte), nunca como fato.
+
 ```
-{"fatos": [{"texto": "CDB vence em 5 dias",
+{"ausencias": ["Nenhuma interação registrada"],
+ "fatos": [{"texto": "CDB vence em 5 dias",
             "fonte": {"tipo_fonte": "posicao", "id_fonte": 1,
                       "data_referencia": "2026-10-15"}}]}
 ```
@@ -46,7 +50,8 @@ GET  /api/clientes                      lista (q, prioridade) ordenada por RN11
 GET  /api/clientes/<id>                 detalhe: perfil, preferências, resumo, alertas, posições, histórico
 POST /api/clientes/<id>/interacoes      registra interação
 POST /api/clientes/<id>/relacionamento  nova avaliação (exige justificativa)
-POST /api/alertas/tratar                trata alerta pela chave de ocorrência
+PATCH /api/clientes/<id>/preferencias  canal_preferido, intervalo_minimo_dias, permite_assuntos_pessoais
+POST /api/alertas/tratar                trata alerta pela chave de ocorrência (200 se já tratado)
 ```
 
 O alerta não tem `id` persistido; a rota de tratamento recebe

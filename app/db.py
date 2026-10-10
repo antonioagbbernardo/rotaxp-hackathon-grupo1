@@ -3,15 +3,31 @@ import sqlite3
 import click
 from flask import Flask, current_app, g
 
-# Dinheiro: TEXT com Decimal (nunca float). Datas: YYYY-MM-DD. Instantes: ISO 8601 com offset.
+# Dinheiro: TEXT com Decimal (nunca float). Datas: YYYY-MM-DD. Instantes: UTC ISO 8601.
+# O alerta NÃO é persistido (calculado sob demanda); só o tratamento (tratamento_alerta).
+TABELAS = ("tratamento_alerta", "avaliacao_relacionamento", "interacao", "data_importante",
+           "posicao", "cliente", "assessor")
+
 SCHEMA = """
+CREATE TABLE IF NOT EXISTS assessor (
+    id INTEGER PRIMARY KEY,
+    nome TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS cliente (
     id INTEGER PRIMARY KEY,
     nome TEXT NOT NULL,
     perfil TEXT NOT NULL DEFAULT '',
-    permite_assuntos_pessoais INTEGER NOT NULL DEFAULT 0,
-    estado_relacionamento TEXT CHECK (estado_relacionamento IN ('positivo','atencao','negativo')),
-    justificativa TEXT NOT NULL DEFAULT ''
+    canal_preferido TEXT CHECK (canal_preferido IN ('whatsapp','email','telefone','presencial')),
+    intervalo_minimo_dias INTEGER NOT NULL DEFAULT 7 CHECK (intervalo_minimo_dias IN (7,14,30)),
+    permite_assuntos_pessoais INTEGER NOT NULL DEFAULT 0 CHECK (permite_assuntos_pessoais IN (0,1))
+);
+CREATE TABLE IF NOT EXISTS avaliacao_relacionamento (
+    id INTEGER PRIMARY KEY,
+    cliente_id INTEGER NOT NULL REFERENCES cliente(id),
+    estado TEXT NOT NULL CHECK (estado IN ('positivo','atencao','negativo')),
+    justificativa TEXT NOT NULL CHECK (length(trim(justificativa)) > 0),
+    assessor_id INTEGER NOT NULL REFERENCES assessor(id),
+    avaliada_em TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS posicao (
     id INTEGER PRIMARY KEY,
@@ -26,8 +42,10 @@ CREATE TABLE IF NOT EXISTS interacao (
     cliente_id INTEGER NOT NULL REFERENCES cliente(id),
     canal TEXT NOT NULL CHECK (canal IN ('whatsapp','email','telefone','presencial')),
     texto TEXT NOT NULL CHECK (length(trim(texto)) > 0),
-    data_hora TEXT NOT NULL,
-    proximos_passos TEXT
+    ocorrida_em TEXT NOT NULL,
+    registrada_em TEXT NOT NULL,
+    proximos_passos TEXT,
+    assessor_id INTEGER NOT NULL REFERENCES assessor(id)
 );
 CREATE TABLE IF NOT EXISTS data_importante (
     id INTEGER PRIMARY KEY,
@@ -39,17 +57,11 @@ CREATE TABLE IF NOT EXISTS data_importante (
     mes INTEGER NOT NULL CHECK (mes BETWEEN 1 AND 12),
     fonte TEXT NOT NULL DEFAULT 'Registro manual do assessor'
 );
-CREATE TABLE IF NOT EXISTS alerta (
-    id INTEGER PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS tratamento_alerta (
+    chave_ocorrencia TEXT PRIMARY KEY,
     cliente_id INTEGER NOT NULL REFERENCES cliente(id),
-    tipo TEXT NOT NULL CHECK (tipo IN ('vencimento','vencido','aniversario')),
-    prioridade TEXT NOT NULL CHECK (prioridade IN ('alta','media','baixa')),
-    motivo TEXT NOT NULL,
-    fonte TEXT NOT NULL,
-    estado TEXT NOT NULL DEFAULT 'pendente' CHECK (estado IN ('pendente','tratado')),
-    chave_ocorrencia TEXT NOT NULL,
-    data_referencia TEXT NOT NULL,
-    UNIQUE (cliente_id, chave_ocorrencia)
+    tratado_em TEXT NOT NULL,
+    assessor_id INTEGER NOT NULL REFERENCES assessor(id)
 );
 """
 
@@ -70,6 +82,13 @@ def close_db(_exc=None) -> None:
 
 def init_db() -> None:
     get_db().executescript(SCHEMA)
+
+
+def drop_all() -> None:
+    db = get_db()
+    for tabela in TABELAS:
+        db.execute(f"DROP TABLE IF EXISTS {tabela}")
+    db.commit()
 
 
 def init_app(app: Flask) -> None:

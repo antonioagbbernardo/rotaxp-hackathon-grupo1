@@ -1,16 +1,25 @@
-"""Regras puras (sem I/O). Referência: docs/spec.md RN03, RN04, RN11, RN12."""
+"""Regras puras (sem I/O). Referência: docs/planejamento/spec.md RN03, RN04, RN11, RN12, RN13."""
 from datetime import date
 
 ORDEM = {"alta": 0, "media": 1, "baixa": 2}
+INTERVALOS_VALIDOS = (7, 14, 30)
 
 
-def prioridade_vencimento(vencimento: date, hoje: date) -> str | None:
-    """RN03/RN04. Vencido ou 0–7 dias: alta; 8–30: média; 31+: sem alerta."""
-    dias = (vencimento - hoje).days
-    if dias <= 7:
-        return "alta"
-    if dias <= 30:
-        return "media"
+def _dias(n: int) -> str:
+    return f"{n} dia" if n == 1 else f"{n} dias"
+
+
+def classificar_vencimento(vencimento: date, hoje: date) -> dict | None:
+    """RN03/RN04. Δ = vencimento − hoje. Devolve None quando fora da janela (Δ ≥ 31)."""
+    delta = (vencimento - hoje).days
+    if delta < 0:
+        return {"classificacao": "vencido", "prioridade": "alta", "rotulo": f"Vencido há {_dias(-delta)}", "delta": delta}
+    if delta == 0:
+        return {"classificacao": "vence_hoje", "prioridade": "alta", "rotulo": "Vence hoje", "delta": delta}
+    if delta <= 7:
+        return {"classificacao": "vencimento_proximo", "prioridade": "alta", "rotulo": f"Vence em {_dias(delta)}", "delta": delta}
+    if delta <= 30:
+        return {"classificacao": "vencimento_futuro", "prioridade": "media", "rotulo": f"Vence em {_dias(delta)}", "delta": delta}
     return None
 
 
@@ -20,7 +29,7 @@ def prioridade_cliente(prioridades_pendentes: list[str]) -> str:
 
 
 def proxima_ocorrencia_aniversario(dia: int, mes: int, hoje: date) -> date:
-    """Próxima data (hoje inclusive) em que dia/mês ocorre. 29/02 cai em 28/02 fora de bissexto."""
+    """Próxima data (hoje inclusive) do dia/mês. 29/02 vira 28/02 fora de ano bissexto."""
     for ano in (hoje.year, hoje.year + 1):
         try:
             candidata = date(ano, mes, dia)
@@ -32,6 +41,18 @@ def proxima_ocorrencia_aniversario(dia: int, mes: int, hoje: date) -> date:
 
 
 def aniversario_gera_alerta(dia: int, mes: int, hoje: date) -> date | None:
-    """RN12. Devolve a data da ocorrência se faltam 0–7 dias; senão None."""
+    """RN12. Data da ocorrência se faltam 0–7 dias; senão None."""
     ocorrencia = proxima_ocorrencia_aniversario(dia, mes, hoje)
     return ocorrencia if (ocorrencia - hoje).days <= 7 else None
+
+
+def contato_pessoal_permitido(
+    permite_assuntos_pessoais: bool, intervalo_minimo_dias: int, ultimo_contato: date | None, hoje: date
+) -> bool:
+    """RN13. Permissão explícita e intervalo mínimo desde o último contato realizado.
+    Sem histórico, o intervalo não bloqueia."""
+    if not permite_assuntos_pessoais:
+        return False
+    if ultimo_contato is None:
+        return True
+    return (hoje - ultimo_contato).days >= intervalo_minimo_dias
