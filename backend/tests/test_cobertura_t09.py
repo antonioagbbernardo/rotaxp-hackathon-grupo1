@@ -1,8 +1,8 @@
 """Testes dos critérios de T09 (CA40–CA56) que a suíte dos incrementos 01 e 02 protegia mal.
 
-Rastreabilidade: docs/planejamento/rastreabilidade-testes.md. Os casos vêm de
+Rastreabilidade: README.md e especificações anteriores no histórico Git. Os casos vêm de
 revisão independente e de mutação da aplicação; as expectativas vêm de
-docs/planejamento/incrementos/ e de contracts.md, não da saída da aplicação.
+incrementos e contratos de especificação preservados no histórico Git, não da saída da aplicação.
 """
 import json
 from datetime import datetime, timedelta

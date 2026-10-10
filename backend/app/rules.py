@@ -1,4 +1,4 @@
-"""Regras puras (sem I/O). Referência: docs/planejamento/spec.md RN03, RN04, RN11, RN12, RN13."""
+"""Regras puras (sem I/O). Referência: README.md; regras RN03, RN04, RN11, RN12 e RN13 preservadas no histórico Git."""
 from datetime import date
 
 ORDEM = {"alta": 0, "media": 1, "baixa": 2}
