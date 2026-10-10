@@ -1,7 +1,8 @@
 # Documentação da equipe
 
 **Situação atual:** planejamento. Nenhuma funcionalidade está implementada nesta pasta.
-**Última revisão:** 10/10/2026.
+**Última revisão:** 10/10/2026. Núcleo: consumir fontes existentes, inferir contexto
+e sugerir lembranças sob supervisão humana, incorporando feedback.
 
 ## Comece por aqui
 
@@ -12,6 +13,8 @@
 | [Especificação curta](planejamento/spec.md) | Alinhar o fluxo principal e regras básicas |
 | [Arquitetura](planejamento/design.md) | Consultar responsabilidades, dados e decisões técnicas |
 | [Tarefas](planejamento/tasks.md) | Dividir responsabilidades, integração e tempo |
+| [Dados fictícios e testes](planejamento/plano-dados-ficticios.md) | Planejar uma fonte simulada e resultados esperados para validar o fluxo |
+| [Contexto e feedback](integracoes/contexto-investidor.md) | Fonte existente, inferências, lembranças e revisão humana |
 | [Busca de notícias](integracoes/busca-noticias.md) | Entender NewsAPI, atualização diária, cache, custos e reuniões |
 
 ## Organização local

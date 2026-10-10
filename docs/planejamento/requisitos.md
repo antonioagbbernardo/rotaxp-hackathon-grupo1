@@ -3,7 +3,7 @@
 **Status:** planejamento para revisão da equipe; somente documentação nesta etapa.
 **Referências:** [especificação](spec.md), [arquitetura](design.md) e [tarefas](tasks.md).
 **Usuário principal proposto:** assessor de investimentos.
-**Revisado em:** 10/10/2026. Inclui preparação de reunião (keynotes).
+**Revisado em:** 10/10/2026. Fontes existentes, inferência de contexto, supervisão humana e feedback são o núcleo do produto.
 
 **Decisão posterior da equipe:** usar NewsAPI.org para notícias, com atualização
 diária e possibilidade de atualização antecipada por reunião próxima. Política
@@ -11,23 +11,40 @@ de cache, limites e papel opcional de IA em [busca-noticias.md](../integracoes/b
 
 ## 1. Objetivo e recorte
 
-Reunir o contexto financeiro e de relacionamento de cada investidor para o
-assessor identificar prioridades, entender os motivos e registrar o próximo contato.
+### Pressupostos confirmados pelo usuário
+
+- Existe uma fonte com transcrições de ligações, e-mails e WhatsApp Business.
+- O investidor já preencheu um formulário inicial, também disponível como fonte.
+- Nosso produto consome esses materiais para extrair e inferir contexto.
+- Sugestões e lembranças ficam sob decisão final do assessor.
+- Feedback de relevância e correções deve influenciar o contexto e sugestões futuras.
+
+A existência dessas fontes é premissa do produto. Formato, localização e acesso
+técnico ainda não foram informados. Para demonstrar, podemos simular a fonte com
+dados fictícios no mesmo contrato, sem afirmar que há uma conexão real pronta.
+Detalhamento: [contexto e feedback](../integracoes/contexto-investidor.md).
+
+### Fluxo e escopo
+
+Transformar transcrições, e-mails, mensagens de WhatsApp Business e o formulário
+inicial já existentes em contexto do investidor, lembranças pertinentes e pautas
+de reunião. O assessor revisa as sugestões e fornece feedback que melhora a seleção futura.
 
 **Fluxo que deve orientar a implementação:**
 
-Selecionar cliente → consultar contexto → analisar alertas → preparar reunião
-com keynotes → registrar resultado e próximo passo → conferir o histórico.
+Receber dados existentes → extrair fatos e hipóteses com evidências → montar
+contexto e sugestões → assessor aprova, corrige ou descarta → preparar contato
+ou reunião → incorporar feedback e novas conversas.
 
 | Primeiro recorte proposto | Evolução ou decisão pendente |
 | --- | --- |
 | Web responsiva para computador e celular | Aplicativo separado |
 | Clientes e posições fictícios persistidos | Integração com sistemas financeiros |
-| Registro manual dos quatro canais | Captura real de WhatsApp, e-mail e telefone |
-| Resumo factual com evidências | Síntese por IA e respostas a perguntas iniciais |
+| Consumo da fonte existente de transcrições, e-mails, WhatsApp Business e formulário | Construção dos sistemas de captura e do formulário, fora do escopo atual |
+| Extração e inferência com evidências, contexto revisável e feedback | Respostas livres a perguntas, após definir limites e fontes |
 | Alertas de vencimento e notícias pertinentes via NewsAPI; simulações identificadas para testes | Análises financeiras e tributárias aprofundadas |
 | Preferências e avaliação do relacionamento | Gestão de vários assessores e acesso do investidor |
-| Histórico e próximos passos | Revisão e envio de atas ao investidor |
+| Histórico importado, lembranças pessoais e próximos passos | Envio de atas ao investidor |
 | Registro mínimo de reuniões e keynotes de preparação | Sincronização com calendários externos |
 
 As funcionalidades à direita continuam na visão do produto. A equipe deve
@@ -39,16 +56,22 @@ decidir quais cabem no hackathon antes de incluí-las como compromisso de entreg
 | --- | --- | --- | --- |
 | RF01 | Listar clientes e buscar por nome | Consulta na API; lista com identidade, perfil e pendências; filtro por prioridade | CA01 |
 | RF02 | Consultar o detalhe de um cliente | Recuperar perfil, objetivos, posições, preferências e registros pelo identificador do cliente | CA02 |
-| RF03 | Registrar uma interação | Formulário com canal, conteúdo e próximos passos opcionais; validar no backend e persistir | CA03, CA04 |
+| RF03 | Ingerir interações existentes | Adaptador de leitura da fonte disponível; identificar cliente, canal, origem e versão; notas manuais são complemento | CA03, CA04, CA26 |
 | RF04 | Consultar histórico cronológico | Ordenar por data da interação; mostrar canal, responsável e conteúdo; distinguir data da interação e do registro | CA02, CA03 |
-| RF05 | Mostrar resumo da situação atual | Organizar objetivo, última interação, pendências e avaliação em campos com fontes e atualização | CA11 |
+| RF05 | Mostrar contexto extraído e inferido | Combinar formulário e conversas; separar fatos de hipóteses, exibir fontes, conflitos e revisão humana | CA11, CA27, CA28 |
 | RF06 | Identificar vencimentos próximos ou passados | Comparar a data de vencimento com a data de referência; gerar indicação com prazo e origem | CA05 |
 | RF07 | Relacionar eventos pessoais aos interesses | Associar assuntos estruturados a interesses revisados, respeitando preferência de contato | CA06, CA07 |
 | RF08 | Mostrar prioridade de acompanhamento | Calcular a maior prioridade das pendências ativas e apresentar os motivos | CA01, CA12 |
 | RF09 | Registrar avaliação do relacionamento | Estado positivo, negativo ou atenção, com justificativa, autor e histórico | CA09 |
-| RF10 | Manter preferências de relacionamento | Registrar canais, frequência e abertura a assuntos pessoais; permitir revisão | CA07 |
+| RF10 | Manter preferências de relacionamento | Extrair formulário/conversas e permitir confirmação ou correção; silêncio não equivale a aceitar assuntos pessoais | CA07, CA28 |
 | RF11 | Marcar alerta como tratado | Persistir cliente, alerta, responsável e data; atualizar pendências sem apagar o histórico | CA08 |
 | RF12 | Alternar visões | Lista, detalhe e reuniões próximas; calendário visual completo é expansão | CA10, CA12, CA19 |
+
+### Conexão à fonte existente
+
+- **RF16 — Conexão à fonte existente:** definir o contrato de leitura do local
+  que já reúne as conversas e o formulário. Gravação/transcrição de chamadas,
+  captura direta nos canais e criação do formulário ficam fora do recorte atual.
 
 ### Requisitos candidatos para extensão
 
@@ -58,8 +81,6 @@ decidir quais cabem no hackathon antes de incluí-las como compromisso de entreg
   fontes, fórmulas e cenários de teste. Vencimento isolado não representa análise completa de risco.
 - **RF15 — Perguntas iniciais:** definir público, perguntas atendidas e fontes
   permitidas antes de incluir um assistente de perguntas e respostas.
-- **RF16 — Integrações:** definir API e condições de acesso de cada canal;
-  importação deve identificar origem e evitar registros repetidos.
 
 ### Novos requisitos de busca definidos pela direção da equipe
 
@@ -102,6 +123,19 @@ Conteúdo proposto da pauta:
 Ausência de dados deve ser indicada. A pauta continua útil com informações
 internas quando notícias ou IA estiverem indisponíveis.
 
+### Extração, lembranças e aprendizado com revisão
+
+| ID | Requisito | Implementação proposta | Aceite |
+| --- | --- | --- | --- |
+| RF25 | Consumir formulário existente | Ler campos/respostas e versões, preservando identificação e datas | CA26 |
+| RF26 | Extrair e inferir contexto das fontes | Saída estruturada com categoria, valor, pessoa referida, evidência, validade e estado de revisão | CA27, CA28 |
+| RF27 | Sugerir lembranças pertinentes | Datas, aniversários e combinados com destinatário correto, justificativa e validade | CA29 |
+| RF28 | Submeter sugestões à decisão humana | Aprovar, editar, descartar ou adiar; correções geram histórico e não alteram a fonte original | CA30 |
+| RF29 | Registrar feedback e aplicá-lo | Motivo e escopo por sugestão/assunto/cliente; reduzir repetição e ajustar seleção futura | CA31, CA32 |
+| RF30 | Renovar contexto sem perder revisão | Processar novos registros, preservar correções e encaminhar contradições para revisão | CA28, CA33 |
+
+RF25–RF30 complementam RF03/RF05/RF10 e constituem o núcleo do recorte revisado.
+
 ## 3. Regras a validar com a equipe
 
 As seguintes regras são **propostas de implementação**, não regras dos organizadores.
@@ -135,6 +169,16 @@ Os identificadores RN01–RN10 seguem `spec.md`.
   concluir mantém o histórico e encerra a preparação automática.
 - **Atualização interna:** nova interação pode renovar a pauta sem buscar novas
   notícias. Cache de notícias e versão da pauta têm controles independentes.
+- **Evidência:** fato extraído tem trecho/campo de origem. Hipótese deve ser
+  identificada e não vira fato confirmado apenas por pontuação do modelo.
+- **Datas e sujeitos:** distinguir aniversário do cliente, familiar e outra pessoa.
+  Expressões relativas usam data da conversa como referência; ambiguidades exigem revisão.
+- **Supervisão:** sugestões podem aparecer na fila interna, mas envio externo e
+  uso no contato dependem da decisão do assessor. Silêncio não é aprovação.
+- **Feedback:** descartar uma notícia não remove automaticamente o interesse;
+  o assessor escolhe o alcance da decisão. Ausência de clique não significa rejeição.
+- **Correção:** informação nova que contradiz dado revisado vira pendência;
+  reprocessamento não sobrescreve silenciosamente uma correção humana.
 
 ## 4. Requisitos não funcionais
 
@@ -155,8 +199,8 @@ de validação específica; esta documentação não a declara atendida.
 
 ### Etapa 0 — Fechar decisões e contratos
 
-**Fazer:** escolher stack, recorte, períodos dos alertas, níveis de prioridade,
-dados fictícios e responsabilidades. Definir campos compartilhados pela API e
+**Fazer:** definir o contrato da fonte existente e a identificação de clientes;
+escolher stack, recorte, períodos dos alertas, dados de demonstração e responsabilidades. Definir campos compartilhados pela API e
 interface, formato dos erros e fuso de referência (`America/Sao_Paulo`, proposto).
 
 **Saída:** especificação revisada e contratos curtos para cliente, interação e alerta.
@@ -168,7 +212,8 @@ interface, formato dos erros e fuso de referência (`America/Sao_Paulo`, propost
 de dados fictícios. Usar um único backend. React, Python e Node.js são candidatos;
 uma combinação ainda não foi aprovada. Banco SQL é a proposta inicial.
 
-**Dados mínimos:** cliente, posição, interação, interesse/vínculo com cliente,
+**Dados mínimos:** documento de origem, formulário versionado, extração, feedback,
+lembrança, cliente, posição quando disponível, interação, interesse/vínculo com cliente,
 preferência, evento, alerta, reunião, pauta versionada e histórico de avaliação. Persistir dinheiro em
 centavos ou tipo decimal apropriado, com unidade definida no contrato.
 
@@ -185,27 +230,31 @@ provisória até o motor de alertas estar integrado.
 **Validar:** busca, abertura do cliente correto e isolamento dos registros exibidos.
 **Entrega:** primeiro fluxo completo de consulta, integrado cedo.
 
-### Etapa 3 — Registrar interações e preferências
+### Etapa 3 — Consumir as fontes existentes
 
-**Fazer:** implementar RF03/RF04/RF10. Separar validação da interface e validação
-obrigatória no backend. Definir limites de conteúdo e impedir envio repetido
-enquanto salva; se houver retries, avaliar chave de operação no backend.
+**Fazer:** implementar RF03/RF04/RF16/RF25. Ler a fonte por adaptador, validar
+identificação do cliente e manter origem, data e versão. Importação incremental
+e idempotente deve evitar duplicação. Separar registros de identidade ambígua
+para revisão, sem atribuir conversas por semelhança de nomes.
 
-**Validar:** sucesso, conteúdo vazio, canal inválido, cliente inexistente,
-datas inválidas e persistência após recarregar. Preferências alteradas precisam
-afetar as sugestões pessoais.
-**Entrega:** histórico utilizável com registro e próximo passo.
+**Validar:** identidade ausente/ambígua, versão repetida ou corrigida, canal inválido,
+datas inválidas e persistência após recarregar. Dados inválidos ficam sinalizados
+sem contaminar o contexto confirmado.
+**Entrega:** formulário e histórico existentes consultáveis por cliente, com origem rastreável.
 
-### Etapa 4 — Construir resumo e avaliação
+### Etapa 4 — Extrair contexto, propor lembranças e receber feedback
 
-**Fazer:** implementar RF05/RF09. Primeiro construir resumo determinístico a
-partir dos dados; atualizar após nova interação. Manter histórico das avaliações.
-Se a equipe escolher IA, adicioná-la atrás de uma interface substituível, com
-cache por versão dos registros e retorno factual em caso de indisponibilidade.
+**Fazer:** implementar RF05/RF09/RF10/RF26–RF30. Extrair informações estruturadas
+com referência ao trecho de origem; classificar fatos, hipóteses e conflitos.
+Sugerir interesses, datas, compromissos e preferências para revisão. Processar
+novas versões dos dados e preservar correções humanas. IA é proposta para essa
+extração; modelo e provedor estão pendentes. Na indisponibilidade, manter contexto
+anterior e sinalizar que os novos registros aguardam processamento.
 
-**Validar:** resumo só usa fontes do cliente, evidencia atualização e não inventa
-informações. Alteração de estado sem justificativa é recusada.
-**Entrega:** contexto explicável e avaliação rastreável.
+**Validar:** fonte correta, negação, terceiros, aniversário ambíguo, conflitos,
+correção humana preservada e feedback com alcance explícito. Alteração de estado
+sem justificativa é recusada.
+**Entrega:** contexto inferido revisável, fila de sugestões e feedback persistido.
 
 ### Etapa 5 — Implementar alertas financeiros
 
@@ -277,6 +326,10 @@ Este contrato descreve responsabilidades; os caminhos podem ser ajustados em equ
 | Preparar/atualizar pauta | POST /meetings/{id}/brief/refresh | Resultado reutilizado, atualizado ou estado de processamento |
 | Revisar observações | PATCH /meetings/{id}/brief/notes | Notas do assessor preservadas separadamente |
 | Concluir encontro | POST /meetings/{id}/complete | Interação vinculada e reunião concluída em operação idempotente |
+| Sincronizar fonte existente | POST /source-syncs | Resultado/estado da ingestão incremental, controlada no backend |
+| Consultar contexto | GET /clients/{id}/context | Fatos, hipóteses, fontes, conflitos e revisão |
+| Consultar sugestões | GET /clients/{id}/suggestions | Lembranças e inferências com justificativa e estado |
+| Revisar sugestão | POST /clients/{id}/suggestions/{suggestionId}/feedback | Ação, correção/motivo e alcance persistidos |
 
 Definir antes de implementar: representação de valores, datas, identificadores,
 paginação se necessária e respostas para entrada inválida, ausência e acesso negado.
@@ -285,7 +338,7 @@ paginação se necessária e respostas para entrada inválida, ausência e acess
 
 CA01–CA10 estão em `spec.md`. Complementos propostos:
 
-- **CA11:** ao registrar nova conversa, o resumo mostra o novo registro como fonte;
+- **CA11:** ao ingerir nova conversa, o resumo atualizado mostra o novo registro como fonte;
   não inclui informações de outro cliente e sinaliza dados ausentes.
 - **CA12:** ao tratar a última pendência alta, filtros, contagens e prioridade
   do cliente são recalculados conforme as pendências restantes.
@@ -311,6 +364,22 @@ CA01–CA10 estão em `spec.md`. Complementos propostos:
   próximos passos e mantém a pauta usada como histórico.
 - **CA25:** falha de notícias/IA mantém a pauta com contexto interno e sinaliza
   quais informações não puderam ser atualizadas.
+- **CA26:** reimportar a mesma origem/versão não duplica interações ou formulário;
+  fonte sem identificação segura de cliente fica pendente, sem associação automática.
+- **CA27:** cada informação extraída aponta para evidência do cliente correto;
+  inferências aparecem como hipóteses, sem inventar campos ausentes.
+- **CA28:** conflito entre formulário, conversa ou correção humana é sinalizado;
+  confiança alta de IA não substitui revisão.
+- **CA29:** uma data de familiar não aparece como aniversário do investidor;
+  datas ambíguas não viram lembrete confirmado.
+- **CA30:** sugestão pode ser aprovada, editada, adiada ou descartada; ações são
+  persistidas e não causam envio automático ao investidor.
+- **CA31:** feedback de notícia irrelevante reduz sua repetição sem apagar o
+  interesse; bloqueio de assunto só afeta o alcance explicitamente escolhido.
+- **CA32:** bloquear um assunto para um cliente não afeta outros; ausência de
+  resposta não é contabilizada como aprovação nem rejeição.
+- **CA33:** reprocessar as mesmas fontes preserva correções; evidência nova e
+  conflitante gera revisão e atualiza o indicador de atualidade da pauta.
 
 **TDD por tarefa:** derivar cenários do requisito → escrever teste → revisar
 resultado esperado → observar falha pelo motivo correto → implementar → executar
@@ -322,10 +391,10 @@ e restrições reais; testes unitários não substituem essa evidência.
 | Frente | Responsabilidade inicial | Primeiro ponto de integração |
 | --- | --- | --- |
 | Pessoa 1 | Requisitos, contratos e roteiro; depois apoio em testes | Especificação e casos de aceite |
-| Pessoa 2 | API de consulta e persistência | Lista e detalhe com pessoa 4 |
+| Pessoa 2 | Adaptador da fonte, identidade, persistência e API | Formulário e conversas consultáveis |
 | Pessoa 3 | Vencimentos, NewsAPI, cache e testes | Dados de posições, interesses e preferências |
 | Pessoa 4 | Lista, detalhe, pauta e telas responsivas | Primeiro fluxo de consulta |
-| Pessoa 5 | Interações, preferências, avaliação e cadastro de reunião | Formulários com gravação e leitura |
+| Pessoa 5 | Extração de contexto, lembranças e feedback | Evidências da fonte e revisão na interface |
 | Pessoa 6 | Integração, preparação de keynotes e revisão | Ambiente reproduzível e contrato de contexto/reunião |
 
 Os números são espaços para atribuição, não membros já definidos. Combinar
@@ -342,4 +411,5 @@ Se for necessário cortar: agenda extra, aplicativo separado, integrações de c
 e IA generativa são candidatos antes de comprometer o fluxo demonstrável.
 
 **Pronto para apresentar:** cliente consultável, fonte explicável, interação
-persistida, alerta demonstrável, pauta com fontes, limitações registradas e execução reproduzível.
+importada, sugestão com evidência e revisão, feedback aplicado, alerta demonstrável,
+pauta com fontes, limitações registradas e execução reproduzível.

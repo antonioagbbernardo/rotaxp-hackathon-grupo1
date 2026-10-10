@@ -6,28 +6,32 @@ Detalhamento: [requisitos](requisitos.md). Leitura rápida: [visão geral](../vi
 
 ## Objetivo
 
-O assessor identifica quem precisa de atenção, entende o motivo com base em
-fontes e registra o próximo contato em uma interface web utilizável no celular.
+O sistema consome formulário inicial, transcrições, e-mails e WhatsApp Business
+já existentes. Extrai e infere contexto para sugerir lembranças, alertas e pautas
+pertinentes. O assessor decide o uso e fornece feedback para melhorar a seleção.
 
 ## Primeiro fluxo
 
-Listar clientes → abrir contexto e alertas → preparar reunião com keynotes →
-registrar resultado → consultar histórico atualizado após recarregar.
+Consumir fontes existentes → extrair contexto com evidências → assessor revisa
+e dá feedback → selecionar lembranças/notícias → preparar reunião → atualizar contexto.
 
 ## Recorte proposto
 
 - Lista de clientes com busca e filtro de prioridade.
 - Detalhe com perfil, interesses, preferências de contato, posições e histórico.
-- Resumo factual derivado das informações registradas, sem inferir humor.
+- Fatos e hipóteses extraídos das fontes, com evidência e revisão humana.
+- Datas, aniversários e lembranças com sujeito correto e pertinência revisável.
+- Feedback persistido que corrige contexto e reduz sugestões irrelevantes.
 - Alertas de vencimento e notícias via NewsAPI associadas a interesses; dados
   fictícios identificados para teste e demonstração quando necessário.
-- Registro manual de interações de WhatsApp, e-mail, telefone e presencial.
+- Leitura do formulário e da fonte de conversas existente; registro manual é complemento.
 - Estado de relacionamento informado pelo assessor com justificativa.
 - Marcar alertas como tratados, com persistência.
 - Visualização de clientes e de prioridades.
 - Reuniões próximas com pauta breve, fontes e observações revisáveis pelo assessor.
 
-Integrações de canais, envio de mensagens/atas, aplicação mobile separada e análise
+Construção da captura dos canais e do formulário fica fora do recorte.
+Envio de mensagens/atas, aplicação mobile separada e análise
 tributária automatizada ficam pendentes de definição. Propõe-se usar dados
 fictícios identificados na primeira demonstração.
 
@@ -52,7 +56,7 @@ RN10. Dados devem persistir entre recargas e reinicializações do servidor.
 
 - CA01: busca por nome e filtros retornam somente os clientes correspondentes.
 - CA02: abrir um cliente mostra somente suas posições, interações e preferências.
-- CA03: salvar interação válida atualiza o histórico e permanece após recarregar.
+- CA03: ingerir interação válida atualiza o histórico e permanece após recarregar.
 - CA04: canal inválido, texto vazio ou cliente inexistente não criam registros.
 - CA05: vencimentos em 0, 7 e 30 dias seguem os limites; 31 dias fica fora do alerta.
 - CA06: evento associado a interesse aparece com fonte e não se repete no processamento.
@@ -63,7 +67,7 @@ RN10. Dados devem persistir entre recargas e reinicializações do servidor.
 
 ## Validação
 
-Critérios CA11–CA25, incluindo notícias, reuniões e keynotes, estão em
+Critérios CA11–CA33, incluindo notícias, reuniões, inferência e feedback, estão em
 [requisitos](requisitos.md). As regras de busca estão em
 [integração NewsAPI](../integracoes/busca-noticias.md).
 
@@ -72,6 +76,7 @@ em desktop e celular. Informar separadamente verificações executadas e limita�
 
 ## Decisões pendentes
 
+- Definir contrato e acesso à fonte existente e vínculo de identidade dos clientes.
 - Confirmar stack. Python, Node.js, React, SQL e NoSQL foram opções mencionadas;
   nenhuma combinação foi aprovada. O escopo solicitado abrange o MVP completo.
 - Confirmar regras RN03/RN04 e o recorte do MVP.

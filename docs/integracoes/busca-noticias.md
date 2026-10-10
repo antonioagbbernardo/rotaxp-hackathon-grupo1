@@ -28,13 +28,16 @@ delimitada ao modelo; não exige uma infraestrutura de múltiplos agentes.
 
 ## 2. Coleta compartilhada por assunto
 
-1. Normalizar assuntos acompanhados: por exemplo, Fórmula 1 e determinado time.
+1. Usar assuntos extraídos do formulário/conversas existentes e revisados pelo
+   assessor, por exemplo Fórmula 1 e determinado time. Hipóteses pendentes de
+   confirmação ficam na revisão de contexto.
 2. Usar consultas revisadas pela equipe, evitando enviar nome, carteira ou
    conversas do investidor ao NewsAPI.
 3. Buscar cada consulta uma vez por ciclo e armazenar resultados compartilhados.
 4. Deduplicar artigos por URL normalizada; agrupar cobertura repetida de um
    mesmo acontecimento quando possível. Uma URL diferente pode cobrir o mesmo fato.
-5. Relacionar artigos aos clientes por interesses e preferências registrados.
+5. Relacionar artigos aos clientes por interesses e preferências registrados,
+   respeitando feedback e assuntos bloqueados para cada cliente.
 6. Apresentar somente informações pertinentes com fonte e data.
 
 O endpoint proposto é `/v2/everything`, com `q`, `language=pt`, período de busca,
@@ -101,6 +104,8 @@ dos assuntos, paginação e limite contratado.
 - Reutilizar análise de IA por conjunto/versão dos artigos, idioma e versão do prompt.
 - Registrar chamadas ao provedor e uso de IA separadamente.
 - Definir limite de artigos por assunto e de sugestões por cliente.
+- Reutilizar feedback: descartar uma notícia não apaga o interesse; bloquear
+  assunto afeta apenas o cliente e alcance escolhidos. Ver [contexto e feedback](contexto-investidor.md).
 
 No caso de cota esgotada, mostrar os últimos resultados com sua data e explicar
 que a atualização não ocorreu. Não inventar notícia para preencher a tela.

@@ -5,6 +5,10 @@ stack, demais integrações e escopo aguardam definição.
 
 ## Organização
 
+A entrada do produto é a fonte existente de conversas e formulário inicial.
+Um adaptador lê os dados, um processador extrai contexto com evidências e a
+revisão humana alimenta memória e regras de pertinência.
+
 Uma interface web adaptada ao celular e uma API central podem atender ao
 primeiro fluxo. A API concentra regras, acesso aos dados e processamento de
 eventos. Um banco relacional é uma opção inicial para os vínculos entre clientes,
@@ -17,7 +21,10 @@ no prazo de 6h30. Web responsiva não deve ser apresentada como app nativo.
 
 | Parte | Responsabilidade |
 | --- | --- |
-| Interface | Lista, filtros, detalhes, linha do tempo e registro de interação |
+| Interface | Contexto, evidências, revisão de sugestões, feedback, lembranças e pautas |
+| Adaptador de entrada | Ler fonte existente e formulário, validar identidade e evitar duplicação |
+| Extração e inferência | Propor fatos, hipóteses e datas com evidência, sujeito e estado de revisão |
+| Feedback | Preservar correções e preferências de relevância com alcance por cliente/assunto |
 | API | Validar entradas, aplicar regras e devolver dados por cliente |
 | Persistência | Guardar clientes, preferências, registros, fontes e decisões |
 | Processamento de eventos | Consultar fontes escolhidas, deduplicar e associar interesses |
@@ -33,6 +40,10 @@ sem serviços distribuídos no primeiro recorte.
 | --- | --- | --- |
 | Assessor | Identificação e acesso | Acompanha clientes; regra de atribuição a definir |
 | Cliente | Nome, perfil, objetivo e preferências | Tem posições e interações |
+| Documento de origem | Canal, identificador externo, cliente, conteúdo, data e versão | Sustenta extrações; inclui formulário |
+| Item de contexto | Categoria, valor, sujeito, evidência, explícito/inferido, validade e revisão | Pertence a cliente e aponta para origem |
+| Lembrança/sugestão | Motivo, data, recorrência, estado e pertinência | Usa contexto e recebe feedback |
+| Feedback | Autor, ação, correção, motivo, alcance e data | Afeta item/assunto/cliente sem reescrever origem |
 | Interação | Canal, data, registro, próximos passos | Pertence a cliente e identifica responsável |
 | Interesse | Assunto e origem da informação | Pode ser compartilhado por vários clientes |
 | Interesse do cliente | Interesse, evidência e revisão | Liga cliente a interesse |
@@ -76,8 +87,8 @@ a pauta sem outra busca externa; mudanças de data ou estado reconciliam disparo
 Reunião concluída preserva a pauta usada e a interação resultante.
 
 - Fonte das posições financeiras e critérios das análises de risco e tributárias.
-- Captura real ou registro manual por canal; revisão e envio de atas.
+- Formato/localização e contrato de leitura da fonte já existente; identidade por cliente.
 - Acesso de gestores e investidores, autenticação e autorização por cliente.
-- Uso de IA no produto, dados enviados ao provedor e custo máximo.
+- Modelo de extração/inferência, dados enviados ao provedor e custo máximo.
 - Armazenamento, correção, exclusão e retenção de informações pessoais.
 - Forma de execução da demonstração e necessidade de publicação.
