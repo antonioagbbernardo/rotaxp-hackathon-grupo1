@@ -1,4 +1,5 @@
 import { Panel } from '@/components/ui/Panel'
+import { diaLocal } from '@/lib/format'
 import { calcularPerfilRadar, type EixoRadar } from '@/lib/perfil-radar'
 import type { Client } from '@/types/client'
 
@@ -35,7 +36,7 @@ export function RadarPerfil({ client, hoje }: RadarPerfilProps) {
     valor: p.valor,
     vencimento: p.vencimento,
   }))
-  const perfil = calcularPerfilRadar(posicoes, hoje.slice(0, 10), client.tags[0]?.label)
+  const perfil = calcularPerfilRadar(posicoes, diaLocal(hoje), client.tags[0]?.label)
   const resumo = perfil.eixos.map((e) => `${e.rotulo} ${e.valor ?? 'sem dado'}`).join(', ')
 
   return (

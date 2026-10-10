@@ -86,8 +86,8 @@ function perfilDeclarado(tag: string | null | undefined): PerfilSugerido | null 
   if (!tag) return null
   const t = semAcento(tag)
   if (t.startsWith('conservador')) return 'Conservador'
-  if (t.startsWith('moderado')) return 'Moderado'
-  if (t.startsWith('arrojado') || t.startsWith('agressivo')) return 'Arrojado'
+  if (t.startsWith('moderad')) return 'Moderado'
+  if (t.startsWith('arrojad') || t.startsWith('agressiv')) return 'Arrojado'
   return null
 }
 

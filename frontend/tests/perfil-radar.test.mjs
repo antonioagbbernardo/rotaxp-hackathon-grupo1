@@ -67,3 +67,15 @@ test('diversificação: um ativo só é 0 e dois iguais é 50', () => {
     50,
   )
 })
+
+test('data de referência usa o dia de São Paulo, não o dia UTC', async () => {
+  const { diaLocal } = await import('../src/lib/format.ts')
+  assert.equal(diaLocal('2026-10-11T01:30:00+00:00'), '2026-10-10')
+  assert.equal(diaLocal('2026-10-10T17:51:09.379673+00:00'), '2026-10-10')
+  assert.throws(() => diaLocal(''), /Instante inválido/)
+})
+
+test('formas femininas do perfil declarado são reconhecidas', () => {
+  const r = calcularPerfilRadar([pos(1, 'Tesouro X', '100.00', '2026-10-10')], HOJE, 'Moderada')
+  assert.equal(r.declarado, 'Moderado')
+})
