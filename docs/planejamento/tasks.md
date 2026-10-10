@@ -1,19 +1,20 @@
 # Plano de execução — seis pessoas
 
 Status: plano adotado em 10/10/2026. Referências: `spec.md`, `design.md`,
-`contracts.md`. Responsáveis definidos pela equipe.
+`requisitos.md`, `contracts.md`. Responsáveis definidos pela equipe.
 
 ## Sequência de trabalho
 
 | Tarefa | Resultado verificável | Depende de | Aceite | Responsável |
 | --- | --- | --- | --- | --- |
-| T00 — Contratos | `contracts.md` fechado (campos, rotas, erros, formatos); stack e responsáveis registrados; `Clock` e seed relativo definidos; primeiro lote de testes (vencimento, `Clock`, identidade e persistência do tratamento, permissões pessoais) escrito antes das rotas | Equipe (≤ 20 min, testes em seguida) | CA05, CA07, CA15 | Líder técnico + backend + frontend |
-| T01 — Base | Projeto roda em ≥ 2 máquinas com lockfile; banco, assessor e clientes fictícios persistidos; seed idempotente e reset explícito | T00 | CA02, CA15 | Pessoa 2 |
+| T00 — Contratos | `contracts.md` fechado (campos, rotas, erros, formatos); stack e responsáveis registrados; `Clock` e seed relativo definidos; primeiro lote de testes (vencimento, `Clock`, identidade e persistência do tratamento, permissões pessoais) escrito antes das rotas | Equipe (≤ 20 min, testes em seguida) | CA05, CA07, CA30 | Líder técnico + backend + frontend |
+| T01 — Base | Projeto roda em ≥ 2 máquinas com lockfile; banco, assessor e clientes fictícios persistidos; seed idempotente e reset explícito | T00 | CA02, CA30 | Pessoa 2 |
 | T02 — Consulta | Lista (busca, filtro, ordenação) abre detalhe com dados da base | T00 (usar contrato/seed enquanto T01 termina) | CA01, CA02, CA10 | Pessoas 2 e 4 |
-| T03 — Histórico | Registrar interação (`ocorrida_em` e `registrada_em`) e consultar após recarregar | T00 | CA03, CA04, CA13 | Pessoa 5 |
-| T04 — Alertas e prioridade | Alertas calculados sob demanda, tratamento persistido, RN11 e resumo com fontes (RN08) | T00 | CA05, CA07, CA08, CA11, CA12, CA14, CA16 | Pessoa 3 |
+| T03 — Histórico | Registrar interação (`ocorrida_em` e `registrada_em`) e consultar após recarregar | T00 | CA03, CA04, CA28 | Pessoa 5 |
+| T04 — Alertas e prioridade | Alertas calculados sob demanda, tratamento persistido, RN11 e resumo com fontes (RN08) | T00 | CA05, CA07, CA08, CA26, CA27, CA29, CA31 | Pessoa 3 |
 | T05 — Relacionamento | Preferências (RN13) e avaliação com justificativa, responsável e data | T00 | CA07, CA09 | Pessoas 4 e 5 |
-| T06 — Integração | Fluxo completo revisado, inclusive falhas e celular | T01–T05 | Todos | Pessoa 6 + autores |
+| T08 — Notícias, reuniões e keynotes | Reunião agendada com pauta, fontes, notas preservadas e conclusão; NewsAPI com cache | T01–T05; contratos em T00 | CA16–CA25 | Pessoas 3, 4, 5 e 6 |
+| T06 — Integração | Fluxo completo revisado, inclusive falhas e celular | T01–T05 e T08 | Todos | Pessoa 6 + autores |
 | T07 — Entrega | README testado em clone limpo, pitch ≤ 5 min, push | T06 | Demo reproduzível | Pessoas 1 e 6 + equipe |
 | Opcional | Eventos externos/simulados (CA06) | T06 concluída | CA06 | Quem estiver livre |
 
@@ -55,11 +56,12 @@ idempotência de alertas e persistência. Fluxo completo e celular na integraç�
 1. Problema e quem é impactado; como é hoje.
 2. Lista priorizada; abrir um cliente e mostrar resumo com fontes.
 3. Vencimento (alta) e aniversário (média, respeitando permissão).
-4. Registrar interação, tratar alerta e ver prioridade/histórico atualizados.
-5. Privacidade (dados fictícios), limitações, benefícios e evolução.
+4. Abrir os keynotes da próxima reunião e revisar fontes e pendências.
+5. Registrar o resultado, tratar alerta e ver prioridade/histórico atualizados.
+6. Privacidade (dados fictícios), custo, limitações, benefícios e evolução.
 
 ## Quando faltar tempo
 
-Preservar o fluxo completo. Cortar nesta ordem: eventos opcionais, visualizações
+Preservar o fluxo completo. Cortar nesta ordem: IA generativa, notícias/reuniões (T08), visualizações
 extras, polimento visual. Não cortar persistência, regras essenciais nem a
 validação em clone limpo.

@@ -2,8 +2,10 @@
 
 Status: especificação adotada para o hackathon (decisões de 10/10/2026), sujeita
 a ajuste da equipe. Escopo fechado: não ampliar após a tarefa T00.
-Referência: `ideia-plataforma-assessores.md`, `design.md`, `contracts.md` e
-instruções do evento.
+Detalhamento: [requisitos](requisitos.md) (RF/CA11–CA25), [contratos](contracts.md),
+[arquitetura](design.md). Leitura rápida: [visão geral](../visao-geral.md).
+Nas divergências sobre regras de alerta, prioridade, preferências e acesso, vale
+este documento (decisões de 10/10/2026).
 
 ## Objetivo
 
@@ -13,8 +15,8 @@ fontes e registra o próximo contato em uma interface web utilizável no celular
 ## Primeiro fluxo
 
 Listar clientes (ordenados por prioridade) → abrir cliente → consultar resumo,
-alertas e fontes → registrar interação → tratar alerta → consultar histórico e
-prioridade atualizados após recarregar.
+alertas e fontes → preparar reunião com keynotes → registrar interação/resultado
+→ tratar alerta → consultar histórico e prioridade atualizados após recarregar.
 
 ## Recorte do MVP
 
@@ -29,8 +31,16 @@ Obrigatório:
 - Estado de relacionamento informado pelo assessor, com justificativa.
 - Marcar alertas como tratados, com persistência.
 
-Opcional (somente depois do fluxo completo validado): eventos pessoais externos
-ou simulados ligados a interesses (esportes, Fórmula 1).
+Definido pela direção da equipe, depois do fluxo principal validado (tarefa T08):
+
+- Notícias via NewsAPI.org por assunto compartilhado, com cache e atualização
+  diária (RF17–RF20).
+- Reuniões próximas com pauta (keynotes), fontes e observações revisáveis
+  (RF21–RF24).
+
+Critérios CA16–CA25 e regras de busca: [requisitos](requisitos.md) e
+[integração NewsAPI](../integracoes/busca-noticias.md). O agendador serve só à
+busca de notícias e às reuniões; alertas continuam calculados sob demanda (RN14).
 
 Fora do MVP: integrações reais de canais, envio de mensagens/atas, aplicativo
 mobile separado, análise tributária automatizada, autenticação, dispensar/
@@ -155,7 +165,7 @@ Estado inicial: sem avaliação (`NULL`), exibido como "Não avaliado".
   criam registros.
 - CA05: com Δ = −1, 0, 7, 8, 30 e 31, verificar existência, rótulo e
   prioridade do alerta (RN03/RN04). Vencido exibe `Vencido há N dias`.
-- CA06 (opcional): evento associado a interesse aparece com fonte e não se repete
+- CA06: evento/notícia associado a interesse aparece com fonte e não se repete
   no recálculo.
 - CA07: sem permissão pessoal, não há alerta pessoal. Com permissão mas contato
   mais recente que o intervalo mínimo, não há sugestão pessoal. Sem histórico,
@@ -166,20 +176,23 @@ Estado inicial: sem avaliação (`NULL`), exibido como "Não avaliado".
   não alteram o relacionamento.
 - CA10: o fluxo principal funciona em viewport de celular sem rolagem horizontal
   da página.
-- CA11: cliente com múltiplos alertas assume a maior prioridade, recalculada
+- CA26: cliente com múltiplos alertas assume a maior prioridade, recalculada
   após tratar um alerta.
-- CA12: um aniversário próximo gera apenas um alerta, respeita RN13 e não
+- CA27: um aniversário próximo gera apenas um alerta, respeita RN13 e não
   reaparece como pendência depois de tratado naquela ocorrência anual; no ano
   seguinte é nova ocorrência.
-- CA13: reunião realizada ontem e cadastrada hoje não fica acima de conversa
+- CA28: reunião realizada ontem e cadastrada hoje não fica acima de conversa
   realizada hoje (RN02).
-- CA14: resumo com registros ausentes usa as mensagens de RN08 e cada fato
+- CA29: resumo com registros ausentes usa as mensagens de RN08 e cada fato
   apresentado tem referência de fonte.
-- CA15: os testes têm resultado idêntico em qualquer dia de execução (relógio
+- CA30: os testes têm resultado idêntico em qualquer dia de execução (relógio
   injetado) e reexecutar o seed não altera uma base já populada.
-- CA16: atualizar a lista várias vezes não duplica alertas.
+- CA31: atualizar a lista várias vezes não duplica alertas.
 
 ## Validação
+
+CA11–CA25 (notícias, reuniões e keynotes) estão em [requisitos](requisitos.md);
+os CA26–CA31 abaixo foram acrescentados em 10/10/2026 sem alterar IDs existentes.
 
 Primeiro lote de testes (antes das rotas): limites de vencimento, `Clock`,
 identidade do alerta, persistência do tratamento e permissões pessoais. Depois,

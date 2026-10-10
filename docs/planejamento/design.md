@@ -1,6 +1,7 @@
 # Arquitetura — plataforma de assessores
 
-Status: decisões de 10/10/2026. Integrações externas e IA fora do MVP.
+Status: decisões de 10/10/2026. NewsAPI.org é a fonte de notícias definida;
+demais integrações e IA generativa ficam fora do MVP.
 
 ## Stack
 
@@ -35,6 +36,7 @@ distribuídos. Web responsiva não é app nativo e não deve ser apresentada com
 | API JSON | Validar entradas, chamar regras, devolver JSON e erros padronizados |
 | Regras | Prioridade (RN11), vencimentos (RN03/04), aniversários (RN12), preferências (RN13), `Clock` injetável |
 | Persistência | Assessor, clientes, posições, interações, datas importantes, avaliações de relacionamento e tratamentos de alerta |
+| Preparação de reunião | Combina contexto interno e notícias em pauta versionada; preserva notas manuais |
 | Resumo | Template determinístico; cada fato com `{tipo_fonte, id_fonte, data_referencia}` (RN08); sem LLM |
 
 ## Entidades
@@ -50,7 +52,9 @@ Campos mínimos em `contracts.md`.
 | DataImportante | Pertence a cliente; origem dos alertas de aniversário |
 | Avaliação do relacionamento | Histórico: estado, justificativa, assessor, data |
 | Tratamento de alerta | Única entidade persistida do alerta: chave de ocorrência, `tratado_em`, `assessor_id` |
-| Interesse / Evento (opcional) | Somente se o fluxo principal estiver validado |
+| Interesse / Evento | Assunto compartilhado e notícia/evento com fonte; só após o fluxo principal |
+| Reunião | Objetivo, início/fuso, responsável e estado; pertence a cliente; pode ter interação de conclusão |
+| Versão da pauta | Conteúdo, fontes, versão dos dados e data; pertence a reunião; notas manuais em campo separado |
 
 Restrições: vínculos válidos, `chave_ocorrencia` única em tratamento, dinheiro
 em `Decimal` (TEXT/NUMERIC, nunca float), instantes em UTC. Exclusão e retenção
@@ -85,11 +89,19 @@ Sem autenticação. Um assessor fictício único; executar somente em
 `127.0.0.1`; sem dados reais. Não há `403` no contrato. Não publicar nem tratar
 dados financeiros pessoais reais com esta versão.
 
-## Eventos externos (opcional)
+## Notícias e reuniões
 
-Se o fluxo principal estiver validado: eventos simulados e identificados,
-consultados uma vez por assunto e reutilizados entre clientes. Fonte real,
-frequência, limites e orçamento não aprovados.
+Fonte escolhida: **NewsAPI.org**. Coleta diária por assuntos compartilhados e
+atualização antecipada quando houver reunião próxima, reutilizando cache. Filtrar
+por interesse, preferência (RN13), atualidade e duplicidade antes de qualquer IA
+(opcional, com entradas e orçamento limitados). Plano, horários, orçamento e
+parâmetros: [busca de notícias](../integracoes/busca-noticias.md).
+
+O agendador e o coletor são rotinas de backend **apenas para notícias e
+reuniões**; o cálculo de alertas continua sob demanda. O agendador prepara
+reuniões na janela definida. Alterações internas podem renovar a pauta sem nova
+busca externa; mudanças de data ou estado reconciliam disparos. Reunião concluída
+preserva a pauta usada e a interação resultante.
 
 ## Questões abertas (pós-MVP)
 

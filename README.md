@@ -1,6 +1,6 @@
 # Assessor do Futuro — MVP Rota XP (grupo 1)
 
-Documentação: `docs/` (`spec.md`, `design.md`, `contracts.md`, `tasks.md`).
+Documentação: `docs/` (índice em `docs/README.md`; planejamento em `docs/planejamento/`).
 Dados do projeto são fictícios.
 
 ## Executar (só Python)
