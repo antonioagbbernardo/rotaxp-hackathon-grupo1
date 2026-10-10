@@ -450,3 +450,19 @@ continua decidindo como usar as fontes e abordar o investidor.
 keynotes/fontes → revisão humana/notas → concluir → histórico; confirmar uma
 data pertinente e mostrar feedback. Para mostrar notícias automáticas, manter
 o processo aberto e usar um vínculo de interesse já revisado pelo assessor.
+
+## Ajuste — Todos na interface atual de humor (10/10/2026)
+
+- Pedido: implementar Todos na versão atualizada da main (`77cf36d`). Branch
+  `feat/filtro-todos-humor`. Escopo registrado antes do código no incremento 03.
+- Frontend: Todos com contagem, ícone de grupo e seleção explícita em uma linha
+  acima de Feliz, Neutro, Triste e Sem avaliação. Mantém os rostos, cores e
+  comportamento dos quatro filtros atuais. Reutiliza `all` e preserva a busca.
+- Backend, regras e contratos sem alteração. Sem chamadas a provedores ou
+  gravações de registros de clientes durante a verificação.
+- Validação: build, lint e 22 testes frontend aprovados. Edge: seleção inicial
+  de Todos, retorno aos cinco clientes após cada filtro e busca preservada.
+  Desktop e celular de 390/320 px sem rolagem horizontal; captura inspecionada.
+  Build atualizado servido na porta 5004.
+- Limites: sem aparelho físico; suíte backend não repetida para este ajuste
+  de apresentação. Alteração local, sem commit ou push.
