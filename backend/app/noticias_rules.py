@@ -18,6 +18,8 @@ CATALOGO = {
 
 def assuntos_do_interesse(texto):
     texto = ''.join(c for c in unicodedata.normalize('NFD', texto.casefold()) if unicodedata.category(c) != 'Mn')
+    if re.search(r'\b(?:nao (?:gosta|acompanha|tem interesse|se interessa|quer noticias)|deixou de|parou de)\b', texto):
+        return []
     padroes = {'formula-1': r'\b(?:formula\s*1|f1)\b', 'palmeiras': r'\bpalmeiras\b', 'corinthians': r'\bcorinthians\b'}
     return [assunto for assunto, padrao in padroes.items() if re.search(padrao, texto)]
 

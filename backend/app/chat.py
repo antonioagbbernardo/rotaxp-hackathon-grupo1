@@ -22,6 +22,7 @@ def _expor(row):
     return {'id': row['id'], 'request_id': row['request_id'], 'pergunta': row['pergunta'],
             'resposta': row['resposta'], 'fontes': json.loads(row['fontes']),
             'nota_sugerida': row['nota_sugerida'], 'nota_id': nota['id'] if nota else None,
+            'contexto_sugerido': json.loads(row['contexto_sugerido']),
             'criada_em': row['criada_em'], 'modo': 'openai'}
 
 
@@ -95,16 +96,20 @@ def responder(cliente, entrada):
             mensagens.extend([{'role': 'user', 'content': r['pergunta']}, {'role': 'assistant', 'content': r['resposta']}])
         provedor = current_app.config.get('CHAT_OPENAI') or OpenAIChat(current_app.config['OPENAI_API_KEY'], current_app.config['OPENAI_MODEL'])
         saida = provedor.conversar(fatos, mensagens, pergunta)
-        if (not isinstance(saida, dict) or set(saida) != {'resposta', 'fontes', 'nota_sugerida'}
+        if (not isinstance(saida, dict) or set(saida) not in ({'resposta', 'fontes', 'nota_sugerida'}, {'resposta', 'fontes', 'nota_sugerida', 'contexto_sugerido'})
                 or not isinstance(saida['resposta'], str) or not saida['resposta'].strip() or len(saida['resposta']) > 10000
                 or not isinstance(saida['fontes'], list) or len(saida['fontes']) > 15
                 or any(not isinstance(f, str) or f not in fontes for f in saida['fontes'])
                 or (saida['nota_sugerida'] is not None and (not isinstance(saida['nota_sugerida'], str)
                     or not saida['nota_sugerida'].strip() or len(saida['nota_sugerida']) > 1000))):
             raise ErroAgenda('A IA retornou uma resposta inválida. Tente novamente.', 'chat', 502)
+        from .contexto_chat import validar
+        propostas = validar(saida.get('contexto_sugerido', []), pergunta)
+        if propostas and not saida['nota_sugerida']:
+            raise ErroAgenda('Contexto novo exige uma nota para confirmação.', 'contexto_sugerido', 502)
         referencias = list(dict.fromkeys(fontes[f]['fonte'] for f in saida['fontes']))
-        db.execute("UPDATE chat_turno SET estado='concluido',resposta=?,fontes=?,nota_sugerida=? WHERE id=?",
-            (saida['resposta'].strip(), json.dumps(referencias, ensure_ascii=False), saida['nota_sugerida'], rid))
+        db.execute("UPDATE chat_turno SET estado='concluido',resposta=?,fontes=?,nota_sugerida=?,contexto_sugerido=? WHERE id=?",
+            (saida['resposta'].strip(), json.dumps(referencias, ensure_ascii=False), saida['nota_sugerida'], json.dumps(propostas, ensure_ascii=False), rid))
         db.commit()
     except Exception:
         db.rollback()
@@ -123,7 +128,16 @@ def confirmar_nota(cid, rid):
         raise ErroAgenda('Mensagem inexistente para este cliente.', 'turno_id', 404)
     if not r['nota_sugerida']:
         raise ErroAgenda('Essa mensagem não contém uma nota para confirmar.', 'turno_id')
-    db.execute('INSERT OR IGNORE INTO nota_assessor(cliente_id,turno_id,texto,evidencia,registrada_em) VALUES (?,?,?,?,?)',
-        (cid, rid, r['nota_sugerida'], r['pergunta'], formatar_utc(current_app.config['CLOCK'].agora())))
-    db.commit()
+    from .contexto_chat import registrar
+    db.execute('BEGIN IMMEDIATE')
+    try:
+        agora = formatar_utc(current_app.config['CLOCK'].agora())
+        db.execute('INSERT OR IGNORE INTO nota_assessor(cliente_id,turno_id,texto,evidencia,registrada_em) VALUES (?,?,?,?,?)',
+            (cid, rid, r['nota_sugerida'], r['pergunta'], agora))
+        nota = db.execute('SELECT * FROM nota_assessor WHERE turno_id=?', (rid,)).fetchone()
+        registrar(db, r, nota, agora)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     return _expor(r)

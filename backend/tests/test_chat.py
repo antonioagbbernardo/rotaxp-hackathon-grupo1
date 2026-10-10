@@ -98,3 +98,72 @@ def test_transporte_chat_responses_sem_chave_no_conteudo(monkeypatch):
     assert modulo.OpenAIChat('chave-ficticia').conversar({'fatos':[]}, [], 'Oi')['resposta'] == 'Olá!'
     assert captured['store'] is False and captured['input'][-1]['content'] == 'Oi'
     assert 'chave-ficticia' not in json.dumps(captured)
+
+
+def test_interesse_chat_confirmado_alimenta_contexto_noticias_sem_contato(ambiente):
+    app, c, fake = ambiente
+    antes = next(r for r in c.get('/api/pulse').get_json()['clients'] if r['id'] == '1')
+    pergunta = 'O cliente gosta de Fórmula 1 e prefere reuniões à tarde.'
+    fake.saida['nota_sugerida'] = pergunta
+    fake.saida['contexto_sugerido'] = [
+        {'categoria': 'interesse', 'assunto': 'formula-1', 'sujeito': 'cliente', 'valor': 'Gosta de Fórmula 1.', 'trecho': 'gosta de Fórmula 1'},
+        {'categoria': 'preferencia', 'assunto': 'horario-reuniao', 'sujeito': 'cliente', 'valor': 'Prefere reuniões à tarde.', 'trecho': 'prefere reuniões à tarde'}]
+    turno = perguntar(c, pergunta).get_json()
+    assert len(turno['contexto_sugerido']) == 2 and turno['nota_id'] is None
+    assert not c.get('/api/clientes/1/contexto').get_json()['itens']
+    caminho = f"/api/pulse/clientes/1/chat/{turno['id']}/nota"
+    assert c.post(caminho).status_code == 200 and c.post(caminho).status_code == 200
+    atual = next(r for r in c.get('/api/pulse').get_json()['clients'] if r['id'] == '1')
+    assert 'Gosta de Fórmula 1.' in atual['interests']
+    assert {a['id'] for a in atual['newsState']['assuntos']} == {'formula-1'}
+    assert atual['lastContactDays'] == antes['lastContactDays'] and atual['priority'] == antes['priority']
+    assert atual['sentiment'] == antes['sentiment']
+    itens = atual['context']['itens']
+    assert len(itens) == 2 and all(i['estado'] == 'confirmado' and i['evidencia_atual'] for i in itens)
+    assert all(i['evidencias'][0]['origem'] == 'chat-assessor' for i in itens)
+    assert c.get('/api/clientes/2/contexto').get_json()['itens'] == []
+    with app.app_context():
+        assert get_db().execute("SELECT count(*) FROM documento_fonte WHERE tipo='nota_assessor'").fetchone()[0] == 1
+        assert get_db().execute('SELECT count(*) FROM revisao_contexto').fetchone()[0] == 2
+    # Nova informação confirmada substitui a anterior, sem conflito artificial.
+    fake.saida['nota_sugerida'] = 'O cliente não acompanha Fórmula 1.'
+    fake.saida['contexto_sugerido'] = [{'categoria': 'interesse', 'assunto': 'formula-1', 'sujeito': 'cliente',
+        'valor': 'Não acompanha Fórmula 1.', 'trecho': 'não acompanha Fórmula 1'}]
+    t = perguntar(c, fake.saida['nota_sugerida']).get_json()
+    assert c.post(f"/api/pulse/clientes/1/chat/{t['id']}/nota").status_code == 200
+    atual = next(r for r in c.get('/api/pulse').get_json()['clients'] if r['id'] == '1')
+    assert {a['id'] for a in atual['newsState']['assuntos']} == {'mercado'}
+    assert all(not i['conflitos'] for i in atual['context']['itens'] if i['estado'] == 'confirmado')
+
+
+def test_contexto_chat_recusa_trecho_inventado_e_nao_presume_gosto_do_cliente(ambiente):
+    app, c, fake = ambiente
+    fake.saida['nota_sugerida'] = 'A filha gosta de Palmeiras.'
+    fake.saida['contexto_sugerido'] = [{'categoria': 'interesse', 'assunto': 'palmeiras', 'sujeito': 'familiar',
+        'valor': 'A filha gosta de Palmeiras.', 'trecho': 'trecho inventado'}]
+    assert perguntar(c, 'A filha gosta de Palmeiras.').status_code == 502
+    assert not c.get('/api/clientes/1/contexto').get_json()['itens']
+    fake.saida['contexto_sugerido'][0]['trecho'] = 'A filha gosta de Palmeiras.'
+    turno = perguntar(c, 'A filha gosta de Palmeiras.').get_json()
+    assert c.post(f"/api/pulse/clientes/1/chat/{turno['id']}/nota").status_code == 200
+    atual = next(r for r in c.get('/api/pulse').get_json()['clients'] if r['id'] == '1')
+    assert atual['interests'] == [] and {a['id'] for a in atual['newsState']['assuntos']} == {'mercado'}
+
+
+def test_migracao_preserva_fontes_antigas_e_amplia_tipo_nota(tmp_path):
+    import sqlite3
+    from app.db import SCHEMA
+    caminho = tmp_path / 'antiga.db'
+    antigo = SCHEMA.replace("'interacao', 'formulario', 'nota_assessor'", "'interacao', 'formulario'").replace("    contexto_sugerido TEXT NOT NULL DEFAULT '[]',\n", '')
+    with sqlite3.connect(caminho) as db:
+        db.executescript(antigo)
+        db.execute("INSERT INTO assessor VALUES(1,'Assessor fictício')")
+        db.execute("INSERT INTO cliente(id,nome) VALUES(1,'Cliente fictício')")
+        db.execute("INSERT INTO documento_fonte(id,origem,registro_id,versao,cliente_id,tipo,conteudo,ocorrida_em,importada_em) VALUES(7,'demo','original',1,1,'formulario','{}','2026-10-10T12:00:00+00:00','2026-10-10T12:00:00+00:00')")
+    app = create_app({'TESTING': True, 'DATABASE': str(caminho)})
+    with app.app_context():
+        db = get_db()
+        assert db.execute('SELECT registro_id FROM documento_fonte WHERE id=7').fetchone()[0] == 'original'
+        assert 'contexto_sugerido' in {r['name'] for r in db.execute('PRAGMA table_info(chat_turno)')}
+        db.execute("INSERT INTO documento_fonte(origem,registro_id,versao,cliente_id,tipo,conteudo,ocorrida_em,importada_em) VALUES('chat-assessor','chat-1',1,1,'nota_assessor','\"informação declarada\"','2026-10-10T12:00:00+00:00','2026-10-10T12:00:00+00:00')")
+        assert not db.execute('PRAGMA foreign_key_check').fetchall()

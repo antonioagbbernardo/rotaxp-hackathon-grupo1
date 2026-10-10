@@ -14,6 +14,7 @@ import { useApiResource } from '@/hooks/useApiResource'
 interface ChatTurn {
   id: number; request_id: string; pergunta: string; resposta: string; fontes: string[];
   nota_sugerida: string | null; nota_id: number | null; error?: string
+  contexto_sugerido?: { categoria: string; assunto: string; sujeito: string; valor: string; trecho: string }[]
 }
 interface ChatView {
   configurado: boolean; modelo: string; mensagens: ChatTurn[];
@@ -30,7 +31,7 @@ export function AssistantPanel({ client, onUpdated }: AssistantPanelProps) {
   const [busy, setBusy] = useState(false)
   const [noteError, setNoteError] = useState('')
   const { data: chat, error: chatError, loading, refresh } = useApiResource<ChatView>(
-    `/api/pulse/clientes/${client.id}/chat`, '')
+    `/api/pulse/clientes/${client.id}/chat`, (client.sourceDocuments ?? []).map((d) => `${d.id}:${d.versao}`).join('|'))
   const turns = [...(chat?.mensagens.filter((m) => !followUps.some((f) => f.request_id === m.request_id)) ?? []), ...followUps]
   const { assistant } = client
   const firstName = client.name.split(' ')[0]
@@ -102,7 +103,11 @@ export function AssistantPanel({ client, onUpdated }: AssistantPanelProps) {
             {entry.nota_sugerida && <div className="rounded-lg border border-line p-3">
               <p className="text-[11px] font-medium">{entry.nota_id ? 'Nota registrada no contexto' : 'Informação para registrar no contexto'}</p>
               <p className="mt-2 whitespace-pre-wrap text-xs leading-5">{entry.nota_sugerida}</p>
-              {!entry.nota_id && <Button disabled={busy} className="mt-3" onClick={() => void confirmNote(entry)}>Confirmar e salvar nota</Button>}
+              {!!entry.contexto_sugerido?.length && <ul className="mt-2 space-y-2 text-[11px] text-ink-muted">{entry.contexto_sugerido.map((c, i) => <li key={`${c.assunto}-${i}`}><strong>{c.categoria.replace('_', ' ')} · {c.sujeito}:</strong> {c.valor}<span className="mt-1 block text-[10px]">Sua mensagem: “{c.trecho}”</span></li>)}</ul>}
+              {!entry.nota_id && <>
+                {!!entry.contexto_sugerido?.length && <p className="mt-2 text-[10px] text-ink-muted">Ao confirmar, o contexto é atualizado e os interesses alimentam as notícias. Informações anteriores do mesmo assunto são substituídas, preservando o histórico.</p>}
+                <Button disabled={busy} className="mt-3" onClick={() => void confirmNote(entry)}>Confirmar e salvar contexto</Button>
+              </>}
             </div>}
             {entry.error && <div role="alert" className="text-xs text-negative">{entry.error}<Button onClick={() => void handleAsk(entry.pergunta, followUps.findIndex((f) => f.request_id === entry.request_id))} disabled={busy}>Tentar novamente</Button></div>}
             {!entry.resposta && !entry.error && <p role="status" className="text-[11px] text-ink-muted">Preparando resposta com OpenAI…</p>}
@@ -114,7 +119,7 @@ export function AssistantPanel({ client, onUpdated }: AssistantPanelProps) {
       <div className="mt-3">
         <AskAssistantForm placeholder="Converse, peça ajuda ou informe algo novo…" onAsk={(q) => void handleAsk(q)} disabled={busy || loading || !chat?.configurado} />
         <p className="mt-2 text-[9px] text-ink-muted">
-          OpenAI · Conversa salva por cliente · Notas após sua confirmação
+          Informe interesses, preferências e contexto aqui · Salvos após sua confirmação
         </p>
       </div>
     </Panel>

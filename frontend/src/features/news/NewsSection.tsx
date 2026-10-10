@@ -10,6 +10,11 @@ interface NewsSectionProps {
   onUpdated: () => Promise<void>
 }
 
+interface InterestProposal {
+  id: number; resposta: string; nota_sugerida: string | null; nota_id: number | null;
+  contexto_sugerido?: { categoria: string; sujeito: string; valor: string; trecho: string }[]
+}
+
 const statusLabel = { nunca: 'Ainda sem coleta', atualizado: 'Coleta do dia', desatualizado: 'Cache de outro dia', falhou: 'Atualização falhou', processando: 'Coleta em andamento' }
 
 export function NewsSection({ client, onUpdated }: NewsSectionProps) {
@@ -18,6 +23,27 @@ export function NewsSection({ client, onUpdated }: NewsSectionProps) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [interest, setInterest] = useState('')
+  const [proposal, setProposal] = useState<InterestProposal | null>(null)
+  async function addInterest() {
+    if (busy || !interest.trim()) return
+    setBusy(true); setError(''); setNotice(''); setProposal(null)
+    try {
+      const result = await api<InterestProposal>(`/api/pulse/clientes/${client.id}/chat`, { method: 'POST', body: { pergunta: `Informação fornecida pelo assessor sobre os interesses e contexto deste cliente: ${interest.trim()}`, request_id: crypto.randomUUID() } })
+      setProposal(result)
+    } catch (e) { setError(e instanceof Error ? e.message : 'Não foi possível preparar o interesse.') }
+    finally { setBusy(false) }
+  }
+  async function confirmInterest() {
+    if (busy || !proposal) return
+    setBusy(true); setError('')
+    try {
+      await api(`/api/pulse/clientes/${client.id}/chat/${proposal.id}/nota`, { method: 'POST' })
+      setProposal(null); setInterest(''); setNotice('Contexto salvo. Os interesses identificados serão usados na seleção de notícias.')
+      await onUpdated()
+    } catch (e) { setError(e instanceof Error ? e.message : 'Não foi possível salvar o interesse.') }
+    finally { setBusy(false) }
+  }
   async function collect() {
     if (busy) return
     setBusy(true); setError(''); setNotice('')
@@ -53,6 +79,26 @@ export function NewsSection({ client, onUpdated }: NewsSectionProps) {
           {busy ? 'Aguarde…' : 'Buscar notícias'}
         </Button>
       </div>
+
+      <details className="mt-3 rounded-lg border border-line p-3 text-xs">
+        <summary className="cursor-pointer font-medium">Adicionar interesse ou contexto pelo chat</summary>
+        <form className="mt-3 space-y-2" onSubmit={(e) => { e.preventDefault(); void addInterest() }}>
+          <label className="block">O que o assessor sabe sobre este cliente
+            <input required maxLength={3500} value={interest} onChange={(e) => setInterest(e.target.value)} placeholder="Ex.: acompanha Fórmula 1 e torce pelo Palmeiras" disabled={busy}
+              className="mt-2 block w-full rounded-lg border border-line bg-surface p-2" />
+          </label>
+          <Button type="submit" disabled={busy || !interest.trim()}>Enviar ao assistente</Button>
+        </form>
+        {proposal && <div className="mt-3 space-y-2">
+          <p className="whitespace-pre-wrap leading-5">{proposal.resposta}</p>
+          {proposal.nota_sugerida && !proposal.nota_id && <>
+            <p className="leading-5">{proposal.nota_sugerida}</p>
+            {proposal.contexto_sugerido?.map((c, i) => <p key={i} className="text-[11px] text-ink-muted">{c.categoria} · {c.sujeito}: {c.valor}<span className="block">Sua mensagem: “{c.trecho}”</span></p>)}
+            <p className="text-[10px] text-ink-muted">A confirmação atualiza o contexto, substitui informações anteriores do mesmo assunto e alimenta as notícias, preservando o histórico.</p>
+            <Button disabled={busy} onClick={() => { void confirmInterest() }}>Confirmar e salvar contexto</Button>
+          </>}
+        </div>}
+      </details>
 
       <p className="mt-3 text-[10px] leading-relaxed text-ink-muted">NewsAPI pode disponibilizar artigos com atraso conforme o plano. Coleta recente não garante notícia em tempo real. O humor é inferido das interações; as notícias não são recomendações de investimento.</p>
       {state && <div className="mt-3 space-y-3">

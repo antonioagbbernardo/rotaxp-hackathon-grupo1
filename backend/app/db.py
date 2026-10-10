@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS chat_turno (
     request_id TEXT NOT NULL, pergunta TEXT NOT NULL, criada_em TEXT NOT NULL,
     estado TEXT NOT NULL DEFAULT 'processando' CHECK(estado IN ('processando','concluido','falhou')),
     resposta TEXT, fontes TEXT NOT NULL DEFAULT '[]', nota_sugerida TEXT,
+    contexto_sugerido TEXT NOT NULL DEFAULT '[]',
     UNIQUE(cliente_id,request_id)
 );
 CREATE TABLE IF NOT EXISTS nota_assessor (
@@ -148,7 +149,7 @@ CREATE TABLE IF NOT EXISTS documento_fonte (
     versao INTEGER NOT NULL CHECK (versao > 0),
     cliente_referencia INTEGER,
     cliente_id INTEGER REFERENCES cliente(id),
-    tipo TEXT NOT NULL CHECK (tipo IN ('interacao', 'formulario')),
+    tipo TEXT NOT NULL CHECK (tipo IN ('interacao', 'formulario', 'nota_assessor')),
     canal TEXT CHECK (canal IN ('whatsapp', 'email', 'telefone', 'presencial')),
     conteudo TEXT NOT NULL,
     ocorrida_em TEXT NOT NULL,
@@ -203,7 +204,27 @@ def close_db(_exc=None) -> None:
 
 
 def init_db() -> None:
-    get_db().executescript(SCHEMA)
+    db = get_db()
+    db.executescript(SCHEMA)
+    if 'contexto_sugerido' not in {r['name'] for r in db.execute('PRAGMA table_info(chat_turno)')}:
+        db.execute("ALTER TABLE chat_turno ADD COLUMN contexto_sugerido TEXT NOT NULL DEFAULT '[]'")
+        db.commit()
+    antigo = db.execute("SELECT sql FROM sqlite_master WHERE name='documento_fonte'").fetchone()['sql']
+    if 'nota_assessor' not in antigo:
+        # Amplia apenas o CHECK de tipo, preservando IDs, versões e referências.
+        inicio = SCHEMA.index('CREATE TABLE IF NOT EXISTS documento_fonte (')
+        tabela = SCHEMA[inicio:SCHEMA.index(';', inicio)]
+        db.execute('BEGIN IMMEDIATE')
+        try:
+            db.execute(tabela.replace('documento_fonte (', 'documento_fonte_novo (', 1))
+            db.execute('INSERT INTO documento_fonte_novo SELECT * FROM documento_fonte')
+            db.execute('DROP TABLE documento_fonte')
+            db.execute('ALTER TABLE documento_fonte_novo RENAME TO documento_fonte')
+            db.execute('CREATE INDEX documento_fonte_cliente ON documento_fonte(cliente_id)')
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
 
 
 def drop_all() -> None:
