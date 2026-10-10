@@ -208,6 +208,30 @@ Nomes de canal em perguntas de preferência/histórico não implicam pedir núme
 de contato. Números/endereço e notícias ausentes retornam ausência.
 Objeto/campos inválidos: 400; cliente inexistente: 404. Não persiste a pergunta.
 
+### Síntese OpenAI (incremento 04)
+
+`assistant.summary` factual passa a separar os registros com quebras de linha;
+`assistant.summaryItems` contém as linhas para apresentação (inclui ausências).
+`assistant.aiSummary` = `{configurado: boolean, modelo: texto, assinatura: texto,
+resumo: null | {...}}`. GET apenas lê cache válido; não chama OpenAI.
+
+`POST /api/pulse/clientes/<id>/resumo-ia`, **sem corpo**. Fontes e modelo vêm
+do servidor. Retorna `{reutilizado: boolean, resumo: {...}}`. O resumo inclui
+`visao_geral: {texto, fontes: [referências textuais]}`, `pontos_atencao` e
+`antes_contato` (arrays de até três objetos do mesmo formato), `modelo`,
+`gerado_em` (UTC), `assinatura` e `uso` (contadores de tokens, se disponíveis).
+As referências textuais são resolvidas pelo backend a partir de IDs permitidos;
+não se aceitam fontes livres do modelo. Visão geral: até 450 caracteres;
+demais trechos: até 300; de uma a cinco fontes por trecho.
+
+Cache em `resumo_ia` por cliente, assinatura dos dados/data/modelo/prompt e
+tentativa. Dados alterados invalidam leitura e persistência em andamento.
+400: corpo indevido/entrada muito grande; 404: cliente ausente; 409: geração
+em andamento/dados alterados; 502: saída inválida, recusada ou incompleta;
+503: configuração ou provedor indisponível. Envelope `erro` com campo
+`resumo_ia`, sem corpo bruto do provedor ou credenciais. Sem alterações nos
+registros originais e sem envio de contato.
+
 `GET /` serve `frontend/dist/index.html` quando compilado; `/assets/<arquivo>`
 serve seus assets e `/favicon.svg` o ícone do build. Sem build, `/` usa a interface
 anterior. `/legacy` mantém essa interface. Em desenvolvimento,

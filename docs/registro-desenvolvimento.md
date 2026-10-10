@@ -194,6 +194,64 @@ fictícios permanece no painel. Após a combinação: 143 testes backend e cinco
 frontend aprovados, build e lint aprovados. Layout/fluxos visuais registrados
 acima correspondem à integração anterior; não repetidos após este merge visual.
 
+## Incremento SDD 04 — resumo OpenAI legível (10/10/2026)
+
+- Problema: o assistente concatenava os fatos num parágrafo, com `dia(s)` e
+  sem hierarquia. Pedido do usuário: usar sua API OpenAI e melhorar o texto.
+  [Spec](planejamento/incrementos/04-resumo-openai.md), RN40–RN45/CA65–CA71 e
+  contrato escritos antes do código; testes novos falharam por módulo ausente.
+- Backend: Responses REST com JSON Schema estrito, `store: false`, saída
+  limitada a 1.200 tokens, timeout de 30 segundos, erro seguro e nenhuma chave
+  no frontend. Configuração local `OPENAI_API_KEY`/`OPENAI_MODEL`;
+  modelo usado `gpt-4.1-mini`. Sem dependência/SDK adicional.
+- Seleção: fatos, ausências, preferências, alertas pendentes e fatos revisados
+  elegíveis. Propostas pendentes, hipóteses, bloqueios, terceiros, conflitos e
+  evidências antigas não entram. Não enviamos transcrições completas.
+  A avaliação de relacionamento aparece diretamente com autoria humana;
+  não é reinterpretada na síntese. IA não altera nenhum registro/prioridade.
+- Cache SQLite: uma síntese atual por cliente, assinatura do conteúdo, dia,
+  modelo e prompt. GET não chama IA; POST repetido reutiliza resultado.
+  Lock curto antes da chamada, proteção contra concorrência, retomada após
+  dois minutos e verificação de versão antes de salvar. Mudança relevante
+  esconde o resultado anterior até nova geração.
+- Frontend: fatos em linhas com plural correto; botão de geração, carregamento,
+  erro/retry. Síntese em **Visão geral**, **Pontos de atenção** e **Antes do
+  contato**, fontes por trecho e registros originais acessíveis. Síntese e
+  decisões humanas distintas; consultas básicas/rascunhos continuam por templates.
+- Validação real: duas chamadas OpenAI para **Bruno fictício**, sendo a segunda
+  um ajuste de redação/separação da avaliação humana. Ambas HTTP 200. Contadores
+  do provedor: **1.912 tokens de entrada + 507 de saída = 2.419** no total.
+  A síntese atual usou 1.205 tokens; repetição da primeira já demonstrou cache
+  (`reutilizado: true`). Não medimos cobrança, economia financeira nem qualidade
+  em uma amostra representativa. Não houve novas chamadas Gemini/NewsAPI.
+- Testes: 26 novos casos (seleção, formato/fontes, erro/recusa/timeout, cache,
+  alterações, persistência, concorrência e tentativa antiga); **169 backend**
+  e **cinco frontend** aprovados, além de build, lint e diff sem erro.
+- Navegador: síntese atual de Bruno visível no desktop e em viewport
+  **390 × 844**, com três seções e quebras de texto; fonte da visão geral aberta
+  e conferida. Sem cortes horizontais visíveis. Medição DOM da largura não foi
+  obtida nesta conferência; não equivale a teste em celular físico. Geração/retry
+  e falhas têm cobertura de API; botão não foi acionado visualmente neste lote.
+- Limites: estrutura/IDs de fontes validados não garantem precisão semântica;
+  assessor confere texto e fonte antes do atendimento. NewsAPI, reuniões,
+  keynotes, análise tributária e autenticação continuam pendentes. Chave e cache
+  são locais, não acompanham o clone; cada equipe configura a própria chave.
+
+**Demonstração:** abrir Bruno → mostrar síntese e pendências → abrir fontes →
+destacar avaliação do assessor → explicar cache e revisão final. Nos demais
+clientes, “Preparar resumo com IA” solicita a geração explícita.
+
+## Integração do incremento 04 na main
+
+Solicitada pelo usuário. Atualização até `52eb841` preserva a cobertura adicional
+da equipe e os ajustes de ícones/cartões/filtros do React. Merge automático sem
+conflitos de texto; resolvida a divergência do README que descrevia o frontend
+como mock independente. A documentação agora informa API Flask e proxy Vite.
+Após a integração: **288 testes backend + cinco frontend**, lint, build e
+diff aprovados. Credenciais locais excluídas do commit. A verificação visual
+da síntese foi feita antes deste merge; o layout combinado não foi novamente
+verificado em navegador. Não houve chamadas adicionais aos provedores.
+
 ## Roteiro para a apresentação
 
 | Tempo sugerido | Mostrar e explicar |

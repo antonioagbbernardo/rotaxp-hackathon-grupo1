@@ -10,12 +10,14 @@ import { OpeningSuggestion } from './OpeningSuggestion'
 import { UserMessage } from './UserMessage'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
+import { ClientBriefing } from './ClientBriefing'
 
 interface AssistantPanelProps {
   client: Client
+  onUpdated: () => Promise<void>
 }
 
-export function AssistantPanel({ client }: AssistantPanelProps) {
+export function AssistantPanel({ client, onUpdated }: AssistantPanelProps) {
   const [followUps, setFollowUps] = useState<{ question: string; answer?: string; sources?: string[]; error?: string }[]>([])
   const [busy, setBusy] = useState(false)
   const { assistant } = client
@@ -42,7 +44,7 @@ export function AssistantPanel({ client }: AssistantPanelProps) {
           <h2 id="assistant-title" className="text-base font-semibold">
             Assistente do assessor
           </h2>
-          <p className="mt-1 text-[11px] text-ink-muted">Consulta aos registros de {firstName} · IA na extração revisável</p>
+          <p className="mt-1 text-[11px] text-ink-muted">Prepare o atendimento de {firstName} com contexto e fontes.</p>
         </div>
       </header>
 
@@ -58,13 +60,7 @@ export function AssistantPanel({ client }: AssistantPanelProps) {
       <div className="-mx-1 mt-3.5 min-h-0 flex-1 space-y-3.5 overflow-y-auto px-1 pb-1">
         <UserMessage>{assistant.question}</UserMessage>
 
-        <div>
-          <p className="flex items-center gap-1 text-xs font-semibold">
-            <span aria-hidden>✦</span> XP Pulse
-          </p>
-          <p className="mt-2 text-[13px] leading-relaxed">{assistant.summary}</p>
-          <details className="mt-2 text-[10px] text-ink-muted"><summary className="cursor-pointer">Fontes do resumo</summary><ul className="mt-2">{assistant.summarySources?.map((s) => <li key={s}>{s}</li>)}</ul></details>
-        </div>
+        <ClientBriefing client={client} onUpdated={onUpdated} />
 
         <ol className="space-y-3">
           {assistant.insights.map((insight, index) => (

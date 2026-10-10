@@ -228,6 +228,10 @@ humanas persistidas; não altera o resumo por template nem os alertas da base.
 Integração autorizada do frontend React recebido: [incremento 03](incrementos/03-front-pulse.md),
 RN33–RN39 e CA57–CA64. Layout XP Pulse, dados persistidos e ações explícitas.
 
+Síntese OpenAI autorizada: [incremento 04](incrementos/04-resumo-openai.md),
+RN40–RN45 e CA65–CA71. Melhora a redação com fontes, cache e revisão humana;
+o resumo factual RN08 e as regras determinísticas continuam independentes.
+
 CA11–CA25 (notícias, reuniões e keynotes) estão em [requisitos](requisitos.md);
 CA26–CA33 de inferência/feedback continuam em requisitos; CA34–CA39 acima
 validam a base implementada (IDs reconciliados durante o merge).

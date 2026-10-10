@@ -97,6 +97,9 @@ extração, supervisão e feedback são a evolução T09 autorizada pelo usuári
 T09.1 importa JSON fictício e preserva evidências; T09.2/T09.3 acrescentam Gemini,
 revisão, correções e bloqueio por cliente. Chamada real validada em amostra fictícia;
 IA para extração não altera o resumo por template da base.
+Incremento 04 autorizado: síntese OpenAI separada (RN40–RN45), gerada por POST,
+com fontes validadas e cache SQLite. GET não chama provedor. O relacionamento
+humano é exibido diretamente, sem reinterpretação na síntese. Chaves no `.env`.
 
 ## Materiais locais
 `material-local/` (PDF do evento, comandos, guias) é pessoal, fica fora do Git e

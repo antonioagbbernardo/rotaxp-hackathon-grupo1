@@ -93,7 +93,7 @@ export function App() {
         </div>
 
         <div className="flex min-h-0 flex-col lg:col-span-2 xl:col-span-1">
-          <AssistantPanel key={selectedClient.id} client={selectedClient} />
+          <AssistantPanel key={selectedClient.id} client={selectedClient} onUpdated={updated} />
         </div>
         </> : <div className="p-5 text-sm text-ink-muted">Nenhum cliente cadastrado. Inicialize a base fictícia com o comando seed do backend.</div>}
       </main>}

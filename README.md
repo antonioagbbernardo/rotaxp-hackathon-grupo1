@@ -33,21 +33,24 @@ npm run dev
 ```
 
 Acesse http://127.0.0.1:5173. O Vite encaminha `/api` ao Flask.
-Credenciais Gemini ficam somente em `backend/.env`; processamento é explícito
-na tela de contexto. Sem chave, registros e revisões continuam consultáveis.
+Credenciais OpenAI/Gemini ficam somente em `backend/.env` (modelo em
+`backend/.env.example`). Extração Gemini é explícita na tela de contexto;
+o botão **Preparar resumo com IA** usa OpenAI. Sem chave, os registros continuam
+consultáveis. Reinicie o Flask após configurar ou alterar o `.env`.
 
-### Protótipo do front (React)
+### Frontend React em desenvolvimento
 
-O `frontend/` é um protótipo visual separado: usa dados fictícios próprios e
-**não chama a API Flask**, então não depende do backend estar rodando. Requer Node.js 22+.
+O `frontend/` consulta os dados fictícios persistidos na API Flask. Mantenha
+o backend em `127.0.0.1:5001`; o proxy do Vite encaminha as chamadas `/api`.
+Requer Node.js 22.18+ ou 24+.
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
-Acesse a URL que o Vite mostrar no terminal (por padrão http://localhost:5173).
+Acesse a URL que o Vite mostrar no terminal (por padrão http://127.0.0.1:5173).
 Outros comandos: `npm run build` (checagem de tipos + build) e `npm run lint`.
 Detalhes em [frontend/README.md](frontend/README.md).
 
@@ -64,7 +67,9 @@ npm run build
 
 O painel integra lista/prioridade, posições, histórico, fontes, revisão,
 bloqueios, preferências, relacionamento e alertas. Perguntas básicas e rascunhos
-usam templates com fontes. IA atua na extração revisável. NewsAPI e keynotes
+usam templates com fontes. Gemini extrai contexto revisável; OpenAI redige
+uma síntese com fontes em três seções, reutilizada enquanto os fatos estiverem
+iguais. Relacionamento humano e prioridade calculada aparecem separados. NewsAPI e keynotes
 continuam planejados, sem notícias estáticas apresentadas como coleta real.
 
 ## Estrutura

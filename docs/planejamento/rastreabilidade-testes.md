@@ -88,6 +88,23 @@ exige permissão e intervalo pessoal, mas `contexto.py` só aplica isso às
 categorias `interesse`, `data_importante` e `preferencia`; `objetivo`,
 `compromisso` e `ponto_atencao` ficam livres. Nenhum documento descreve a exceção.
 
+## Síntese OpenAI (CA65–CA71): incremento 04
+
+Integração na `main` com a base `52eb841`: `uv run --locked pytest -q` →
+**288 aprovados** (262 anteriores + 26 de `test_resumo_ia.py`). Transporte OpenAI
+simulado nos testes; duas chamadas reais fictícias registradas separadamente
+em [registro de desenvolvimento](../registro-desenvolvimento.md).
+
+| CA | Testes em `test_resumo_ia.py` | Evidência |
+| --- | --- | --- |
+| CA65 | `test_get_sem_chamada_fatos_separados_cache_persistente` | Linhas/plural cobertos; layout e fontes conferidos manualmente antes do merge |
+| CA66 | `test_get_sem_chamada_fatos_separados_cache_persistente` | GET, reuso por POST e cache após recriar a aplicação |
+| CA67 | `test_mudancas_invalidam_cache`, `test_mudanca_durante_chamada_nao_persiste_e_permite_retry`, `test_selecao_nao_envia_propostas_bloqueios_terceiros_transcricoes` | Contato, preferência, vencimento, data/modelo e correção de contexto; alteração durante geração |
+| CA68 | `test_saida_invalida_nao_persiste` | Formato, tamanho, fontes, ausência de saída persistida |
+| CA69 | `test_selecao_nao_envia_propostas_bloqueios_terceiros_transcricoes` | Cliente, revisão, hipóteses, bloqueio, conflito, fonte antiga e elegibilidade |
+| CA70 | `test_configuracao_entrada_grande_e_corpo_sem_chamada`, `test_transporte_*` | Configuração, limite, schema, timeout, HTTP 401/429, recusa e saída incompleta |
+| CA71 | `test_requisicao_concorrente_e_retomada_de_tentativa`, `test_tentativa_antiga_nao_sobrescreve_a_retomada` | Concorrência, retomada e preservação do resultado mais recente |
+
 ## Sem teste e sem implementação
 
 | CA | Tema | Tarefa |
