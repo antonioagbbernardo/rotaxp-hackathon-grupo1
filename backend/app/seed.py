@@ -50,9 +50,43 @@ def seed_db(hoje: date, agora: datetime) -> bool:
             "INSERT INTO data_importante (cliente_id, tipo, vinculo, descricao, dia, mes) VALUES (?,?,?,?,?,?)",
             (cid, "aniversario", vinculo, desc, quando.day, quando.month))
     interacoes = [  # cliente, canal, texto, dias atrás, próximos passos
-        (1, "telefone", "Conversa sobre vencimento do CDB.", 10, "Enviar opções de reinvestimento."),
-        (2, "email", "Cliente pediu revisão da carteira.", 4, None),
-        (3, "whatsapp", "Alinhamento sobre metas do ano.", 20, "Agendar reunião de revisão."),
+        # Cliente 1 - Ana Souza (intervalo mínimo: 7 dias)
+        (1, "telefone",
+         "[Transcrição de Áudio — XP Voice · Duração: 03:45]\nAssessor: 'Olá, Ana! Tudo bem? Estou te ligando para alinharmos o vencimento do seu CDB de R$ 50.000, previsto para daqui a alguns dias.'\nAna: 'Oi! Tudo ótimo por aqui. Que bom que me ligou, na correria eu nem lembrava da data exata. O que você recomenda para reaplicar esse valor?'\nAssessor: 'Pelo seu perfil moderado e com foco na aposentadoria, selecionei duas alternativas: um CDB indexado ao IPCA e uma LCI isenta de Imposto de Renda. Posso te enviar as simulações detalhadas?'\nAna: 'Com certeza! Pode mandar sim. E a propósito, minha filha faz aniversário mês que vem, então quero manter uma pequena reserva caso façamos uma viagem.'\nAssessor: 'Excelente lembrança, Ana! Já vou reservar essa liquidez no nosso planejamento. Te envio as opções hoje mesmo.'\nAna: 'Combinado, muito obrigada pela atenção!'",
+         8, "Enviar lâmina comparativa de LCI isenta e CDB IPCA+."),
+        (1, "whatsapp",
+         "Ana: 'Oi! Vi o resumo que você mandou sobre a LCI IPCA+. A taxa de 6,8% me pareceu excelente para o vencimento do meu CDB!'\nAssessor: 'Olá, Ana! Que bom que gostou. Como o seu objetivo é a aposentadoria, essa taxa garante ganho real protegido da inflação. Quer que eu faça a alocação hoje?'\nAna: 'Pode alocar sim, por favor!'",
+         10, "Confirmar aplicação de R$ 50.000 em LCI IPCA+ 6,8%."),
+        (1, "email",
+         "De: Ana Souza <ana.souza@exemplo.com>\nPara: assessor@xp.com.br\nAssunto: Extrato e planejamento mensal\n\n'Olá! Poderia me encaminhar o extrato consolidado com a posição atualizada da minha carteira? Gostaria de analisar a rentabilidade deste trimestre antes de decidirmos os próximos aportes. Um abraço, Ana.'",
+         15, "Extrato trimestral consolidado enviado por e-mail."),
+        # Cliente 2 - Bruno Lima
+        (2, "email",
+         "De: Bruno Lima <bruno.lima@exemplo.com>\nPara: assessor@xp.com.br\nAssunto: Re: Posição de renda fixa e vencimentos de outubro\n\n'Prezado assessor, recebi a notificação sobre a debênture vencida e o Tesouro com vencimento hoje. Solicito o envio formal por e-mail de 3 alternativas estritamente conservadoras (CDB 100%+ CDI com FGC ou Tesouro Selic) para reaplicação do capital. Por favor, mantenha nosso contato exclusivamente por e-mail com dados técnicos.'",
+         1, "Apresentar comparativo de 3 opções conservadoras com garantia do FGC via e-mail."),
+        (2, "telefone",
+         "[Transcrição de Áudio — XP Voice · Duração: 01:52]\nAssessor: 'Sr. Bruno, bom dia. Sou seu assessor da XP, entrando em contato a respeito da debênture de R$ 20.000 com vencimento recente.'\nBruno: 'Bom dia. Como informei no meu cadastro, prefiro que assuntos de carteira sejam tratados por e-mail com relatórios anexos, para que eu possa avaliar com calma os números.'\nAssessor: 'Compreendo perfeitamente, Sr. Bruno. Respeitamos seu canal de preferência. Vou compilar as taxas e enviar diretamente para sua caixa de entrada.'\nBruno: 'Agradeço a atenção. Fico no aguardo do material por e-mail.'",
+         3, "Enviar relatório técnico formal por e-mail."),
+        (2, "email",
+         "De: Bruno Lima <bruno.lima@exemplo.com>\nPara: assessor@xp.com.br\nAssunto: Solicitação de revisão conservadora\n\n'Gostaria de uma revisão periódica das posições de renda fixa antes dos vencimentos de outubro. Favor atentar para o perfil conservador sem exposição a risco de crédito privado.'",
+         4, None),
+        # Cliente 3 - Carla Mendes (intervalo mínimo: 14 dias)
+        (3, "telefone",
+         "[Transcrição de Áudio — XP Voice · Duração: 04:15]\nCarla: 'Fala! Tudo bem? Te ligando rapidinho entre um treino de corrida e o trabalho.'\nAssessor: 'Tudo ótimo, Carla! Vi que seu CRA de R$ 80.000 vence na semana que vem. Já pensou onde quer alocar o resgate?'\nCarla: 'Quero algo arrojado dessa vez! Talvez um fundo de ações internacional ou debênture incentivada com yield bem alto. Minha esposa também faz aniversário daqui a pouco, mas quero o dinheiro trabalhando forte.'\nAssessor: 'Perfeito! Posso montar uma cesta com debêntures incentivadas de infraestrutura e uma fatia em renda variável global.'\nCarla: 'Excelente! Manda no WhatsApp assim que tiver pronto que eu dou o ok.'",
+         15, "Estruturar cesta agressiva com debêntures de infraestrutura e BDRs."),
+        (3, "whatsapp",
+         "Carla: 'E aí! Vi que saiu o prospecto do novo IPO de tecnologia. Tem cota disponível pra mim?'\nAssessor: 'Oi Carla! Tem sim, a procura está alta mas consigo garantir sua reserva. Como seu perfil é arrojado, se encaixa muito bem na estratégia.'\nCarla: 'Top! Pode reservar R$ 20.000 para a minha conta!'",
+         20, "Executar reserva de IPO no sistema XP."),
+        (3, "whatsapp",
+         "Carla: 'Você viu a matéria sobre a maratona no Rio? Mês que vem tô confirmada! Depois me manda como ficaram os fundos multimercado.'\nAssessor: 'Parabéns pela maratona, Carla! Vou atualizar a lâmina dos multimercados e te envio logo mais.'",
+         25, None),
+        # Cliente 4 - Diego Rocha
+        (4, "telefone",
+         "[Transcrição de Áudio — XP Voice · Duração: 02:30]\nAssessor: 'Olá Diego, tudo bem? Estou fazendo nosso alinhamento de rotina da carteira.'\nDiego: 'Tudo bem por aqui! Como estão as projeções para os CDBs?'\nAssessor: 'Temos um CDB de R$ 25.000 vencendo daqui a 30 dias. Estou ligando com antecedência para monitorarmos as melhores taxas do mercado.'\nDiego: 'Bacana! Muito bom você antecipar isso. Quando faltarem uns 10 dias me dá um toque com as taxas atualizadas.'\nAssessor: 'Combinado, Diego! Agendarei nosso próximo contato para essa data.'",
+         2, "Retomar contato a 10 dias do vencimento com grade de taxas."),
+        (4, "whatsapp",
+         "Diego: 'Bom dia! Recebi o relatório semanal de mercado da XP. Muito bom o resumo sobre a curva de juros!'\nAssessor: 'Que ótimo que acompanhou, Diego! Qualquer dúvida sobre o impacto nos seus títulos, estou à disposição.'",
+         6, None),
     ]
     for cid, canal, texto, dias, passos in interacoes:
         db.execute(
@@ -67,6 +101,8 @@ def seed_db(hoje: date, agora: datetime) -> bool:
 
 
 def init_app(app: Flask) -> None:
+    from . import demo_pulse
+    demo_pulse.init_app(app)
     @app.cli.command("seed")
     def seed_command():
         """Popula dados fictícios somente se a base estiver vazia."""

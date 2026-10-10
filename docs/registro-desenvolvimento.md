@@ -474,3 +474,79 @@ o processo aberto e usar um vínculo de interesse já revisado pelo assessor.
   fluxo visual no navegador e suíte backend completa. A URI de retorno do cliente
   OAuth ainda precisa incluir a rota e a porta documentadas; configuração local
   não foi preenchida.
+## Ajuste — Todos na interface atual de humor (10/10/2026)
+
+- Pedido: implementar Todos na versão atualizada da main (`77cf36d`). Branch
+  `feat/filtro-todos-humor`. Escopo registrado antes do código no incremento 03.
+- Frontend: Todos com contagem, ícone de grupo e seleção explícita em uma linha
+  acima de Feliz, Neutro, Triste e Sem avaliação. Mantém os rostos, cores e
+  comportamento dos quatro filtros atuais. Reutiliza `all` e preserva a busca.
+- Backend, regras e contratos sem alteração. Sem chamadas a provedores ou
+  gravações de registros de clientes durante a verificação.
+- Validação: build, lint e 22 testes frontend aprovados. Edge: seleção inicial
+  de Todos, retorno aos cinco clientes após cada filtro e busca preservada.
+  Desktop e celular de 390/320 px sem rolagem horizontal; captura inspecionada.
+  Build atualizado servido na porta 5004.
+- Limites: sem aparelho físico; suíte backend não repetida para este ajuste
+  de apresentação. Alteração local, sem commit ou push.
+
+## Ajuste — nome fixo Pulse (10/10/2026)
+
+- Pedido: substituir Assistente do assessor por Pulse IA como nome fixo. Branch
+  `fix/nome-fixo-pulse`, a partir de `6e299bd`; escopo no incremento 03.
+- Frontend: cabeçalho Pulse IA e rótulo acessível Pergunte ao Pulse IA. Nome
+  independente de cliente/assessor; marca, aparência e chat preservados.
+  Backend e contratos sem alteração.
+- Validação: build, lint e 22 testes frontend aprovados. Edge: nome correto
+  antes/depois de trocar cliente, rótulo acessível e celular de 390 px sem
+  rolagem horizontal; captura desktop inspecionada. Build na porta 5004.
+- Limites: sem aparelho físico; suíte backend não repetida para esta troca
+  de texto. Sem chamadas a provedores ou gravações de clientes. Commit local
+  solicitado pelo usuário; sem push.
+
+## Incremento 10 — perfil do assessor (10/10/2026)
+
+- Pedido: abrir o perfil pelo assessor no cabeçalho e permitir editar/salvar,
+  preservando logo, cores e design. Branch `feat/perfil-do-assessor`, após
+  `8bcbd71`. RF32, RN76–RN78 e CA99–CA102 especificados antes do código.
+- Frontend: tela `#/perfil`, resumo com avatar/iniciais, formulário de nome,
+  cargo, e-mail, telefone e escritório, salvar/cancelar e retorno ao painel.
+  Cabeçalho reflete o perfil salvo; acesso por teclado e avatar no celular.
+  Inclui estados de carga, erro/retry, envio e confirmação.
+- Backend: GET/PUT `/api/pulse/assessor`, validação pura, escrita atômica no
+  SQLite, sessão/CSRF existentes. Migração adiciona colunas com padrões sem
+  sobrescrever nomes/IDs. Cargo do painel passa a vir do banco. Contratos
+  atualizados; login, dados de clientes e regras de alertas preservados.
+- TDD: antes da implementação, 16 falhas esperadas (rotas ausentes e colunas
+  inexistentes), uma verificação de proteção já aprovada. Depois: 17 testes do
+  perfil aprovados, incluindo persistência em nova aplicação e migração.
+- Validação: build, lint e 22 testes frontend aprovados. Lote backend de perfil,
+  painel e autenticação: 57 aprovados e uma falha preexistente no Windows,
+  `test_ca82_chave_local_persiste_e_cookie_funciona_apos_reinicio`, que exige
+  permissão POSIX 0600 (Windows retorna 0666).
+- Navegador Edge: edição/salvamento, cabeçalho, recarga, cancelar, falha simulada
+  de gravação com retry e telefone inválido sem persistência. Retorno ao painel,
+  teclado e viewports 390/320 px sem rolagem horizontal; capturas inspecionadas.
+  Perfil fictício original restaurado após a verificação. Porta local 5004.
+- Limites: sem aparelho físico ou suíte backend completa. Sem chamadas a
+  provedores durante a verificação. Commit local solicitado pelo usuário; sem push.
+
+## Integração na main — perfil, Todos e Pulse IA (10/10/2026)
+
+- Envio à main autorizado pelo usuário. Integrados os 13 commits remotos até
+  `6b9d8ae`, preservando notícias, fotos, comunicações recentes e painel da equipe.
+- Conflito único no título do chat: mantido `Pulse IA`, conforme pedido.
+  Perfil editável e cabeçalho preservam textos salvos sem a substituição de
+  nomes usada na apresentação dos demais dados; teste frontend de regressão.
+- Ajustado o teste da última interação de Ana para oito dias, conforme o novo
+  seed remoto de comunicações (o teste ainda esperava dez). Regra sem alteração.
+- Build, lint e 24 testes frontend aprovados. Lote backend: 57 aprovados, uma
+  expectativa desatualizada identificada e corrigida; caso corrigido aprovado
+  na repetição. Total: 58 casos aprovados. Teste POSIX 0600 excluído por
+  incompatibilidade conhecida com Windows. Suíte completa não executada.
+- Edge: salvar/recarregar perfil, cabeçalho, cancelar, erro/retry, validação e
+  retorno ao cliente aprovados; celular 390/320 px sem rolagem horizontal.
+  Perfil fictício original restaurado. Backend atualizado na porta 5004.
+- Atualização remota concorrente `9dad5e4` integrada antes do envio, preservando
+  a remoção de próximos passos no modal de mensagens recentes. Build, lint e
+  os 24 testes frontend repetidos após esse ajuste; backend sem mudança adicional.

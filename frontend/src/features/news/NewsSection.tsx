@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { api } from '@/lib/api'
+import { atualizarNoticias } from '@/lib/noticias'
 import { formatDate } from '@/lib/format'
 import type { Client } from '@/types/client'
 import { NewsCard } from './NewsCard'
@@ -8,6 +9,11 @@ import { NewsCard } from './NewsCard'
 interface NewsSectionProps {
   client: Client
   onUpdated: () => Promise<void>
+}
+
+interface InterestProposal {
+  id: number; resposta: string; nota_sugerida: string | null; nota_id: number | null;
+  contexto_sugerido?: { categoria: string; sujeito: string; valor: string; trecho: string }[]
 }
 
 const statusLabel = { nunca: 'Ainda sem coleta', atualizado: 'Coleta do dia', desatualizado: 'Cache de outro dia', falhou: 'Atualização falhou', processando: 'Coleta em andamento' }
@@ -18,11 +24,30 @@ export function NewsSection({ client, onUpdated }: NewsSectionProps) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [interest, setInterest] = useState('')
+  const [proposal, setProposal] = useState<InterestProposal | null>(null)
+  async function addInterest() {
+    if (busy || !interest.trim()) return
+    setBusy(true); setError(''); setNotice(''); setProposal(null)
+    try {
+      const result = await api<InterestProposal>(`/api/pulse/clientes/${client.id}/chat`, { method: 'POST', signal: AbortSignal.timeout(60_000), body: { pergunta: `Adicionar interesse do cliente: ${interest.trim()}`, interesse: interest.trim(), request_id: crypto.randomUUID() } })
+      setProposal(result)
+      if (result.nota_id) {
+        setInterest(''); setNotice('Interesse salvo. Buscando notícias automaticamente…')
+        await onUpdated()
+        const collectionError = await atualizarNoticias(client.id)
+        await onUpdated()
+        setError(collectionError)
+        setNotice(collectionError ? '' : 'Interesses e notícias atualizados automaticamente.')
+      }
+    } catch (e) { setError(e instanceof Error ? e.message : 'Não foi possível preparar o interesse.') }
+    finally { setBusy(false) }
+  }
   async function collect() {
     if (busy) return
     setBusy(true); setError(''); setNotice('')
     try {
-      const result = await api<{ resultados: { assunto: string; estado: string; erro?: { mensagem: string } }[] }>(`/api/clientes/${client.id}/noticias/atualizar`, { method: 'POST' })
+      const result = await api<{ resultados: { assunto: string; estado: string; erro?: { mensagem: string } }[] }>(`/api/clientes/${client.id}/noticias/atualizar`, { method: 'POST', signal: AbortSignal.timeout(60_000) })
       await onUpdated()
       const failures = result.resultados.filter((r) => r.estado === 'erro')
       const updated = result.resultados.filter((r) => r.estado === 'atualizado').length
@@ -54,10 +79,25 @@ export function NewsSection({ client, onUpdated }: NewsSectionProps) {
         </Button>
       </div>
 
+      <details className="mt-3 rounded-lg border border-line p-3 text-xs">
+        <summary className="cursor-pointer font-medium">Adicionar interesse</summary>
+        <form className="mt-3 space-y-2" onSubmit={(e) => { e.preventDefault(); void addInterest() }}>
+          <label className="block">Interesse deste cliente
+            <input required maxLength={500} value={interest} onChange={(e) => setInterest(e.target.value)} placeholder="Ex.: uva ou ele gosta de futebol e café"
+              className="mt-2 block w-full rounded-lg border border-line bg-surface p-2" />
+          </label>
+          <Button type="submit" disabled={busy}>{busy ? 'Atualizando…' : 'Adicionar e buscar notícias'}</Button>
+        </form>
+        {proposal && <div className="mt-3 space-y-2">
+          <p className="whitespace-pre-wrap leading-5">{proposal.resposta}</p>
+          {proposal.nota_id && <p className="text-[11px] text-ink-muted">Informação registrada automaticamente no contexto do cliente.</p>}
+        </div>}
+      </details>
+
       <p className="mt-3 text-[10px] leading-relaxed text-ink-muted">NewsAPI pode disponibilizar artigos com atraso conforme o plano. Coleta recente não garante notícia em tempo real. O humor é inferido das interações; as notícias não são recomendações de investimento.</p>
       {state && <div className="mt-3 space-y-3">
         {!state.configurado && <p className="text-xs text-ink-muted">A busca de notícias precisa de configuração no backend.</p>}
-        {state.assuntos.some((a) => a.id === 'mercado') && <p className="text-xs text-ink-muted">Sem assunto pessoal identificado no catálogo, mostramos notícias gerais do mercado financeiro.</p>}
+        {state.assuntos.some((a) => a.id === 'mercado') && <p className="text-xs text-ink-muted">Sem interesse pessoal identificado, mostramos notícias gerais do mercado financeiro.</p>}
         <ul className="space-y-2 text-[11px] leading-relaxed text-ink-muted">
           {state.assuntos.map((t) => <li key={t.id}>
             <span className="font-medium">{t.nome}</span> · {statusLabel[t.estado]}{t.ultima_coleta && ` · Última coleta ${formatDate(t.ultima_coleta)}`}

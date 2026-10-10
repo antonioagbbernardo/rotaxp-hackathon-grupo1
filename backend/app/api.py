@@ -25,6 +25,14 @@ from .seed import ASSESSOR_ID
 bp = Blueprint("api", __name__, url_prefix="/api")
 
 
+@bp.route('/pulse/assessor', methods=['GET', 'PUT'])
+def perfil_do_assessor():
+    from . import perfil_assessor
+    if request.method == 'PUT':
+        return jsonify(perfil_assessor.salvar(request.get_json(silent=True)))
+    return jsonify(perfil_assessor.consultar())
+
+
 @bp.post('/pulse/clientes/<int:cliente_id>/humor')
 def inferir_humor(cliente_id):
     from .humor import inferir

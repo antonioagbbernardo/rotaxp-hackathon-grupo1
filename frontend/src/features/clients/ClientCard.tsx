@@ -33,7 +33,7 @@ export function ClientCard({ client, isSelected, onSelect }: ClientCardProps) {
       )}
 
       <div className="flex items-center gap-3">
-        <Avatar name={client.name} />
+        <Avatar name={client.name} src={client.photoUrl} />
         <div className="min-w-0 flex-1 space-y-1">
           <p className="truncate text-sm font-medium" title={client.name}>{client.name}</p>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">

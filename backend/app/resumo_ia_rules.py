@@ -41,7 +41,7 @@ def montar_entrada(cliente, hoje):
                   'fonte': f"cliente #{cliente['id']} · preferências cadastradas"})
     for nota in cliente.get('advisorNotes', []):
         fatos.append({'id': f"nota-{nota['id']}", 'texto': nota['texto'],
-                      'fonte': f"nota confirmada do assessor #{nota['id']} · {nota['registrada_em']}"})
+                      'fonte': f"informação declarada pelo assessor · nota #{nota['id']} · {nota['registrada_em']}"})
     for item in cliente['context']['itens']:
         if (item['estado'] not in ('confirmado', 'corrigido') or item['tipo'] != 'fato' or item['sujeito'] != 'cliente'
                 or not item['evidencia_atual'] or item['conflitos'] or item['bloqueado']

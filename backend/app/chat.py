@@ -1,5 +1,7 @@
-"""Conversa OpenAI por cliente; notas dependem de confirmação do assessor."""
+"""Conversa OpenAI por cliente; dados declarados são registrados automaticamente."""
 import json
+import re
+import unicodedata
 from datetime import timedelta
 from uuid import UUID, uuid4
 
@@ -22,6 +24,7 @@ def _expor(row):
     return {'id': row['id'], 'request_id': row['request_id'], 'pergunta': row['pergunta'],
             'resposta': row['resposta'], 'fontes': json.loads(row['fontes']),
             'nota_sugerida': row['nota_sugerida'], 'nota_id': nota['id'] if nota else None,
+            'contexto_sugerido': json.loads(row['contexto_sugerido']),
             'criada_em': row['criada_em'], 'modo': 'openai'}
 
 
@@ -58,8 +61,11 @@ def _entrada(cliente):
 
 
 def responder(cliente, entrada):
-    b = corpo(entrada, ('pergunta', 'request_id'), ('pergunta',))
+    b = corpo(entrada, ('pergunta', 'request_id', 'interesse'), ('pergunta',))
     pergunta = texto(b['pergunta'], 'pergunta', 4000)
+    interesse = texto(b['interesse'], 'interesse', 500) if 'interesse' in b else None
+    if interesse is not None and pergunta != f'Adicionar interesse do cliente: {interesse}':
+        raise ErroAgenda('A mensagem deve corresponder ao interesse declarado.', 'interesse')
     try:
         request_id = str(UUID(b.get('request_id', str(uuid4()))))
     except (ValueError, TypeError, AttributeError):
@@ -87,24 +93,52 @@ def responder(cliente, entrada):
     try:
         fatos, fontes = _entrada(cliente)
         fontes['mensagem-atual'] = {'id': 'mensagem-atual', 'texto': pergunta,
-            'fonte': f'mensagem do assessor no chat #{rid} · informação fornecida na conversa, sujeita à confirmação'}
+            'fonte': f'mensagem do assessor no chat #{rid} · informação fornecida pelo assessor'}
         fatos['fatos'] = list(fontes.values())
         historico = db.execute("SELECT pergunta,resposta FROM chat_turno WHERE cliente_id=? AND estado='concluido' ORDER BY id DESC LIMIT 10", (cid,)).fetchall()
         mensagens = []
         for r in reversed(historico):
             mensagens.extend([{'role': 'user', 'content': r['pergunta']}, {'role': 'assistant', 'content': r['resposta']}])
-        provedor = current_app.config.get('CHAT_OPENAI') or OpenAIChat(current_app.config['OPENAI_API_KEY'], current_app.config['OPENAI_MODEL'])
-        saida = provedor.conversar(fatos, mensagens, pergunta)
-        if (not isinstance(saida, dict) or set(saida) != {'resposta', 'fontes', 'nota_sugerida'}
+        if interesse is not None:
+            # Entrada explícita do assessor: não depende de a IA reconhecer uma frase nominal.
+            from .contexto_chat import interesses_declarados
+            propostas = interesses_declarados(interesse)
+            if not propostas:
+                propostas = []
+                for termo in re.split(r',|;|\s+e\s+', interesse, flags=re.IGNORECASE)[:10]:
+                    termo = termo.strip()
+                    if not termo:
+                        continue
+                    norm = ''.join(c for c in unicodedata.normalize('NFD', termo.casefold()) if unicodedata.category(c) != 'Mn')
+                    assunto = re.sub(r'[^a-z0-9]+', '-', norm).strip('-')[:80] or 'interesse-declarado'
+                    propostas.append({'categoria': 'interesse', 'assunto': assunto, 'sujeito': 'cliente', 'valor': termo, 'trecho': termo})
+            saida = {'resposta': f'Informação registrada: {interesse}.',
+                'fontes': ['mensagem-atual'], 'nota_sugerida': interesse, 'contexto_sugerido': propostas}
+        else:
+            provedor = current_app.config.get('CHAT_OPENAI') or OpenAIChat(current_app.config['OPENAI_API_KEY'], current_app.config['OPENAI_MODEL'])
+            saida = provedor.conversar(fatos, mensagens, pergunta)
+            if isinstance(saida, dict) and isinstance(saida.get('contexto_sugerido', []), list) and not any(p.get('categoria') == 'interesse' for p in saida.get('contexto_sugerido', []) if isinstance(p, dict)):
+                from .contexto_chat import interesses_declarados
+                declarados = interesses_declarados(pergunta)
+                if declarados:
+                    saida['contexto_sugerido'] = (saida.get('contexto_sugerido') or []) + declarados
+                    saida['nota_sugerida'] = pergunta[:1000]
+        if (not isinstance(saida, dict) or set(saida) not in ({'resposta', 'fontes', 'nota_sugerida'}, {'resposta', 'fontes', 'nota_sugerida', 'contexto_sugerido'})
                 or not isinstance(saida['resposta'], str) or not saida['resposta'].strip() or len(saida['resposta']) > 10000
                 or not isinstance(saida['fontes'], list) or len(saida['fontes']) > 15
                 or any(not isinstance(f, str) or f not in fontes for f in saida['fontes'])
                 or (saida['nota_sugerida'] is not None and (not isinstance(saida['nota_sugerida'], str)
                     or not saida['nota_sugerida'].strip() or len(saida['nota_sugerida']) > 1000))):
             raise ErroAgenda('A IA retornou uma resposta inválida. Tente novamente.', 'chat', 502)
+        from .contexto_chat import validar
+        propostas = validar(saida.get('contexto_sugerido', []), pergunta)
+        if propostas and not saida['nota_sugerida']:
+            raise ErroAgenda('Contexto novo exige uma nota com a informação declarada.', 'contexto_sugerido', 502)
         referencias = list(dict.fromkeys(fontes[f]['fonte'] for f in saida['fontes']))
-        db.execute("UPDATE chat_turno SET estado='concluido',resposta=?,fontes=?,nota_sugerida=? WHERE id=?",
-            (saida['resposta'].strip(), json.dumps(referencias, ensure_ascii=False), saida['nota_sugerida'], rid))
+        db.execute("UPDATE chat_turno SET estado='concluido',resposta=?,fontes=?,nota_sugerida=?,contexto_sugerido=? WHERE id=?",
+            (saida['resposta'].strip(), json.dumps(referencias, ensure_ascii=False), saida['nota_sugerida'], json.dumps(propostas, ensure_ascii=False), rid))
+        if saida['nota_sugerida']:
+            _salvar_nota(db, db.execute('SELECT * FROM chat_turno WHERE id=?', (rid,)).fetchone(), formatar_utc(clock.agora()))
         db.commit()
     except Exception:
         db.rollback()
@@ -112,6 +146,14 @@ def responder(cliente, entrada):
         db.commit()
         raise
     return _expor(db.execute('SELECT * FROM chat_turno WHERE id=?', (rid,)).fetchone())
+
+
+def _salvar_nota(db, turno, agora):
+    from .contexto_chat import registrar
+    db.execute('INSERT OR IGNORE INTO nota_assessor(cliente_id,turno_id,texto,evidencia,registrada_em) VALUES (?,?,?,?,?)',
+        (turno['cliente_id'], turno['id'], turno['nota_sugerida'], turno['pergunta'], agora))
+    nota = db.execute('SELECT * FROM nota_assessor WHERE turno_id=?', (turno['id'],)).fetchone()
+    registrar(db, turno, nota, agora)
 
 
 def confirmar_nota(cid, rid):
@@ -123,7 +165,12 @@ def confirmar_nota(cid, rid):
         raise ErroAgenda('Mensagem inexistente para este cliente.', 'turno_id', 404)
     if not r['nota_sugerida']:
         raise ErroAgenda('Essa mensagem não contém uma nota para confirmar.', 'turno_id')
-    db.execute('INSERT OR IGNORE INTO nota_assessor(cliente_id,turno_id,texto,evidencia,registrada_em) VALUES (?,?,?,?,?)',
-        (cid, rid, r['nota_sugerida'], r['pergunta'], formatar_utc(current_app.config['CLOCK'].agora())))
-    db.commit()
+    db.execute('BEGIN IMMEDIATE')
+    try:
+        agora = formatar_utc(current_app.config['CLOCK'].agora())
+        _salvar_nota(db, r, agora)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     return _expor(r)

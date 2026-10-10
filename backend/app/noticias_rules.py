@@ -13,12 +13,17 @@ CATALOGO = {
     'formula-1': {'nome': 'Fórmula 1', 'q': '"Fórmula 1" OR "Formula 1" OR F1'},
     'palmeiras': {'nome': 'Palmeiras', 'q': 'Palmeiras AND futebol'},
     'corinthians': {'nome': 'Corinthians', 'q': 'Corinthians AND futebol'},
+    'futebol': {'nome': 'Futebol', 'q': 'futebol AND (brasileiro OR campeonato OR seleção)'},
+    'cafe': {'nome': 'Café', 'q': '"café especial" OR "cultura do café" OR cafeterias'},
 }
 
 
 def assuntos_do_interesse(texto):
     texto = ''.join(c for c in unicodedata.normalize('NFD', texto.casefold()) if unicodedata.category(c) != 'Mn')
-    padroes = {'formula-1': r'\b(?:formula\s*1|f1)\b', 'palmeiras': r'\bpalmeiras\b', 'corinthians': r'\bcorinthians\b'}
+    if re.search(r'\b(?:nao (?:gosta|acompanha|tem interesse|se interessa|quer noticias)|deixou de|parou de)\b', texto):
+        return []
+    padroes = {'formula-1': r'\b(?:formula\s*1|f1)\b', 'palmeiras': r'\bpalmeiras\b', 'corinthians': r'\bcorinthians\b',
+               'futebol': r'\bfutebol\b', 'cafe': r'\b(?:cafe|cafes|cafeterias?)\b'}
     return [assunto for assunto, padrao in padroes.items() if re.search(padrao, texto)]
 
 
@@ -30,8 +35,8 @@ class ErroNoticias(Exception):
         return {'codigo': self.codigo, 'campo': self.campo, 'mensagem': self.mensagem, 'status': self.status}
 
 
-def versao_consulta(assunto):
-    parametros = {'q': CATALOGO[assunto]['q'], 'language': 'pt', 'sortBy': 'publishedAt',
+def versao_consulta(assunto, catalogo=None):
+    parametros = {'q': (catalogo or CATALOGO)[assunto]['q'], 'language': 'pt', 'sortBy': 'publishedAt',
                   'searchIn': 'title,description', 'dias': 7, 'pageSize': 10, 'page': 1, 'versao': 1}
     return hashlib.sha256(json.dumps(parametros, sort_keys=True).encode()).hexdigest()
 
@@ -72,7 +77,7 @@ def validar_artigos(dados, agora):
     for a in dados['articles']:
         if not isinstance(a, dict):
             invalida()
-        if a.get('title') == '[Removed]':
+        if a.get('title') in (None, '[Removed]'):
             continue
         titulo, fonte, descricao = a.get('title'), a.get('source'), a.get('description')
         if not isinstance(titulo, str) or not titulo.strip() or len(titulo) > 500:

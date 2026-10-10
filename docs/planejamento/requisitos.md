@@ -490,3 +490,8 @@ adiciona convidados e não importa alterações feitas diretamente no Google.
 Cada evento dura uma hora. Reuniões locais são preservadas se a sincronização
 falhar; o painel mostra o estado e oferece nova tentativa. RN76–RN79 e CA99–CA102
 estão em [incremento 10](incrementos/10-google-agenda.md).
+## RF32 — perfil do assessor (incremento 10)
+
+Abrir perfil pelo nome/avatar no cabeçalho; editar nome, cargo, e-mail, telefone
+e escritório, salvar no banco e refletir no cabeçalho. CA99–CA102 e RN76–RN78
+em [incremento 10](incrementos/10-perfil-assessor.md). Sem alterar credenciais.

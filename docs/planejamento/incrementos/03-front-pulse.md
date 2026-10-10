@@ -45,3 +45,19 @@ React recebido em `5eac9c5`, preservando o layout e as decisões humanas.
 
 Notícias/NewsAPI, cadastro de novos clientes, app nativo e integrações dos canais
 continuam fora deste incremento. Documentar front/back e validação no registro.
+
+## Ajuste de interface — Todos nos filtros de humor (10/10/2026)
+
+Expor `Todos` abaixo da busca, junto de Feliz, Neutro, Triste e Sem avaliação.
+Usar o filtro `all` já existente: incluir todos os clientes, preservando a
+busca digitada. Exibir contagem e seleção com `aria-pressed`. Todos ocupa uma
+linha; as quatro opções atuais permanecem em duas colunas, sem alterar seus
+ícones ou significados. Conferir CA62/CA64, build, lint e testes frontend.
+Backend, contratos e regras não mudam.
+
+## Ajuste de interface — nome fixo Pulse (10/10/2026)
+
+O assistente se chama `Pulse IA` no cabeçalho do painel e no rótulo acessível do
+campo de conversa. O nome é fixo e não depende do cliente ou assessor.
+Preservar a marca XP Pulse, os demais textos, fontes e comportamento do chat.
+Validar CA64 com troca de cliente e celular; build, lint e testes frontend.

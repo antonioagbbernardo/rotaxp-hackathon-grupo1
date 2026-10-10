@@ -29,7 +29,7 @@ def _novos(cid, modelo, fontes):
         "SELECT documentos FROM processamento_contexto WHERE cliente_id=? AND modelo=? AND prompt_versao=? AND estado='concluido'",
         (cid, modelo, PROMPT_VERSAO)):
         processados.update(json.loads(row["documentos"]))
-    return [d for d in fontes if d["id"] not in processados]
+    return [d for d in fontes if d["tipo"] != 'nota_assessor' and d["id"] not in processados]
 
 
 def processar(cid):

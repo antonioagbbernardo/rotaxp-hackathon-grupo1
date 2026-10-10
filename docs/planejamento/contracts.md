@@ -17,7 +17,7 @@ equipe.
 
 | Entidade | Campos |
 | --- | --- |
-| Assessor | `id`, `nome` (um assessor fictício único, criado no seed) |
+| Assessor | `id`, `nome`, `cargo`, `email`, `telefone`, `escritorio` (assessor fictício único, criado no seed) |
 | Cliente | `id`, `nome`, `perfil`, `canal_preferido`, `intervalo_minimo_dias`, `permite_assuntos_pessoais` |
 | AvaliacaoRelacionamento | `id`, `cliente_id`, `estado` (`positivo`\|`atencao`\|`negativo`), `justificativa`, `assessor_id`, `avaliada_em`. Estado atual = última avaliação; sem avaliação = "Não avaliado" |
 | Posicao | `id`, `cliente_id`, `ativo`, `valor`, `vencimento`, `fonte` |
@@ -402,3 +402,15 @@ eventos. Cancelamento remove o evento da agenda. Concluir mantém o evento passa
 Eventos usam `inicio_em`, fuso `America/Sao_Paulo`, duração de 1 hora, título
 “Reunião com <cliente>” e objetivo na descrição. GET de reuniões não chama Google.
 Erros de configuração, OAuth e API são apresentados sem expor tokens.
+## Incremento 10 — perfil do assessor
+
+`GET /api/pulse/assessor` retorna `{name, role, email, phone, office}` do assessor
+único. `PUT /api/pulse/assessor` aceita exatamente esses cinco campos textuais e
+retorna o perfil salvo (200). Nome/cargo obrigatórios; demais aceitam string vazia.
+Limites/formato/trim: RN76 no [incremento 10](incrementos/10-perfil-assessor.md).
+Entrada inválida retorna 400 `entrada_invalida`, com `erro.campo` igual ao campo
+inválido (`corpo` se não objeto). Assessor ausente: 404 `nao_encontrado`, campo
+`assessor`. Nenhuma escrita parcial. Sessão obrigatória e PUT exige CSRF.
+`GET /api/pulse` mantém `{advisor: {name, role}}`, agora lendo o cargo persistido.
+Migração acrescenta cargo padrão `Assessor de investimentos` e contatos vazios
+sem sobrescrever nomes/IDs. Perfil não muda o usuário/senha de login.

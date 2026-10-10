@@ -43,7 +43,7 @@ export function RadarPerfil({ client, hoje }: RadarPerfilProps) {
     <Panel className="px-5 py-5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="text-sm font-medium">Radar de perfil</h2>
-        <p className="text-[10px] text-ink-muted">Estimativa heurística · dados fictícios · não é recomendação</p>
+        <p className="text-[10px] text-ink-muted">Estimativa heurística · não é recomendação</p>
       </div>
 
       {perfil.eixos.length === 0 ? (

@@ -1,5 +1,6 @@
 """Adaptador do painel React; consulta registros sem chamar IA ou enviar contato."""
 from decimal import Decimal
+import re
 import unicodedata
 
 from flask import current_app
@@ -21,6 +22,38 @@ def referencia(fonte):
     return f"{fonte['tipo_fonte']} #{ids}" + (f" · {fonte['data_referencia']}" if fonte.get("data_referencia") else "")
 
 
+def montar_carteira(posicoes, perfil, itens, fontes):
+    valores = {}
+    for p in posicoes:
+        ativo = ''.join(ch for ch in unicodedata.normalize('NFD', p['ativo'].casefold()) if unicodedata.category(ch) != 'Mn')
+        classe = ('fixedIncome' if re.search(r'\b(cdb|lci|lca|cra|cri|tesouro|debenture|renda fixa)\b', ativo)
+                  else 'funds' if re.search(r'\b(fundo|fundos|fii|etf)\b', ativo)
+                  else 'stocks' if re.search(r'\b(acao|acoes)\b', ativo) else 'other')
+        valores[classe] = valores.get(classe, Decimal('0')) + Decimal(p['valor'])
+    total = sum(valores.values(), Decimal('0'))
+    alocacao = []
+    if total > 0:
+        percentuais = {k: v * 100 / total for k, v in valores.items() if v > 0}
+        inteiros = {k: int(v) for k, v in percentuais.items()}
+        for k in sorted(percentuais, key=lambda k: percentuais[k] - inteiros[k], reverse=True)[:100 - sum(inteiros.values())]:
+            inteiros[k] += 1
+        alocacao = [{'asset': k, 'percent': v} for k, v in inteiros.items()]
+    objetivos = [i for i in itens if i['categoria'] == 'objetivo' and i['tipo'] == 'fato'
+                 and i['sujeito'] == 'cliente' and i['estado'] in ('confirmado', 'corrigido', 'pendente')
+                 and i['evidencia_atual'] and not i['conflitos'] and not i['bloqueado']]
+    objetivos.sort(key=lambda i: (i['estado'] != 'pendente', i['gerado_em']), reverse=True)
+    objetivo = next((i['valor_revisado'] or i['valor_original'] for i in objetivos), None)
+    if not objetivo:
+        objetivo = next((f['conteudo']['objetivo'] for f in fontes if f['atual'] and f['tipo'] == 'formulario'
+                         and isinstance(f['conteudo'], dict) and isinstance(f['conteudo'].get('objetivo'), str)
+                         and f['conteudo']['objetivo'].strip()), None)
+    if not objetivo and 'objetivo:' in (perfil or '').casefold():
+        objetivo = re.split(r'objetivo:', perfil, flags=re.IGNORECASE)[1].strip()
+    objetivo = re.sub(r'^Dados fictícios:\s*', '', objetivo or 'Não informado', flags=re.IGNORECASE)
+    return {'total': format(total, '.2f') if posicoes else None, 'goal': objetivo,
+            'profile': (perfil or '').split(';')[0].strip() or 'Não informado', 'allocation': alocacao}
+
+
 def montar_cliente(c, incluir_resumo_ia=True):
     # Mesma leitura/regras das rotas existentes, sem outra lógica de prioridade.
     from .api import _contexto, _preferencias, _relacionamento
@@ -33,6 +66,8 @@ def montar_cliente(c, incluir_resumo_ia=True):
     resumo = montar_resumo(dict(c), ctx["posicoes"], ctx["ultima"],
                           ctx["avaliacoes"][0] if ctx["avaliacoes"] else None, clock.hoje(), ctx["ultima_data"])
     revisao = contexto.consultar(c["id"])
+    fontes_cliente = consultar_fontes(c["id"])
+    formulario = next((f['conteudo'] for f in fontes_cliente if f['atual'] and f['tipo'] == 'formulario' and f['origem'] == 'demo-pulse-v2'), {})
     novidades = noticias.consultar(c['id'], revisao['itens'])
     confirmados = [i for i in revisao["itens"] if i["estado"] in ("confirmado", "corrigido")
                    and i["sujeito"] == "cliente" and i["evidencia_atual"] and not i["conflitos"]]
@@ -63,6 +98,7 @@ def montar_cliente(c, incluir_resumo_ia=True):
     atualizado = max(instantes, default=None)
     linhas_resumo = [apresentar_fato(f['texto']) for f in resumo['fatos']] + resumo['ausencias']
     cliente = {
+        "photoUrl": f"/assets/avatars/{c['id']}.jpg" if 1 <= c["id"] <= 10 else None,
         "id": str(c["id"]), "name": c["nome"], "pronoun": "este cliente",
         "status": "attention" if ctx["prioridade"] in ("alta", "media") else "stable",
         "priority": ctx["prioridade"], "nextDue": ctx["proxima_pendencia"],
@@ -72,20 +108,19 @@ def montar_cliente(c, incluir_resumo_ia=True):
         "sentiment": humor['sentiment'], "mood": humor,
         "headline": f"{len(alertas)} pendência(s) · {len(pendentes)} proposta(s) para revisar",
         "updatedMinutesAgo": max(0, int((clock.agora() - parse_instante(atualizado)).total_seconds() // 60)) if atualizado else None,
-        "clientSince": None, "lastContactDays": (clock.hoje() - ctx["ultima_data"]).days if ctx["ultima_data"] else None,
-        "whatsapp": "", "email": "",
+        "clientSince": formulario.get("cliente_desde"), "lastContactDays": (clock.hoje() - ctx["ultima_data"]).days if ctx["ultima_data"] else None,
+        "whatsapp": formulario.get("whatsapp", ""), "email": formulario.get("email", ""),
         "perception": [{"id": r["id"], "month": parse_instante(r["avaliada_em"]).astimezone(TZ).strftime("%Y-%m"),
                         "sentiment": {"positivo": "positive", "negativo": "negative", "atencao": "neutral"}[r["estado"]],
                         "label": {"positivo": "Positivo", "negativo": "Negativo", "atencao": "Atenção"}[r["estado"]],
                         "reason": r["justificativa"], "date": r["avaliada_em"]} for r in reversed(ctx["avaliacoes"])],
-        "portfolio": {"total": format(sum((Decimal(p["valor"]) for p in ctx["posicoes"]), Decimal("0")), ".2f") if ctx["posicoes"] else None,
-                      "goal": next((valor(i) for i in confirmados if i["categoria"] == "objetivo"), "Objetivo ainda não revisado"), "allocation": []},
+        "portfolio": montar_carteira(ctx['posicoes'], c['perfil'], revisao['itens'], fontes_cliente),
         "news": novidades['artigos'], "newsState": {k: v for k, v in novidades.items() if k != 'artigos'},
         "assistant": {"question": "O que preciso revisar antes do contato?",
           "summary": "\n".join(linhas_resumo), "summaryItems": linhas_resumo,
           "insights": insights, "openings": aberturas, "sources": fontes_abertura,
           "summarySources": fontes_resumo},
-        "context": revisao, "sourceDocuments": consultar_fontes(c["id"]), "alerts": ctx["alertas"],
+        "context": revisao, "sourceDocuments": fontes_cliente, "alerts": ctx["alertas"],
         "interactions": ctx["interacoes"], "preferences": _preferencias(c), "positions": ctx["posicoes"],
         "summaryFacts": resumo["fatos"], "relationshipHistory": ctx["avaliacoes"],
         "advisorNotes": notas(c['id']),
@@ -100,8 +135,8 @@ def consultar_painel():
     db = get_db()
     clientes = [montar_cliente(c) for c in db.execute("SELECT * FROM cliente").fetchall()]
     clientes.sort(key=lambda c: (PRIORIDADES.index(c["priority"]), c["nextDue"] or "9999-12-31", _norm(c["name"])))
-    assessor = db.execute("SELECT nome FROM assessor WHERE id=1").fetchone()
-    return {"advisor": {"name": assessor["nome"] if assessor else "Assessor não cadastrado", "role": "Assessor de investimentos"},
+    assessor = db.execute("SELECT nome, cargo FROM assessor WHERE id=1").fetchone()
+    return {"advisor": {"name": assessor["nome"] if assessor else "Assessor não cadastrado", "role": assessor['cargo'] if assessor else "Assessor de investimentos"},
             "generatedAt": formatar_utc(current_app.config["CLOCK"].agora()), "clients": clientes}
 
 

@@ -4,6 +4,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from .resumo_ia_rules import ErroResumoIA, SCHEMA
+from .contexto_rules import CATEGORIAS, SUJEITOS
 
 INSTRUCOES = """Você redige um briefing curto em português brasileiro para um assessor de investimentos.
 Sua função é poupar a busca do assessor e ajudá-lo a preparar o atendimento; ele decide os próximos passos.
@@ -86,8 +87,13 @@ CHAT_SCHEMA = {
         'resposta': {'type': 'string'},
         'fontes': {'type': 'array', 'items': {'type': 'string'}},
         'nota_sugerida': {'type': ['string', 'null']},
+        'contexto_sugerido': {'type': 'array', 'items': {'type': 'object', 'additionalProperties': False,
+            'properties': {'categoria': {'type': 'string', 'enum': list(CATEGORIAS)},
+                'assunto': {'type': 'string'}, 'sujeito': {'type': 'string', 'enum': list(SUJEITOS)},
+                'valor': {'type': 'string'}, 'trecho': {'type': 'string'}},
+            'required': ['categoria', 'assunto', 'sujeito', 'valor', 'trecho']}},
     },
-    'required': ['resposta', 'fontes', 'nota_sugerida'],
+    'required': ['resposta', 'fontes', 'nota_sugerida', 'contexto_sugerido'],
 }
 
 CHAT_INSTRUCOES = """Você é o assistente do assessor XP Pulse. Converse naturalmente em português,
@@ -107,15 +113,24 @@ Explique ausência de dados de maneira natural. Não ofereça recomendações es
 compra/venda, análise tributária ou promessa de retorno; pode explicar conceitos gerais.
 Use fontes com os IDs exatos dos fatos que fundamentam afirmações sobre o cliente.
 Para cumprimentos ou conhecimento geral, fontes pode ser vazio. Máximo 15 fontes.
-mensagem-atual representa apenas o que o assessor acabou de informar, ainda não
-uma nota confirmada. Não use sua própria resposta como fonte.
+mensagem-atual representa o que o assessor acabou de informar. Não use sua própria resposta como fonte.
 Quando o assessor informa nesta mensagem um dado novo e concreto do investidor ou pede
 que seja lembrado/anotado, escreva nota_sugerida curta (até 1000 caracteres), fiel apenas
 ao que ele informou, sem inferências. Não crie nota de perguntas, exemplos hipotéticos,
-cumprimentos ou suas próprias sugestões. Nunca diga que já salvou a nota: ela aparecerá
-para confirmação humana. Uma conversa com você não é contato realizado com o investidor.
-Ao sugerir uma nota, diga "Preparei uma nota para você confirmar abaixo".
-Antes da confirmação nunca diga "anotei", "salvei", "registrei" ou "atualizei o cadastro".
+cumprimentos ou suas próprias sugestões. O backend salva automaticamente nota e contexto
+quando você inclui dados válidos. Diga de forma natural que a informação foi registrada.
+Não peça confirmação nem ofereça botões de aprovação. Uma conversa com você não é
+contato realizado com o investidor.
+Também extraia contexto_sugerido (até dez itens) somente de informações concretas que o
+assessor declarou nesta mensagem sobre o cliente: interesses, preferências, objetivos,
+datas, compromissos e pontos de atenção. Para cada item use categoria, assunto (slug estável
+minúsculo até 80 caracteres a-z/0-9/hífen), sujeito, valor (até 500 caracteres) e trecho
+LITERAL da mensagem atual. Use assuntos como formula-1, palmeiras, corinthians quando
+pertinentes; interesses diferentes devem ter seus próprios assuntos. Não confunda gosto
+de familiar com gosto do cliente. Não extraia de perguntas, hipóteses, notícias lidas ou
+suas próprias respostas. Lista vazia quando não há dados novos. Se há contexto_sugerido,
+inclua uma nota_sugerida fiel. O sistema salvará nota e contexto automaticamente e os
+interesses alimentarão as notícias; não é necessário confirmar ou preencher outro formulário.
 Não execute ações nem prometa enviar mensagens, atualizar carteira ou buscar dados externos.
 Texto com parágrafos curtos, até 6000 caracteres, sem markdown pesado."""
 
