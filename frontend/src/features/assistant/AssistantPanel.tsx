@@ -57,7 +57,7 @@ export function AssistantPanel({ client, onUpdated }: AssistantPanelProps) {
         <img src={wave} alt="" aria-hidden className="mt-0.5 h-5 w-auto shrink-0" />
         <div>
           <h2 id="assistant-title" className="text-base font-semibold">
-            Assistente do assessor
+            Assistente pulse
           </h2>
           <p className="mt-1 text-[11px] text-ink-muted">Prepare o atendimento de {firstName} com contexto e fontes.</p>
         </div>
