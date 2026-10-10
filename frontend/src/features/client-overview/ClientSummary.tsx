@@ -1,23 +1,23 @@
-import { Avatar } from '@/components/ui/Avatar'
-import { Badge, type BadgeTone } from '@/components/ui/Badge'
-import { Panel } from '@/components/ui/Panel'
-import { formatElapsed, formatMonth } from '@/lib/format'
-import type { Client, ClientStatus } from '@/types/client'
+import { Avatar } from "@/components/ui/Avatar";
+import { Badge, type BadgeTone } from "@/components/ui/Badge";
+import { Panel } from "@/components/ui/Panel";
+import { formatElapsed, formatMonth } from "@/lib/format";
+import type { Client, ClientStatus } from "@/types/client";
 
 const statusBadge: Record<ClientStatus, { label: string; tone: BadgeTone }> = {
-  opportunity: { label: 'Oportunidade', tone: 'positive' },
-  attention: { label: 'Atenção', tone: 'negative' },
-  stable: { label: 'Estável', tone: 'neutral' },
-}
+  opportunity: { label: "Oportunidade", tone: "positive" },
+  attention: { label: "Atenção", tone: "negative" },
+  stable: { label: "Estável", tone: "neutral" },
+};
 
-const MINUTES_PER_DAY = 1440
+const MINUTES_PER_DAY = 1440;
 
 interface ClientSummaryProps {
-  client: Client
+  client: Client;
 }
 
 export function ClientSummary({ client }: ClientSummaryProps) {
-  const status = statusBadge[client.status]
+  const status = statusBadge[client.status];
 
   return (
     <Panel className="px-6 pt-6 pb-4">
@@ -32,20 +32,22 @@ export function ClientSummary({ client }: ClientSummaryProps) {
             </Badge>
           </div>
           <p className="mt-1 text-[11px] text-ink-muted">
-            Cliente desde {formatMonth(client.clientSince)} · Último contato{' '}
+            Cliente desde {formatMonth(client.clientSince)} · Último contato{" "}
             {formatElapsed(client.lastContactDays * MINUTES_PER_DAY)}
           </p>
           <ul className="mt-3 flex flex-wrap gap-2">
             {client.tags.map((tag) => (
               <li key={tag.label}>
-                <Badge tone={tag.highlighted ? 'positive' : 'neutral'}>{tag.label}</Badge>
+                <Badge tone={tag.highlighted ? "positive" : "neutral"}>
+                  {tag.label}
+                </Badge>
               </li>
             ))}
           </ul>
         </div>
       </div>
 
-      <dl className="mt-4 grid grid-cols-1 gap-2 border-t border-line pt-3.5 text-[11px] sm:grid-cols-3 sm:items-center">
+      <dl className="mt-4 grid grid-cols-1 gap-2 border-t border-line pt-3.5 text-[11px] sm:grid-cols-2 sm:items-center">
         <div className="text-ink-muted">
           <dt className="inline">WhatsApp </dt>
           <dd className="inline">{client.whatsapp}</dd>
@@ -54,13 +56,7 @@ export function ClientSummary({ client }: ClientSummaryProps) {
           <dt className="sr-only">E-mail</dt>
           <dd>{client.email}</dd>
         </div>
-        <a
-          href={`#perfil/${client.id}`}
-          className="font-medium text-ink hover:text-brand sm:text-right"
-        >
-          Ver perfil completo →
-        </a>
       </dl>
     </Panel>
-  )
+  );
 }

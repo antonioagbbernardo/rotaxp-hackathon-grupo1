@@ -58,12 +58,6 @@ export function ClientSidebar({ clients, selectedClientId, onSelectClient }: Cli
           <li className="py-8 text-center text-xs text-ink-muted">Nenhum cliente encontrado.</li>
         )}
       </ul>
-
-      <p className="mt-4 border-t border-line pt-4 text-[10px] leading-relaxed text-ink-muted">
-        O emoji indica o impacto da notícia.
-        <br />
-        Ele não representa o humor real do cliente.
-      </p>
     </Panel>
   )
 }
