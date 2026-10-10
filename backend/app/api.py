@@ -106,6 +106,28 @@ def perguntar_pulse(cliente_id):
     return jsonify(pulse.responder(pulse.montar_cliente(c), pergunta))
 
 
+@bp.get('/pulse/clientes/<int:cliente_id>/chat')
+def historico_chat(cliente_id):
+    from . import chat
+    _cliente_ou_404(get_db(), cliente_id)
+    return jsonify(chat.consultar(cliente_id))
+
+
+@bp.post('/pulse/clientes/<int:cliente_id>/chat')
+def conversar_chat(cliente_id):
+    from . import chat
+    c = _cliente_ou_404(get_db(), cliente_id)
+    return jsonify(chat.responder(pulse.montar_cliente(c, incluir_resumo_ia=False), _corpo()))
+
+
+@bp.post('/pulse/clientes/<int:cliente_id>/chat/<int:turno_id>/nota')
+def confirmar_nota_chat(cliente_id, turno_id):
+    from . import chat
+    _cliente_ou_404(get_db(), cliente_id)
+    _sem_corpo()
+    return jsonify(chat.confirmar_nota(cliente_id, turno_id))
+
+
 @bp.post("/pulse/clientes/<int:cliente_id>/resumo-ia")
 def gerar_resumo_ia(cliente_id):
     c = _cliente_ou_404(get_db(), cliente_id)

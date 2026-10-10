@@ -5,12 +5,24 @@ from flask import Flask, current_app, g
 
 # Dinheiro: TEXT com Decimal (nunca float). Datas: YYYY-MM-DD. Instantes: UTC ISO 8601.
 # O alerta NÃO é persistido (calculado sob demanda); só o tratamento (tratamento_alerta).
-TABELAS = ("feedback_lembranca", "lembranca_contexto", "pauta_reuniao", "reuniao", "sessao_acesso", "descarte_noticia", "coleta_artigo_noticia", "artigo_noticia", "coleta_noticia", "vinculo_noticia",
+TABELAS = ("nota_assessor", "chat_turno", "feedback_lembranca", "lembranca_contexto", "pauta_reuniao", "reuniao", "sessao_acesso", "descarte_noticia", "coleta_artigo_noticia", "artigo_noticia", "coleta_noticia", "vinculo_noticia",
            "resumo_ia", "historico_assunto", "preferencia_assunto", "revisao_contexto", "item_contexto", "processamento_contexto",
            "documento_fonte", "tratamento_alerta", "avaliacao_relacionamento", "interacao", "data_importante",
            "posicao", "cliente", "assessor")
 
 SCHEMA = """
+CREATE TABLE IF NOT EXISTS chat_turno (
+    id INTEGER PRIMARY KEY, cliente_id INTEGER NOT NULL REFERENCES cliente(id),
+    request_id TEXT NOT NULL, pergunta TEXT NOT NULL, criada_em TEXT NOT NULL,
+    estado TEXT NOT NULL DEFAULT 'processando' CHECK(estado IN ('processando','concluido','falhou')),
+    resposta TEXT, fontes TEXT NOT NULL DEFAULT '[]', nota_sugerida TEXT,
+    UNIQUE(cliente_id,request_id)
+);
+CREATE TABLE IF NOT EXISTS nota_assessor (
+    id INTEGER PRIMARY KEY, cliente_id INTEGER NOT NULL REFERENCES cliente(id),
+    turno_id INTEGER NOT NULL UNIQUE REFERENCES chat_turno(id), texto TEXT NOT NULL,
+    evidencia TEXT NOT NULL, registrada_em TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS lembranca_contexto (
     id INTEGER PRIMARY KEY, cliente_id INTEGER NOT NULL REFERENCES cliente(id),
     item_id INTEGER NOT NULL REFERENCES item_contexto(id), revisao INTEGER NOT NULL,

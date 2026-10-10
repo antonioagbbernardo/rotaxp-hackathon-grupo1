@@ -39,6 +39,9 @@ def montar_entrada(cliente, hoje):
                   f"Intervalo mínimo: {p['intervalo_minimo_dias']} dias. "
                   f"Assuntos pessoais: {'permitidos' if p['permite_assuntos_pessoais'] else 'não permitidos'}.",
                   'fonte': f"cliente #{cliente['id']} · preferências cadastradas"})
+    for nota in cliente.get('advisorNotes', []):
+        fatos.append({'id': f"nota-{nota['id']}", 'texto': nota['texto'],
+                      'fonte': f"nota confirmada do assessor #{nota['id']} · {nota['registrada_em']}"})
     for item in cliente['context']['itens']:
         if (item['estado'] not in ('confirmado', 'corrigido') or item['tipo'] != 'fato' or item['sujeito'] != 'cliente'
                 or not item['evidencia_atual'] or item['conflitos'] or item['bloqueado']

@@ -22,8 +22,8 @@ def create_app(config: dict | None = None) -> Flask:
         GEMINI_MODEL=os.environ.get("GEMINI_MODEL", locais.get("GEMINI_MODEL", "gemini-3.5-flash-lite")),
         OPENAI_API_KEY=os.environ.get("OPENAI_API_KEY", locais.get("OPENAI_API_KEY", "")),
         OPENAI_MODEL=os.environ.get("OPENAI_MODEL", locais.get("OPENAI_MODEL", "gpt-4.1-mini")),
-        NEWSAPI_API_KEY=os.environ.get("NEWSAPI_API_KEY", os.environ.get("NEWSAPI_KEY",
-            locais.get("NEWSAPI_API_KEY", locais.get("NEWSAPI_KEY", "")))),
+        NEWSAPI_API_KEY=(os.environ.get("NEWSAPI_API_KEY") or os.environ.get("NEWSAPI_KEY")
+            or locais.get("NEWSAPI_API_KEY") or locais.get("NEWSAPI_KEY") or ""),
         NEWSAPI_LIMITE_DIARIO=os.environ.get("NEWSAPI_LIMITE_DIARIO", locais.get("NEWSAPI_LIMITE_DIARIO", "20")),
     )
     if config:

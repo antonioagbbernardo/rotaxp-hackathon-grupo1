@@ -24,6 +24,7 @@ def referencia(fonte):
 def montar_cliente(c, incluir_resumo_ia=True):
     # Mesma leitura/regras das rotas existentes, sem outra lógica de prioridade.
     from .api import _contexto, _preferencias, _relacionamento
+    from .chat import notas
     db, clock = get_db(), current_app.config["CLOCK"]
     ctx = _contexto(db, c, clock.hoje())
     rel = _relacionamento(ctx["avaliacoes"])
@@ -85,6 +86,7 @@ def montar_cliente(c, incluir_resumo_ia=True):
         "context": revisao, "sourceDocuments": consultar_fontes(c["id"]), "alerts": ctx["alertas"],
         "interactions": ctx["interacoes"], "preferences": _preferencias(c), "positions": ctx["posicoes"],
         "summaryFacts": resumo["fatos"], "relationshipHistory": ctx["avaliacoes"],
+        "advisorNotes": notas(c['id']),
     }
     if incluir_resumo_ia:
         cliente['assistant']['aiSummary'] = resumo_ia.consultar(cliente)

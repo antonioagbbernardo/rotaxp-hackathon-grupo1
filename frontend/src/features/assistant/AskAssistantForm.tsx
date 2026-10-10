@@ -32,7 +32,7 @@ export function AskAssistantForm({ placeholder, onAsk, disabled }: AskAssistantF
         onChange={(event) => setQuestion(event.target.value)}
         placeholder={placeholder}
         autoComplete="off"
-        maxLength={500}
+        maxLength={4000}
         disabled={disabled}
         className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-ink-muted"
       />

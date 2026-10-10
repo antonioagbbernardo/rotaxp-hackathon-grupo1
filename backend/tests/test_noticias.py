@@ -18,6 +18,15 @@ from test_contexto import ExtratorSimulado
 AGORA = datetime(2026, 10, 10, 15, tzinfo=TZ)
 
 
+def test_alias_da_chave_funciona_com_campo_principal_vazio(tmp_path, monkeypatch):
+    import app as modulo
+    monkeypatch.delenv('NEWSAPI_API_KEY', raising=False)
+    monkeypatch.delenv('NEWSAPI_KEY', raising=False)
+    monkeypatch.setattr(modulo, 'dotenv_values', lambda _: {'NEWSAPI_API_KEY': '', 'NEWSAPI_KEY': 'chave-ficticia-alias'})
+    app = create_app({'TESTING': True, 'DATABASE': str(tmp_path / 'config.db')})
+    assert app.config['NEWSAPI_API_KEY'] == 'chave-ficticia-alias'
+
+
 def artigo(**extras):
     return {'title': 'Notícia fictícia de automobilismo', 'description': 'Trecho fictício para testes.',
             'source': {'name': 'Veículo fictício'}, 'url': 'https://exemplo.test/f1?utm_source=teste#noticia',

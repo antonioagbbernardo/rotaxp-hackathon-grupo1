@@ -59,6 +59,9 @@ def _snapshot(r):
         'secoes': [
             {'titulo': 'Visão geral e relacionamento', 'itens': itens(dados['summaryFacts'])},
             {'titulo': 'Contexto confirmado', 'itens': contexto},
+            {'titulo': 'Notas confirmadas do assessor', 'itens': [
+                {'texto': n['texto'], 'fontes': [f"nota do assessor #{n['id']} · {n['registrada_em']}"]}
+                for n in dados['advisorNotes']]},
             {'titulo': 'Últimos combinados', 'itens': combinados},
             {'titulo': 'Pendências para revisar', 'itens': pendencias},
             {'titulo': 'Notícias para avaliar', 'itens': artigos},

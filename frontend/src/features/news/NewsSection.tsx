@@ -89,7 +89,12 @@ export function NewsSection({ client, onUpdated }: NewsSectionProps) {
             </label>
             <p className="break-words text-[10px] leading-relaxed text-ink-muted">Confira se o assunto corresponde ao interesse. {selectedInterest?.fontes.join(' · ')}</p>
             <Button type="submit" disabled={busy}>Associar assunto</Button>
-          </form> : <p className="mt-3 leading-relaxed text-ink-muted">Nenhum interesse revisado elegível. Confira as propostas de contexto, fontes, bloqueios, permissão pessoal e intervalo entre contatos.</p>}
+          </form> : <div className="mt-3 space-y-2 leading-relaxed text-ink-muted">
+            <p>{client.context?.itens.some((i) => i.categoria === 'interesse' && i.estado === 'pendente')
+              ? 'Há interesses aguardando sua confirmação. Revise a evidência no contexto; depois associe o interesse a um assunto aqui.'
+              : 'Nenhum interesse confirmado elegível. Confira fontes, bloqueios, permissão para assuntos pessoais e intervalo entre contatos.'}</p>
+            <Button onClick={() => document.getElementById(`registros-${client.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Revisar contexto e preferências</Button>
+          </div>}
         </details>
         <ul className="space-y-2 text-[11px] leading-relaxed text-ink-muted">
           {state.assuntos.map((t) => <li key={t.id}>
