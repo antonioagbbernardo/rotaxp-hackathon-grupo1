@@ -74,8 +74,11 @@ function centavos(valor: string): bigint | null {
 function diaUtc(iso: string): number | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso)
   if (!m) return null
-  const ms = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
-  return Number.isNaN(ms) ? null : ms
+  const [ano, mes, dia] = [Number(m[1]), Number(m[2]), Number(m[3])]
+  const data = new Date(Date.UTC(ano, mes - 1, dia))
+  // rejeita datas que o calendário "rola" (ex.: 2026-13-45 ou 2026-02-30)
+  if (data.getUTCFullYear() !== ano || data.getUTCMonth() !== mes - 1 || data.getUTCDate() !== dia) return null
+  return data.getTime()
 }
 
 function razaoInteira(numerador: bigint, denominador: bigint) {

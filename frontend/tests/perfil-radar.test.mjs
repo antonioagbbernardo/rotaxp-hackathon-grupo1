@@ -79,3 +79,13 @@ test('formas femininas do perfil declarado são reconhecidas', () => {
   const r = calcularPerfilRadar([pos(1, 'Tesouro X', '100.00', '2026-10-10')], HOJE, 'Moderada')
   assert.equal(r.declarado, 'Moderado')
 })
+
+test('RN48: data inexistente e valor zero geram aviso, não valor inventado', () => {
+  const r = calcularPerfilRadar(
+    [pos(1, 'CDB A', '100.00', '2026-13-45'), pos(2, 'CDB B', '0.00', '2026-12-01'), pos(3, 'CDB C', '100.00', '2026-02-30')],
+    HOJE,
+  )
+  assert.deepEqual(r.eixos, [])
+  assert.equal(r.avisos.length, 3)
+  assert.equal(r.sugerido, null)
+})

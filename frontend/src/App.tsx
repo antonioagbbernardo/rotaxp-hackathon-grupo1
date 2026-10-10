@@ -89,7 +89,7 @@ export function App() {
             <PerceptionHistory entries={selectedClient.perception} />
             <InvestmentProfile portfolio={selectedClient.portfolio} />
           </div>
-          <RadarPerfil client={selectedClient} hoje={data?.generatedAt ?? ''} />
+          {data && <RadarPerfil client={selectedClient} hoje={data.generatedAt} />}
           <ClientWorkspace key={selectedClient.id} client={selectedClient} onUpdated={updated} />
           <NewsSection client={selectedClient} />
         </div>

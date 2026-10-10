@@ -48,7 +48,9 @@ export function RadarPerfil({ client, hoje }: RadarPerfilProps) {
 
       {perfil.eixos.length === 0 ? (
         <p className="mt-4 text-xs text-ink-muted">
-          Sem posições cadastradas: não há dados para estimar o perfil.
+          {posicoes.length === 0
+            ? 'Sem posições cadastradas: não há dados para estimar o perfil.'
+            : 'Nenhuma posição válida para estimar o perfil (veja os avisos abaixo).'}
         </p>
       ) : (
         <div className="mt-3 grid items-center gap-4 sm:grid-cols-[minmax(0,300px)_1fr]">

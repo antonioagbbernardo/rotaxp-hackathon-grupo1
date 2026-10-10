@@ -31,5 +31,8 @@ frontend, sem rota nova e sem persistência (`contracts.md` não muda).
 
 ## Limites
 
+O tipo do ativo é a primeira palavra-chave reconhecida no nome (ex.: "Fundo de Tesouro" conta
+como fundo). Posição com valor zero, negativo ou data inexistente é ignorada com aviso.
+
 Pesos fixos e hard-coded em `frontend/src/lib/perfil-radar.ts`; é o ponto de
 troca por um modelo de ML. Não valida perfil regulatório (API/suitability).
