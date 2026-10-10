@@ -43,11 +43,3 @@ export function ArrowRightIcon(props: IconProps) {
     </BaseIcon>
   )
 }
-
-export function SparkleIcon(props: IconProps) {
-  return (
-    <BaseIcon {...props}>
-      <path d="M12 3c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7Z" />
-    </BaseIcon>
-  )
-}
