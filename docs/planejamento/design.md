@@ -1,6 +1,6 @@
 # Arquitetura — plataforma de assessores
 
-Status: arquitetura da base Flask/Tailwind integrada em 10/10/2026.
+Status: painel React XP Pulse integrado ao Flask/SQLite em 10/10/2026.
 Importação de fonte JSON fictícia é o primeiro incremento SDD implementado.
 Extração Gemini e revisão persistida são o incremento 02; chamada real validada
 com amostra fictícia. Conexão aos canais reais, NewsAPI e reuniões planejados.
@@ -11,14 +11,15 @@ com amostra fictícia. Conexão aos canais reais, NewsAPI e reuniões planejados
 | --- | --- |
 | Backend | Python 3.13 + Flask + Jinja2, gerenciado com `uv` |
 | Dados | SQLite |
-| Interface | Página única responsiva (Jinja serve o HTML base) com JS que consome a API JSON; Tailwind CSS compilado com Node (CLI) |
+| Interface | React/TypeScript/Tailwind/Vite em `frontend/`; dados da API JSON, interface anterior em `/legacy` |
 | Node.js | Somente ferramenta da interface (build de CSS/JS). Não é runtime do backend |
-| Testes | pytest (regras e API); verificação manual no navegador |
+| Testes | pytest (regras e API), Node (formatação/transporte); build/lint e verificação no navegador |
 
 Regras de uso:
 
-- O CSS compilado é versionado, para que o clone da organização rode só com
-  Python (sem `npm install`).
+- O React precisa de `npm ci`/`npm run build` após o clone. `frontend/dist` é
+  ignorado; Flask serve os assets na mesma origem. Vite em desenvolvimento usa
+  proxy `/api` para a porta 5001. CSS da interface anterior é versionado.
 - Versões de Python/Node/Flask são conferidas na ferramenta instalada e fixadas
   em `backend/pyproject.toml`/`backend/uv.lock`, `backend/.python-version` e `backend/.nvmrc`; não presumir
   patches não verificados.
@@ -26,9 +27,9 @@ Regras de uso:
 
 ## Organização
 
-A aplicação e suas ferramentas ficam em `backend/`: `app/`, `tests/`, `src/`,
-lockfiles Python/Node e versões de runtime. Executar `uv` e `npm` nessa pasta;
-a documentação compartilhada permanece em `docs/`. Guia: [backend](../../backend/README.md).
+Backend em `backend/`; frontend principal em `frontend/`; documentação em `docs/`.
+Executar `uv` no backend e `npm` no frontend. O Node do backend recompila somente
+o CSS da interface anterior. Guia: [execução](../../README.md).
 
 Uma aplicação Flask simples, com núcleo de regras puro (prioridade, vencimento,
 aniversário), acesso a dados em módulo separado e rotas JSON finas. Sem serviços
@@ -40,6 +41,7 @@ distribuídos. Web responsiva não é app nativo e não deve ser apresentada com
 | --- | --- |
 | Interface | Lista, filtros, detalhe, linha do tempo, registro de interação, tratar alerta (via API JSON) |
 | API JSON | Validar entradas, chamar regras, devolver JSON e erros padronizados |
+| Adaptador XP Pulse | `pulse.py`: formato de leitura do painel, IDs preservados, Decimal/texto, ausências explícitas e consultas por template; reutiliza regras existentes, sem IA na leitura |
 | Regras | Prioridade (RN11), vencimentos (RN03/04), aniversários (RN12), preferências (RN13), `Clock` injetável |
 | Persistência | Assessor, clientes, posições, interações, datas importantes, avaliações de relacionamento e tratamentos de alerta |
 | Ingestão de fontes | `fontes_rules.py` valida sem I/O; `fontes.py` importa JSON em transação; API/CLI usam o mesmo serviço |

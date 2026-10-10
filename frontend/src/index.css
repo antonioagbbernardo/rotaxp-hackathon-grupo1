@@ -28,7 +28,16 @@
   }
 
   body {
-    @apply bg-canvas font-sans text-ink antialiased;
+    @apply m-0 bg-canvas font-sans text-ink antialiased break-words;
+  }
+
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
   }
 
   ::selection {

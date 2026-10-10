@@ -10,6 +10,7 @@ const sentimentBadge: Record<Sentiment, { label: string; tone: BadgeTone }> = {
   positive: { label: 'Positiva', tone: 'positive' },
   negative: { label: 'Negativa', tone: 'negative' },
   neutral: { label: 'Neutra', tone: 'neutral' },
+  unknown: { label: 'Não avaliada', tone: 'neutral' },
 }
 
 interface NewsCardProps {

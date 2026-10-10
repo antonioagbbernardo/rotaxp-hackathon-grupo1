@@ -8,17 +8,31 @@ import { AskAssistantForm } from './AskAssistantForm'
 import { InsightCard } from './InsightCard'
 import { OpeningSuggestion } from './OpeningSuggestion'
 import { UserMessage } from './UserMessage'
+import { api } from '@/lib/api'
+import { Button } from '@/components/ui/Button'
 
 interface AssistantPanelProps {
   client: Client
 }
 
 export function AssistantPanel({ client }: AssistantPanelProps) {
-  const [followUps, setFollowUps] = useState<string[]>([])
+  const [followUps, setFollowUps] = useState<{ question: string; answer?: string; sources?: string[]; error?: string }[]>([])
+  const [busy, setBusy] = useState(false)
   const { assistant } = client
   const firstName = client.name.split(' ')[0]
 
-  const handleAsk = (question: string) => setFollowUps((current) => [...current, question])
+  async function handleAsk(question: string, retryIndex?: number) {
+    if (busy) return
+    setBusy(true)
+    const index = retryIndex ?? followUps.length
+    setFollowUps((current) => retryIndex === undefined ? [...current, { question }] : current.map((entry, n) => n === index ? { question } : entry))
+    try {
+      const result = await api<{ resposta: string; fontes: string[] }>(`/api/pulse/clientes/${client.id}/perguntar`, { method: 'POST', body: { pergunta: question } })
+      setFollowUps((current) => current.map((entry, n) => n === index ? { question, answer: result.resposta, sources: result.fontes } : entry))
+    } catch (e) {
+      setFollowUps((current) => current.map((entry, n) => n === index ? { question, error: e instanceof Error ? e.message : 'Consulta não concluída.' } : entry))
+    } finally { setBusy(false) }
+  }
 
   return (
     <Panel className="flex min-h-0 flex-1 flex-col px-5 pt-5 pb-3" aria-labelledby="assistant-title">
@@ -28,7 +42,7 @@ export function AssistantPanel({ client }: AssistantPanelProps) {
           <h2 id="assistant-title" className="text-base font-semibold">
             Assistente do assessor
           </h2>
-          <p className="mt-1 text-[11px] text-ink-muted">IA com o contexto de {firstName}</p>
+          <p className="mt-1 text-[11px] text-ink-muted">Consulta aos registros de {firstName} · IA na extração revisável</p>
         </div>
       </header>
 
@@ -37,7 +51,7 @@ export function AssistantPanel({ client }: AssistantPanelProps) {
           {getInitials(client.name)} {client.name}
         </Badge>
         <Badge tone="positive" withDot className="w-38 text-[11px]">
-          Contexto atualizado
+          {client.context?.fontes_novas ? 'Fontes novas para analisar' : client.context?.itens.some((i) => i.estado === 'pendente') ? 'Contexto para revisar' : 'Registros consultados'}
         </Badge>
       </div>
 
@@ -49,6 +63,7 @@ export function AssistantPanel({ client }: AssistantPanelProps) {
             <span aria-hidden>✦</span> XP Pulse
           </p>
           <p className="mt-2 text-[13px] leading-relaxed">{assistant.summary}</p>
+          <details className="mt-2 text-[10px] text-ink-muted"><summary className="cursor-pointer">Fontes do resumo</summary><ul className="mt-2">{assistant.summarySources?.map((s) => <li key={s}>{s}</li>)}</ul></details>
         </div>
 
         <ol className="space-y-3">
@@ -59,22 +74,22 @@ export function AssistantPanel({ client }: AssistantPanelProps) {
           ))}
         </ol>
 
-        <OpeningSuggestion openings={assistant.openings} sources={client.news} />
+        <OpeningSuggestion openings={assistant.openings} sources={assistant.sources ?? []} />
 
-        {followUps.map((question, index) => (
+        {followUps.map((entry, index) => (
           <div key={index} className="space-y-2">
-            <UserMessage>{question}</UserMessage>
-            <p className="text-[11px] text-ink-subtle">
-              Respostas novas não estão disponíveis nos dados de demonstração.
-            </p>
+            <UserMessage>{entry.question}</UserMessage>
+            {entry.answer && <><p className="whitespace-pre-wrap text-xs">{entry.answer}</p><ul className="text-[10px] text-ink-muted">{entry.sources?.map((s) => <li key={s}>{s}</li>)}</ul></>}
+            {entry.error && <div role="alert" className="text-xs text-negative">{entry.error}<Button onClick={() => void handleAsk(entry.question, index)} disabled={busy}>Tentar novamente</Button></div>}
+            {!entry.answer && !entry.error && <p role="status" className="text-[11px] text-ink-muted">Consultando registros…</p>}
           </div>
         ))}
       </div>
 
       <div className="mt-3">
-        <AskAssistantForm placeholder={`Pergunte sobre ${firstName}...`} onAsk={handleAsk} />
+        <AskAssistantForm placeholder={`Perfil, vencimentos, último contato...`} onAsk={(q) => void handleAsk(q)} disabled={busy} />
         <p className="mt-2 text-[9px] text-ink-muted">
-          Sugestões para revisão do assessor · Dados fictícios
+          Consulta por templates com fontes · Sem envio · Dados fictícios
         </p>
       </div>
     </Panel>

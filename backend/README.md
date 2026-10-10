@@ -2,14 +2,16 @@
 
 Documentação compartilhada: [índice](../docs/README.md) e [planejamento](../docs/planejamento/spec.md).
 Todos os comandos deste guia devem ser executados dentro de `backend/`.
-O Flask também serve a interface atual (templates, JavaScript e CSS).
+O Flask serve a API e o build React de `../frontend/dist` quando disponível.
+A interface anterior (templates/JavaScript) fica em `/legacy`.
 Dados do projeto são fictícios.
 
 ## Como usar
 
 ### Requisitos
 - [`uv`](https://docs.astral.sh/uv/) (instala o Python 3.13 do projeto sozinho, se faltar).
-- Node.js 22+ **somente** se for mexer no CSS/interface. Para rodar o app não precisa.
+- Node.js 22.18+ ou 24+ para compilar o React em `frontend/`.
+  Backend e interface anterior podem rodar sem Node.
 
 ### Rodar o app
 ```bash
@@ -18,7 +20,8 @@ uv sync --locked                       # instala as dependências do lockfile
 uv run flask --app app seed            # popula dados fictícios (só em base vazia)
 uv run flask --app app run             # http://127.0.0.1:5000
 ```
-Se a porta 5000 estiver ocupada (comum no macOS), use `run -p 5001`.
+Para o frontend integrado, use `run -p 5001`, porta do proxy Vite.
+Compile o React antes conforme [README da raiz](../README.md).
 O app roda só em `127.0.0.1`, sem login, e **não deve receber dados reais**.
 
 ### Usar a interface
@@ -34,11 +37,15 @@ O app roda só em `127.0.0.1`, sem login, e **não deve receber dados reais**.
 6. **Preferências:** canal, intervalo mínimo entre contatos e permissão para
    assuntos pessoais (sem permissão, não há alerta de aniversário).
 7. **Importar fonte fictícia:** na lista, selecione `dados/fonte-demo.json`.
-   Consulte fontes e versões no detalhe; identidades não resolvidas ficam na
-   lista de pendências. Importação não confirma informações do formulário.
+   Consulte fontes e versões no detalhe; identidades não resolvidas ficam em
+   pendências (contador no React; lista em `/legacy` ou `/api/fontes/pendencias`).
+   Importação não confirma informações do formulário.
 8. **Contexto:** processe fontes novas com IA, confira os trechos e registre
    aprovação, correção, descarte ou adiamento com motivo. Bloquear assunto vale
    só para este cliente e mantém o contexto. Nenhuma decisão envia mensagem.
+9. **Assistente:** consultas básicas por templates com fontes dos registros.
+   Rascunhos podem ser copiados e revisados pelo assessor. Notícias não coletadas
+   permanecem vazias; não há conversa generativa nem envio automático.
 
 ### Configurar IA (incremento SDD 02)
 
@@ -87,7 +94,13 @@ curl -s -X POST localhost:5000/api/clientes/1/interacoes \
 ```
 Rotas e formatos: [`docs/planejamento/contracts.md`](../docs/planejamento/contracts.md).
 
-### Mexer na interface (Node)
+### Mexer na interface principal (React)
+
+Em `../frontend/`: `npm ci`, `npm run dev`, `npm test`, `npm run lint` e
+`npm run build`. Vite na porta 5173 usa o backend na 5001; Flask na 5001
+serve o build recompilado. Guia: [frontend](../frontend/README.md).
+
+### Mexer na interface anterior (Node)
 ```bash
 npm install
 npm run css:watch    # recompila ao salvar
@@ -101,6 +114,8 @@ O CSS compilado (`app/static/css/app.css`) é versionado, então o clone roda se
 | Lista vazia | Base nova: rode `flask --app app seed` |
 | Datas "velhas" na demo | Seed de outro dia: rode `reset-demo` |
 | Classe Tailwind sem efeito | Falta `npm run css:build` |
+| `/` mostra interface anterior | Compile o React com `npm run build` em `frontend/` |
+| React na 5173 não carrega dados | Flask deve estar rodando na porta 5001 |
 | `uv sync --locked` falha | `uv.lock` desatualizado: rode `uv lock` e avise a equipe |
 
 ## Estrutura
@@ -112,13 +127,14 @@ O CSS compilado (`app/static/css/app.css`) é versionado, então o clone roda se
 | `app/alertas.py` | Alertas calculados sob demanda (RN14/15); só o tratamento é persistido |
 | `app/resumo.py` | Resumo por template com fontes (RN08) |
 | `app/api.py` | Rotas JSON `/api/...` (lista, detalhe, interações, relacionamento, preferências, tratar) |
+| `app/pulse.py` | Adaptador do painel React e perguntas básicas com fontes |
 | `app/db.py`, `app/seed.py` | Schema SQLite e dados fictícios com datas relativas |
 | `app/fontes_rules.py`, `app/fontes.py`, `dados/` | Validação, ingestão transacional e fonte JSON fictícia |
 | `app/contexto_rules.py`, `app/contexto.py`, `app/ia_gemini.py` | Evidências, cache incremental, Gemini REST e supervisão persistida |
-| `app/templates`, `app/static/js` | Página base e JS que consome a API |
+| `app/templates`, `app/static/js` | Interface anterior `/legacy` |
 | `tests/` | pytest (regras, alertas, API, persistência, relógio, seed) |
 
-Importação fictícia e contexto/revisão implementados, com 125 testes aprovados
+Importação fictícia, contexto/revisão e painel React integrados, com 143 testes aprovados
 (chamadas ao provedor/transporte simuladas).
 Chamada Gemini real validada em amostra fictícia; conexão à fonte real, NewsAPI, reuniões e
 keynotes seguem planejados. Ver [visão do produto](../docs/visao-geral.md)

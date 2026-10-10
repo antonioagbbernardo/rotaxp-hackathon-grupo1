@@ -1,6 +1,5 @@
 import { Badge } from '@/components/ui/Badge'
 import { Panel } from '@/components/ui/Panel'
-import { PlusIcon } from '@/components/ui/icons'
 import { useClientFilters } from '@/hooks/useClientFilters'
 import type { Client } from '@/types/client'
 import { ClientCard } from './ClientCard'
@@ -27,13 +26,6 @@ export function ClientSidebar({ clients, selectedClientId, onSelectClient }: Cli
 
       <div className="mt-4 flex items-center gap-2">
         <ClientSearch value={query} onChange={setQuery} />
-        <button
-          type="button"
-          aria-label="Adicionar cliente"
-          className="flex size-10 items-center justify-center rounded-lg text-ink transition-colors hover:bg-surface-raised"
-        >
-          <PlusIcon className="size-4.5" />
-        </button>
       </div>
 
       <div className="mt-4">
@@ -60,9 +52,9 @@ export function ClientSidebar({ clients, selectedClientId, onSelectClient }: Cli
       </ul>
 
       <p className="mt-4 border-t border-line pt-4 text-[10px] leading-relaxed text-ink-muted">
-        O emoji indica o impacto da notícia.
+        Relacionamento informado pelo assessor.
         <br />
-        Ele não representa o humor real do cliente.
+        Prioridade calculada pelos alertas pendentes.
       </p>
     </Panel>
   )

@@ -20,12 +20,12 @@ export function InvestmentProfile({ portfolio }: InvestmentProfileProps) {
     <Panel className="px-5 py-5">
       <h2 className="text-sm font-medium">Perfil de investimento</h2>
 
-      <div className="mt-1 flex items-baseline gap-8">
+      <div className="mt-1 flex flex-wrap items-baseline gap-x-4 gap-y-1">
         <p className="text-2xl font-semibold">{formatCurrency(portfolio.total)}</p>
-        <p className="text-[10px] text-ink-muted">Patrimônio fictício</p>
+        <p className="text-[10px] text-ink-muted">Posições cadastradas · dados fictícios</p>
       </div>
 
-      <div
+      {slices.length > 0 ? <div
         className="mt-4 flex h-2.5 overflow-hidden rounded-full bg-surface-raised"
         role="img"
         aria-label={slices
@@ -39,7 +39,7 @@ export function InvestmentProfile({ portfolio }: InvestmentProfileProps) {
             style={{ width: `${slice.percent}%` }}
           />
         ))}
-      </div>
+      </div> : <p className="mt-4 text-[11px] text-ink-muted">Distribuição por classe não informada na fonte.</p>}
 
       <ul className="mt-4 flex justify-between gap-3 text-[10px]">
         {slices.map((slice) => {
