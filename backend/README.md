@@ -25,8 +25,7 @@ O app roda só em `127.0.0.1`, sem login, e **não deve receber dados reais**.
 1. **Lista de clientes:** ordenada por prioridade de atendimento. Busque por nome
    ou filtre por prioridade.
 2. **Detalhe do cliente** (clique no nome): resumo com a fonte de cada fato,
-   alertas pendentes e tratados, posições, histórico de interações, datas
-   importantes e histórico de avaliações do relacionamento.
+   alertas pendentes e tratados, posições e histórico.
 3. **Marcar como tratado:** tira o alerta das pendências e recalcula a prioridade.
 4. **Registrar interação:** canal, texto, e opcionalmente quando ocorreu e
    próximos passos. Datas futuras são recusadas.
@@ -37,8 +36,7 @@ O app roda só em `127.0.0.1`, sem login, e **não deve receber dados reais**.
 
 ### Dados e testes
 ```bash
-uv run --locked pytest                          # testes Python (66)
-npm run test:ui                                 # testes da interface (Node 22+, 7)
+uv run --locked pytest                          # testes (47)
 uv run flask --app app seed                     # não sobrescreve base já populada
 uv run flask --app app reset-demo               # apaga tudo e recria a demonstração
 ```
@@ -82,8 +80,7 @@ O CSS compilado (`app/static/css/app.css`) é versionado, então o clone roda se
 | `app/api.py` | Rotas JSON `/api/...` (lista, detalhe, interações, relacionamento, preferências, tratar) |
 | `app/db.py`, `app/seed.py` | Schema SQLite e dados fictícios com datas relativas |
 | `app/templates`, `app/static/js` | Página base e JS que consome a API |
-| `tests/` | pytest (regras, alertas, API, persistência, relógio, seed, regressões) |
-| `tests/ui/` | Testes Node da interface (respostas atrasadas, envio duplo) |
+| `tests/` | pytest (regras, alertas, API, persistência, relógio, seed) |
 
 Ainda planejados: consumo de fontes existentes, inferência e feedback (T09);
 NewsAPI, reuniões e keynotes (T08). A base registra interações manualmente e não

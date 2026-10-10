@@ -12,7 +12,7 @@ planejada do produto; esses módulos ainda não estão implementados.
 | Dados | SQLite |
 | Interface | Página única responsiva (Jinja serve o HTML base) com JS que consome a API JSON; Tailwind CSS compilado com Node (CLI) |
 | Node.js | Somente ferramenta da interface (build de CSS/JS). Não é runtime do backend |
-| Testes | pytest (regras e API); testes Node da interface (`npm run test:ui`); verificação manual no navegador |
+| Testes | pytest (regras e API); verificação manual no navegador |
 
 Regras de uso:
 
