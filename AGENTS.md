@@ -21,9 +21,10 @@ Executar os comandos dentro de `backend/` (a partir da raiz: `cd backend`).
 ```bash
 uv sync --locked                      # dependências Python
 uv run --locked pytest                # testes
-uv run flask --app app seed           # popula base vazia (não sobrescreve)
-uv run flask --app app reset-demo     # reconstrói a demonstração
-uv run flask --app app run            # http://127.0.0.1:5000
+uv run --locked flask --app app seed           # popula base vazia (não sobrescreve)
+uv run --locked flask --app app reset-demo     # reconstrói a demonstração
+uv run --locked flask --app app run -p 5001    # http://127.0.0.1:5001
+uv run --locked flask --app app acompanhar-agenda  # processo separado, atualizações a cada 60s
 npm install && npm run css:build      # recompila o CSS (versionado) após mexer em classes
 ```
 
@@ -43,6 +44,8 @@ Nunca use `pip` ou `python` direto no host: use `uv run`.
 | `backend/app/api.py`, `backend/app/db.py`, `backend/app/seed.py` | Rotas JSON, schema SQLite, dados fictícios |
 | `frontend/src/` | Interface principal React e chamadas à API |
 | `backend/app/pulse.py` | Adaptador de leitura XP Pulse e consultas por template |
+| `backend/app/reunioes.py`, `backend/app/agendador.py` | Reuniões, pautas versionadas e processo de atualização |
+| `backend/app/lembrancas.py` | Datas confirmadas com fonte e feedback por ocorrência |
 | `backend/app/static/js/app.js`, `backend/app/templates/` | Interface anterior `/legacy` |
 | `backend/tests/` | pytest |
 
@@ -51,7 +54,7 @@ Nunca use `pip` ou `python` direto no host: use `uv run`.
   `datetime.now()` fora de `backend/app/clock.py`. Testes injetam `relogio_fixo(...)`.
 - **Alertas** são calculados a cada consulta; só o tratamento é persistido
   (`tratamento_alerta`). Não crie tabela ou cópia de alerta, nem cron/worker
-  para esses alertas. Agendamento de notícias/reuniões é evolução separada (T08).
+  para esses alertas. O processo do incremento 07 atualiza apenas notícias/pautas.
 - **Prioridade do cliente** vem só dos alertas pendentes (RN11). O estado de
   relacionamento é manual e **não** altera prioridade.
 - **Resumo da base** é por template, sem IA. Cada fato tem fonte; ausência de dado é
@@ -104,9 +107,16 @@ humano é exibido diretamente, sem reinterpretação na síntese. Chaves no `.en
 Incremento 05 autorizado: notícias por catálogo/vínculo humano com interesse
 elegível, coleta explícita/CLI, cache diário compartilhado, cota local e feedback.
 GET não coleta. Notícias não alteram alertas, prioridade, humor ou síntese OpenAI.
-Agendador automático e reuniões/keynotes continuam fora deste recorte.
+Agendador automático e reuniões/keynotes são o incremento 07, separado desse recorte.
 Incremento 06 autorizado explicitamente: login `/login`, `admin` / `admin`,
 sessão com validade/revogação, CSRF e painel protegido. Sem recuperação de senha.
+Incrementos 07/08 autorizados no pedido de concluir as demandas SDD: agenda,
+pautas determinísticas com fontes, notas separadas, conclusão idempotente,
+processo local de coleta diária/antecipação e datas pessoais confirmadas com
+feedback. Janelas: reunião em até 24h, cache de notícias com idade >=2h,
+lembrança em até sete dias. Sem envio automático ou avaliação de humor.
+Pedido atual do usuário: verificações mínimas para acelerar; conferência visual
+adicional e suíte completa adiadas. Registrar exatamente o que foi executado.
 
 ## Materiais locais
 `material-local/` (PDF do evento, comandos, guias) é pessoal, fica fora do Git e

@@ -29,12 +29,13 @@ def create_app(config: dict | None = None) -> Flask:
     if config:
         app.config.update(config)
 
-    from . import api, autenticacao, db, fontes, noticias, seed
+    from . import agendador, api, autenticacao, db, fontes, noticias, seed
 
     db.init_app(app)
     seed.init_app(app)
     fontes.init_app(app)
     noticias.init_app(app)
+    agendador.init_app(app)
     with app.app_context():
         db.init_db()  # CREATE IF NOT EXISTS: a API não falha em base nova
     app.register_blueprint(api.bp)

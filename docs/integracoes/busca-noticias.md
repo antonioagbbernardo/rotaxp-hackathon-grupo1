@@ -5,7 +5,10 @@ NewsAPI por assunto associado pelo assessor, coleta pela tela/CLI, cache diário
 limite local padrão de 20 tentativas/dia e feedback individual. Uma consulta real
 compartilhada por dois clientes fictícios foi verificada. Catálogo inicial:
 Fórmula 1, Palmeiras e Corinthians. Sem síntese por IA de notícias.
-Agendador automático e gatilhos de reunião continuam propostas abaixo.
+Incremento 07 implementa processo local de atualização e gatilho por reunião:
+`uv run --locked flask --app app acompanhar-agenda`. Precisa ficar em execução;
+ciclos a cada 60s, coleta diária compartilhada, reuniões nas próximas 24h e
+renovação de cache com idade >=2h. `--uma-vez` executa somente um ciclo.
 
 Interpretação da proposta: a rotina diária pode ser antecipada quando há uma
 reunião próxima. Atualizar a visão atual preserva notícias, fontes e históricos;
@@ -69,8 +72,8 @@ Resultados esportivos exatos podem exigir uma fonte específica além das notíc
 
 ### Reunião próxima
 
-Proposta de parâmetros para revisão: reunião nas próximas **24 horas** e cache
-dos assuntos com mais de **2 horas** desde a última coleta bem-sucedida.
+Parâmetros implementados: reunião entre agora e as próximas **24 horas** (inclusive)
+e cache dos assuntos com idade **>=2 horas** desde a última coleta bem-sucedida.
 
 1. Identificar reuniões futuras confirmadas e seus clientes.
 2. Selecionar assuntos pertinentes e reunir consultas iguais entre reuniões.

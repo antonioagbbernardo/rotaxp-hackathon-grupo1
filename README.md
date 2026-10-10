@@ -16,9 +16,9 @@ npm ci
 npm run build
 cd ../backend
 uv sync --locked
-uv run flask --app app seed
-uv run flask --app app importar-fontes dados/fonte-demo.json
-uv run flask --app app run -p 5001
+uv run --locked flask --app app seed
+uv run --locked flask --app app importar-fontes dados/fonte-demo.json
+uv run --locked flask --app app run -p 5001
 ```
 
 Acesse http://127.0.0.1:5001/login com usuário **admin** e senha **admin**.
@@ -47,7 +47,22 @@ associe-o a Fórmula 1, Palmeiras ou Corinthians e clique **Buscar notícias**.
 Resultados do dia são compartilhados entre clientes. **Não é relevante** salva
 feedback apenas para o cliente escolhido. Coleta diária também pela CLI:
 `uv run --locked flask --app app coletar-noticias`, dentro de `backend/`.
-Esse comando não instala agendamento automático.
+Para manter coleta diária e preparação de reuniões automáticas, abra outro terminal:
+
+```bash
+cd backend
+uv run --locked flask --app app acompanhar-agenda
+```
+
+O processo consulta a cada 60 segundos enquanto estiver aberto. Reutiliza assuntos
+e antecipa notícias com cache de pelo menos duas horas quando há reunião nas
+próximas 24h. Para executar só um ciclo: acrescente `--uma-vez`.
+
+No cliente, abra **Reuniões e preparação**, cadastre objetivo/horário, prepare e
+revise a pauta com fontes. Notas ficam separadas; concluir registra o resultado
+uma única vez no histórico. Em **Lembranças com contexto**, confirme a data explícita
+de um fato revisado e registre feedback. Permissão, bloqueio e intervalo de
+contato continuam valendo. Nenhuma mensagem é enviada automaticamente.
 
 ### Frontend React em desenvolvimento
 
@@ -81,8 +96,10 @@ bloqueios, preferências, relacionamento e alertas. Perguntas básicas e rascunh
 usam templates com fontes. Gemini extrai contexto revisável; OpenAI redige
 uma síntese com fontes em três seções, reutilizada enquanto os fatos estiverem
 iguais. Relacionamento humano e prioridade calculada aparecem separados. NewsAPI
-coleta por assunto revisado com cache diário, cota e fontes; reuniões/keynotes
-e agendador automático continuam planejados.
+coleta por assunto revisado com cache diário, cota e fontes. Agenda, keynotes,
+notas, conclusão e lembranças com feedback estão integradas; atualização automática
+depende de manter o processo `acompanhar-agenda` em execução. A fonte dos canais
+é simulada por JSON; acesso real depende do contrato e das credenciais da equipe.
 
 ## Estrutura
 

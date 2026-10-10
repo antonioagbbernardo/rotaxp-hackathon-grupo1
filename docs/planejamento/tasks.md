@@ -3,7 +3,8 @@
 Status: plano reconciliado em 10/10/2026. React XP Pulse integrado ao Flask/SQLite;
 ingestão JSON fictícia e contexto/revisão implementados; Gemini real testado em
 amostra fictícia. Síntese OpenAI e NewsAPI com cache/feedback implementados.
-Conexão aos canais, agendamento automático, reuniões e keynotes ainda pendentes.
+Login, agendamento local, reuniões/keynotes e lembranças confirmadas implementados.
+Conexão aos canais reais e revisão visual adicional ainda pendentes.
 Referências: `spec.md`, `design.md`,
 `requisitos.md`, `contracts.md`. Responsáveis definidos pela equipe.
 
@@ -22,6 +23,8 @@ Referências: `spec.md`, `design.md`,
 | T06 — Integração | Fluxo completo revisado, inclusive falhas e celular | T01–T05, T08 e T09 | Todos | Pessoa 6 + autores |
 | T07 — Entrega | README testado em clone limpo, pitch ≤ 5 min, push | T06 | Demo reproduzível | Pessoas 1 e 6 + equipe |
 | T10 — Login (incremento 06) | `/login`, admin/admin, sessão/CSRF, painel/API protegidos e logout | T06 | CA79–CA84 | Pedido explícito do usuário |
+| T11 — Concluir T08 (incremento 07) | Agenda, pauta/revisão/notas, resultado único e processo local de atualização | T08 | CA85–CA90 | Pedido de concluir o SDD |
+| T12 — Lembranças (incremento 08) | Confirmar datas com fonte e tratar ocorrência com feedback | T09 | CA91–CA94 | Pedido de concluir o SDD |
 | Opcional | Eventos externos/simulados (CA06) | T06 concluída | CA06 | Quem estiver livre |
 
 Pessoa 1 mantém a especificação e apoia testes. Pessoa 6 integra desde a base.
@@ -52,14 +55,20 @@ T09 dividida em incrementos SDD:
   a três assuntos, NewsAPI, cache diário compartilhado, cota e descarte de notícia
   por cliente. 41 testes novos; total 329 backend, cinco frontend, lint/build.
   Uma chamada real compartilhada por dois clientes fictícios. Coleta pela tela
-  e CLI; agendador automático, reuniões e keynotes continuam pendentes.
+  e CLI; agendador automático, reuniões e keynotes entregues depois no incremento 07.
+
+- **T08/T09 — incrementos 07/08 implementados:** agenda, pautas versionadas,
+  notas, conclusão idempotente, processo de coleta/preparação e lembranças com
+  fonte/data confirmadas. Verificação mínima: 17 testes direcionados, lint e build.
+  Suíte completa e conferência visual adicional adiadas a pedido do usuário.
+  T06/T07 ainda exigem ensaio visual, clone limpo/segunda máquina e pitch da equipe.
 
 Detalhes em [incremento 01](incrementos/01-fontes.md) e
 [registro para apresentação](../registro-desenvolvimento.md).
 
 Horários herdados do plano da branch; ajustar ao tempo realmente restante.
-A integração da base não comprova execução em duas máquinas nem conclusão
-de T08/T09. O fluxo alvo e suas prioridades são os definidos em requisitos.
+A integração não comprova execução em duas máquinas ou conexão real aos canais.
+T08/T09 têm implementação do recorte fictício; limites e verificações estão no registro.
 
 | Horário | Entrega |
 | --- | --- |
@@ -93,8 +102,8 @@ idempotência de alertas e persistência. Fluxo completo e celular na integraç�
 2. Lista priorizada e resumo com fontes da base. Quando T09 estiver pronta,
    mostrar origem existente, inferência, correção e efeito do feedback.
 3. Vencimento (alta) e aniversário (média, respeitando permissão).
-4. Se T08 estiver pronta, abrir keynotes e revisar fontes; caso contrário,
-   apresentar como evolução planejada.
+4. Abrir reunião, preparar keynotes e revisar fontes; confirmar uma lembrança
+   com data explícita e demonstrar feedback.
 5. Registrar o resultado, tratar alerta e ver prioridade/histórico atualizados.
 6. Privacidade (dados fictícios), custo, limitações, benefícios e evolução.
 

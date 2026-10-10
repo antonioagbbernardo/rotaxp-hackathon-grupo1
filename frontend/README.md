@@ -42,6 +42,13 @@ Sem recuperação de senha. A sessão é validada antes de consultar os clientes
   motivo vale só para o cliente; bloqueios/preferências/revisões ocultam resultados.
   Recargas não chamam o provedor; há estado de falha, ausência e processamento.
 - Campos ausentes e notícias ainda não coletadas aparecem como ausência.
+- Reuniões: criar/reagendar/cancelar, preparar/revisar keynotes com fontes,
+  notas separadas e conclusão com resumo/próximos passos no histórico.
+  Lista lateral abre o cliente de reuniões nas próximas 24h.
+- Lembranças: confirmar data/tipo/descrição de candidato revisado, consultar
+  fonte/sujeito/ocorrência e concluir/descartar/adiar com motivo.
+- Leitura do painel é renovada a cada 60s. Para atualização automática de
+  notícias/pautas, o processo `acompanhar-agenda` deve ficar aberto no backend.
   `src/data/clients.ts` é referência visual antiga e não é importado pela aplicação.
 
 ## Verificar
@@ -59,6 +66,8 @@ Especificação: [incremento SDD 03](../docs/planejamento/incrementos/03-front-p
 Síntese: [incremento SDD 04](../docs/planejamento/incrementos/04-resumo-openai.md).
 Notícias: [incremento SDD 05](../docs/planejamento/incrementos/05-noticias-newsapi.md).
 Login: [incremento SDD 06](../docs/planejamento/incrementos/06-login.md).
+Agenda: [incremento SDD 07](../docs/planejamento/incrementos/07-agenda-keynotes.md).
+Lembranças: [incremento SDD 08](../docs/planejamento/incrementos/08-lembrancas.md).
 
 ## Estrutura
 
@@ -72,8 +81,10 @@ src/
 │   ├── auth/             # Tela de login e composição visual do acesso
 │   ├── client-overview/  # Resumo, carteira, contexto/revisão e registros
 │   ├── news/             # Notícias NewsAPI, associação e feedback
+│   ├── meetings/         # Agenda, keynotes, notas e resultado
+│   ├── reminders/        # Datas confirmadas e feedback de ocorrência
 │   └── assistant/        # Consultas com fontes e rascunhos
-├── hooks/             # useClientFilters, useClipboard
+├── hooks/             # Filtros, clipboard e recurso API com atualização/erros
 ├── lib/               # API, erros e valores decimais exatos
 ├── data/              # Referência visual antiga, fora do fluxo em execução
 └── types/             # Tipos de domínio

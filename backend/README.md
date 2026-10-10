@@ -17,8 +17,8 @@ Dados do projeto são fictícios.
 ```bash
 cd backend                            # a partir da raiz do repositório
 uv sync --locked                       # instala as dependências do lockfile
-uv run flask --app app seed            # popula dados fictícios (só em base vazia)
-uv run flask --app app run             # http://127.0.0.1:5000
+uv run --locked flask --app app seed            # popula dados fictícios (só em base vazia)
+uv run --locked flask --app app run -p 5001     # http://127.0.0.1:5001
 ```
 Para o frontend integrado, use `run -p 5001`, porta do proxy Vite.
 Compile o React antes conforme [README da raiz](../README.md).
@@ -191,14 +191,36 @@ O CSS compilado (`app/static/css/app.css`) é versionado, então o clone roda se
 | `app/pulse.py` | Adaptador do painel React e perguntas básicas com fontes |
 | `app/resumo_ia_rules.py`, `app/resumo_ia.py`, `app/ia_openai.py` | Seleção de fatos, validação, cache e síntese OpenAI por REST |
 | `app/noticias_rules.py`, `app/noticias.py`, `app/newsapi.py` | Catálogo, associação humana, coleta/cache/cota e feedback de notícias |
+| `app/agenda_rules.py`, `app/reunioes.py`, `app/agendador.py` | Agenda, pautas versionadas e processo de atualização |
+| `app/lembrancas.py` | Datas confirmadas e feedback por ocorrência/versão |
 | `app/db.py`, `app/seed.py` | Schema SQLite e dados fictícios com datas relativas |
 | `app/fontes_rules.py`, `app/fontes.py`, `dados/` | Validação, ingestão transacional e fonte JSON fictícia |
 | `app/contexto_rules.py`, `app/contexto.py`, `app/ia_gemini.py` | Evidências, cache incremental, Gemini REST e supervisão persistida |
 | `app/templates`, `app/static/js` | Interface anterior `/legacy` |
 | `tests/` | pytest (regras, alertas, API, persistência, relógio, seed) |
 
-Importação fictícia, contexto/revisão, painel React, síntese OpenAI, notícias e login integrados, com 352 testes aprovados
-(chamadas ao provedor/transporte simuladas).
+Importação fictícia, contexto/revisão, painel React, síntese OpenAI, notícias, login,
+agenda/keynotes e lembranças integrados. Última suíte completa antes dos incrementos
+07/08: 352 backend + 11 frontend. Novos fluxos: 17 testes direcionados, lint/build;
+conferência visual adicional e suíte completa adiadas a pedido do usuário.
 Chamadas Gemini/OpenAI em amostras fictícias e uma coleta NewsAPI real validadas;
-conexão à fonte real, agendamento automático, reuniões e keynotes seguem planejados. Ver [visão do produto](../docs/visao-geral.md)
+conexão à fonte real permanece pendente. Ver [visão do produto](../docs/visao-geral.md)
 e [registro para apresentação](../docs/registro-desenvolvimento.md).
+
+### Atualização e reuniões
+
+Em outro terminal, dentro de `backend/`:
+
+```bash
+uv run --locked flask --app app acompanhar-agenda
+```
+
+Enquanto aberto, verifica a cada 60s: coleta diária por assunto e pauta de
+reuniões agendadas entre agora e 24h. Cache >=2h pode ser renovado na preparação;
+cota/intervalo/lease seguem valendo. `--uma-vez` roda um ciclo e termina.
+GETs nunca chamam provedores. Sem vínculo elegível, nenhuma notícia é buscada.
+
+No painel, crie reunião por cliente, prepare/revise a pauta, mantenha notas e
+conclua com resumo/próximos passos. Conclusão repetida não duplica interação.
+Lembranças exigem confirmar data de fato revisado; feedback é individual por
+ocorrência. Nenhum envio automático, mudança de humor ou nova regra de prioridade.

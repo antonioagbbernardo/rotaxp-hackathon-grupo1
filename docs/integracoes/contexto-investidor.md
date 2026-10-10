@@ -83,7 +83,11 @@ Uma data sem precisão suficiente vira pergunta para confirmar, não aviso de an
 **Proposta de supervisão:** o sistema prepara sugestões e notificações internas.
 O assessor decide o uso no contato. Nenhuma lembrança provoca mensagem automática
 ao investidor. Temas íntimos sem relação clara com o atendimento devem ter pertinência
-avaliada antes de integrar lembretes; detalhes de armazenamento continuam pendentes.
+avaliada antes de integrar lembretes. O [incremento 08](../planejamento/incrementos/08-lembrancas.md)
+implementa confirmação explícita de data/tipo/descrição sobre fato revisado do
+cliente ou familiar. Aniversário guarda apenas dia/mês, sem nome de familiar.
+Fonte/revisão e feedback persistidos por ocorrência; mudança da fonte ou bloqueio
+retira elegibilidade. Uma nova anotação não herda feedback de outra versão.
 
 ## 5. Feedback que melhora o contexto
 

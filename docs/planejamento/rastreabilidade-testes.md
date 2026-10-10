@@ -131,7 +131,7 @@ com fonte/link sem HTTP novo e sem expor notícia de assunto bloqueado.
 | CA11 | Resumo mostra nova conversa importada como fonte | T09 |
 | CA13 | Evento repetido mantém um alerta | T08/CA06 |
 | CA15 | Falha ao salvar preserva o texto (interface) | Verificação manual/E2E |
-| CA17, CA19–CA25 | Reuniões, antecipação da coleta e keynotes | Próximo recorte T08 |
+| CA17, CA19–CA25 | Reuniões, antecipação da coleta e keynotes | Incremento 07 implementado; testes direcionados abaixo, visual adicional pendente |
 
 ## Decisões pendentes da equipe (não resolvidas por teste)
 
@@ -158,6 +158,28 @@ reinício/chave 0600 e cache HTTP. Testes de domínio fazem login HTTP real.
 Seis casos frontend em `auth.test.mjs`: envio de token/cookie, evento 401,
 credenciais inválidas, renovação de sessão no login/logout e erro de rede.
 
-Execução atual: **352 backend + 11 frontend**, lint/build aprovados. Desktop do
+Execução no incremento 06: **352 backend + 11 frontend**, lint/build aprovados. Desktop do
 login conferido; mobile e conferência visual adicional adiados a pedido do
 usuário. As evidências visuais anteriores conservam seus limites individuais.
+
+## Incrementos 07/08 — agenda e lembranças
+
+Verificação mínima atual: **17 casos backend direcionados + 11 frontend**, lint
+e build aprovados. Suíte backend completa e visual adicionais adiados pelo usuário.
+Contagem de 352/11 acima é da última suíte completa, antes destas alterações.
+
+| Aceite | Evidência executada | Limite |
+| --- | --- | --- |
+| CA85 | `test_agenda::test_ca85_identidade_validacao_e_isolamento` | API + perguntas básicas |
+| CA86 | `test_agenda::test_ca86_pauta_fontes_reuso_revisao_e_notas_preservadas` | Versão atual/notas, sem inspeção visual |
+| CA87 | `test_agenda::test_ca87_cancelamento_reagendamento_e_conclusao_unica` | Uma interação no retry |
+| CA88 | Dois casos `test_ca88_*` em `test_agenda.py` | Cache 2h compartilhado, cota e aviso com pauta interna; NewsAPI simulada |
+| CA89 | `test_agenda::test_ca89_cli_janela_reuso_e_cancelada` | 24h inclusivo, ciclo CLI e versão reutilizada |
+| CA90, CA94 | Lint e build frontend | Fluxo visual completo pendente |
+| CA91 | `test_ca91_*` em `test_lembrancas.py` | Sujeito/fonte/data/idempotência; terceiro, hipótese e ambiguidade recusados |
+| CA92 | `test_ca92_recorrencia_e_compromisso_vencido` | 29/02, compromisso vencido e janela |
+| CA93 | Dois casos `test_ca93_*` em `test_lembrancas.py` | Adiamento/revisão/bloqueio, sem duplicação e nova versão após edição |
+
+Quatro regressões executadas: guarda de todas as APIs (`test_autenticacao`),
+cache compartilhado/reinício e erro preservando cache (`test_noticias`),
+bloqueio auditado/reset (`test_contexto`). Nenhuma chamada externa neste lote.
