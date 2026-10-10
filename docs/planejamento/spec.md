@@ -2,13 +2,20 @@
 
 Status: base funcional Flask/Tailwind integrada em 10/10/2026, com regras da
 branch da equipe preservadas. A direção atual do produto inclui consumo de
-fontes existentes, inferência e feedback; essa evolução ainda não está implementada.
+fontes existentes, inferência e feedback. Importação de JSON fictício está
+implementada; extração Gemini e revisão humana implementadas com testes simulados.
+Extração real validada em uma amostra fictícia; fonte real, notícias e reuniões
+seguem planejadas. Qualidade geral e fluxo visual completo ainda não validados.
 Detalhamento: [requisitos](requisitos.md) (RF01–RF30 e CA11–CA33), [contratos](contracts.md),
 [arquitetura](design.md). Leitura rápida: [visão geral](../visao-geral.md).
 Nas divergências sobre regras de alerta, prioridade, preferências e acesso, vale
 este documento (decisões de 10/10/2026).
 
 ## Objetivo
+
+Poupar tempo do assessor e melhorar sua relação com o investidor. O sistema
+apoia o profissional: a decisão de contato e de uso das informações continua
+com ele. Não pretende substituir o assessor ou automatizar o relacionamento.
 
 Transformar formulário inicial, transcrições, e-mails e WhatsApp Business já
 existentes em contexto, lembranças e pautas pertinentes. O assessor revisa
@@ -35,13 +42,17 @@ com keynotes → atualizar o contexto após novos registros.
 - Registro manual de interações de WhatsApp, e-mail, telefone e presencial.
 - Estado de relacionamento informado pelo assessor, com justificativa.
 - Marcar alertas como tratados, com persistência.
+- Importar fonte JSON fictícia: formulário e conversas versionados, histórico
+  integrado, fontes consultáveis e identidades não resolvidas em pendência.
+  Regras e aceites em [incremento 01](incrementos/01-fontes.md).
 
-## Direção do produto — implementação pendente
+## Direção do produto — estágios de entrega
 
 Esclarecido pelo usuário e preservado neste merge:
 
 - Consumo da fonte existente e formulário, extração de fatos/hipóteses,
-  revisão humana, lembranças e feedback (RF03, RF05, RF16, RF25–RF30).
+  revisão humana e feedback (RF03, RF05, RF16, RF25–RF30): JSON fictício e
+  contexto revisável implementados; lembretes derivados ainda pendentes.
 - Notícias via NewsAPI.org por assunto compartilhado, com cache e atualização
   diária (RF17–RF20).
 - Reuniões próximas com pauta (keynotes), fontes e observações revisáveis
@@ -51,14 +62,14 @@ Critérios CA16–CA25 e regras de busca: [requisitos](requisitos.md) e
 [integração NewsAPI](../integracoes/busca-noticias.md). O agendador serve só à
 busca de notícias e às reuniões; alertas continuam calculados sob demanda (RN14).
 
-Fora da base atual: importação, inferência, revisão de sugestões, notícias e
+Fora da entrega atual: conexão à fonte real, lembretes derivados, notícias e
 reuniões. Estes itens continuam planejados em requisitos. Construir captura
 dos canais e formulário, envio de mensagens/atas, app nativo, análises tributárias
 e autenticação não fazem parte desta integração.
 
 Alertas calculados da base só têm pendente/tratado (RN15). Ações de adiar ou
-descartar sugestões inferidas pertencem ao fluxo futuro de revisão, não alteram
-a regra de tratamento desses alertas.
+descartar itens inferidos pertencem à revisão de contexto do incremento 02,
+sem alterar a regra de tratamento desses alertas. Lembretes derivados são futuros.
 
 Demonstração com um assessor fictício único, dados fictícios identificados,
 somente em ambiente local (`127.0.0.1`). **Proibido usar dados reais de
@@ -205,6 +216,15 @@ Estado inicial: sem avaliação (`NULL`), exibido como "Não avaliado".
 
 ## Validação
 
+O desenvolvimento incremental começa por [fontes fictícias](incrementos/01-fontes.md):
+RN16–RN23 e CA40–CA47 detalham RF03/RF04/RF16/RF25 antes da implementação.
+Cada entrega registra mudanças de front/back e evidências no
+[registro de desenvolvimento](../registro-desenvolvimento.md).
+
+Segundo recorte SDD: [contexto e revisão](incrementos/02-contexto-revisao.md),
+RN24–RN32 e CA48–CA56. Gemini configurável, evidências validadas e decisões
+humanas persistidas; não altera o resumo por template nem os alertas da base.
+
 CA11–CA25 (notícias, reuniões e keynotes) estão em [requisitos](requisitos.md);
 CA26–CA33 de inferência/feedback continuam em requisitos; CA34–CA39 acima
 validam a base implementada (IDs reconciliados durante o merge).
@@ -217,9 +237,9 @@ verificações executadas e limitações.
 
 ## Decisões pendentes
 
-Para a evolução: contrato e acesso à fonte existente, modelo/provedor de
-extração, limites de relevância e orçamento, contrato de revisão/feedback
-e dados de demonstração. Stack da base já definida em `design.md`.
+Para a evolução: contrato/acesso à fonte real, qualidade/custo da extração,
+limites de relevância/orçamento e dados de demonstração. Gemini e revisão/feedback
+definidos no incremento 02, com uma amostra real validada. Stack em `design.md`.
 
 ### Identificadores de aceite após o merge
 

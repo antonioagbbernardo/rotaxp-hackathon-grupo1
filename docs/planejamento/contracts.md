@@ -65,3 +65,117 @@ O alerta não tem `id` persistido; a rota de tratamento recebe
   `{"canal": "telefone", "texto": "...", "ocorrida_em": "2026-10-10T14:00:00-03:00", "proximos_passos": "..."}`
   (`ocorrida_em` omitido = agora; futuro → 400).
 - `GET /` serve a página base; a interface lê os dados pelas rotas acima.
+
+## Incremento 01 — contrato de fontes fictícias
+
+Especificação e aceites: [01-fontes.md](incrementos/01-fontes.md).
+Este contrato é interno; não confirma integração a WhatsApp, telefonia ou e-mail.
+
+```
+POST /api/fontes/importar                   importa um lote fictício (200)
+GET  /api/fontes/pendencias                 documentos sem identidade resolvida
+GET  /api/clientes/<id>/fontes              todas as versões de fontes do cliente
+```
+
+Lote: `origem` (texto), `ficticio: true`, `documentos` (1–100 objetos).
+Documento: `registro_id` (texto), `versao` (inteiro > 0), `cliente_id`
+(inteiro > 0 ou null; inteiros limitados a 64 bits com sinal), `tipo` (`interacao` ou `formulario`), `ocorrida_em`
+(ISO 8601, não futuro), `conteudo`. Interação exige `canal` (`whatsapp`,
+`email`, `telefone` ou `presencial`) e conteúdo textual não vazio. Formulário
+exige conteúdo como objeto não vazio de respostas textuais, sem `canal`.
+Campos desconhecidos são recusados para não perder dados silenciosamente.
+
+```json
+{
+  "origem": "fonte-demo",
+  "ficticio": true,
+  "documentos": [{
+    "registro_id": "ana-whatsapp-01",
+    "versao": 1,
+    "cliente_id": 1,
+    "tipo": "interacao",
+    "canal": "whatsapp",
+    "ocorrida_em": "2026-10-09T10:00:00-03:00",
+    "conteudo": "Dados fictícios: acompanho Fórmula 1."
+  }]
+}
+```
+
+Sucesso: `{"importados": 1, "reutilizados": 0, "pendentes": 0}`. Contadores
+referem-se ao lote; pendentes conta documentos sem vínculo, inclusive reutilizados.
+Erro segue `erro.codigo/campo/mensagem`; 400 para validação e 409 para conflito
+de versão ou identidade. `erro.campo` inclui índice do documento.
+
+Documento persistido: `id`, `origem`, `registro_id`, `versao`, `cliente_referencia`
+(ID recebido), `cliente_id` (vínculo resolvido ou null), `tipo`, `canal`,
+`conteudo`, `ocorrida_em`, `importada_em`, `interacao_id` (quando resolvida),
+`atual` (maior versão conhecida). Conteúdo mantém o original; instantes são
+normalizados em UTC. Respostas de consulta: `{"fontes": [...]}` e
+`{"pendencias": [...]}`. Ordenação: ocorrência decrescente, origem/registro,
+versão decrescente. ID de cliente inexistente na consulta retorna 404.
+
+Interações importadas entram no histórico cronológico atual. Uma nova versão
+mantém seu `interacao_id` e `registrada_em`, atualizando canal/texto/ocorrência.
+As versões de evidência permanecem em `documento_fonte`. Formulários não
+alteram automaticamente campos do cliente. Pendências ficam fora de todos os
+históricos de cliente até existir uma rotina explícita de reconciliação.
+
+## Incremento 02 — contexto e revisão
+
+Especificação: [02-contexto-revisao.md](incrementos/02-contexto-revisao.md).
+
+```
+POST /api/clientes/<id>/contexto/processar     processa fontes novas (200)
+GET  /api/clientes/<id>/contexto               itens, revisões e atualidade
+POST /api/clientes/<id>/contexto/<item>/revisar decisão humana
+POST /api/clientes/<id>/assuntos/<assunto>     bloqueio/permissão de contato
+```
+
+Processar não exige corpo; não recebe chave/modelo pelo navegador. Sucesso:
+`{"novos": N, "documentos_processados": N, "reutilizado": false}`; sem novidades,
+`novos: 0`, `documentos_processados: 0`, `reutilizado: true`. Sem fontes resolvidas:
+400. Em processamento ou fontes alteradas durante chamada: 409. Sem chave ou
+erro externo/cota: 503. Saída inválida/truncada: 502, sem itens parciais.
+
+Saída do modelo: `{"itens": [...]}` (0–30), cada item exige:
+
+| Campo | Contrato |
+| --- | --- |
+| `categoria` | objetivo, interesse, preferencia, data_importante, compromisso, ponto_atencao |
+| `assunto` | slug estável de 1–80 caracteres `[a-z0-9-]`, para agrupar o mesmo assunto entre fontes |
+| `sujeito` | cliente, familiar, terceiro ou incerto |
+| `tipo` | fato (explícito na fonte) ou hipotese; ambos aguardam revisão |
+| `valor` | texto de 1–500 caracteres; não inventar precisão de datas |
+| `evidencias` | 1–5 objetos com documento_id inteiro, trecho literal não vazio, campo (nome do campo para formulário; null para conversa) |
+
+Consultar retorna `{"itens": [...], "modelo": "...", "configurado": true/false,
+"fontes_novas": N}`. Cada item acrescenta `id`, `cliente_id`, `valor_original`,
+`valor_revisado`, `estado` (pendente, confirmado, corrigido, descartado, adiado),
+`revisao` (inteiro), `adiado_ate`, `gerado_em`, `modelo`, `evidencia_atual`,
+`conflitos` (IDs com possível divergência), `bloqueado`, `elegivel_contato` e
+`historico_revisoes`. Evidências incluem origem/registro/versão/data da fonte.
+`elegivel_contato` só é verdadeiro se revisado, com sujeito cliente, fontes
+atuais, sem conflito, sem bloqueio e respeitando permissão/intervalo pessoal.
+Não representa envio ou alerta gerado. Item adiado volta a ser exibido como
+pendente na data local combinada; o evento original permanece no histórico.
+
+Revisar: `{"acao": "aprovar|corrigir|descartar|adiar", "motivo": "...",
+"revisao": 0, "valor": "...", "adiado_ate": "YYYY-MM-DD"}`. `valor` só para
+corrigir; `adiado_ate` só para adiar e deve ser futuro. Campos extras recusados.
+Versão de revisão divergente: 409; item de outro cliente: 404. Sucesso retorna
+`{"item_id": N, "revisao": N, "estado": "..."}`. Fonte original imutável.
+
+Assunto: `{"bloqueado": true/false, "motivo": "..."}`. Exige assunto existente
+no contexto do cliente. Persiste cada alteração com assessor/data, sem remover
+o fato ou afetar outros clientes. Retorna assunto/bloqueado. Consulta do contexto
+inclui a preferência atual; histórico de alterações fica persistido.
+
+Configuração local: `GEMINI_API_KEY` e `GEMINI_MODEL` em `backend/.env` ou
+variáveis de ambiente (que prevalecem). Provedor usa `x-goog-api-key`, HTTPS,
+timeout de 30 s e nenhum segredo na resposta ao frontend ou nos logs de erro.
+Esquema do provedor limitado às palavras-chave suportadas no REST. O backend
+continua validando slug, texto e evidências conforme o contrato acima.
+Limites de arrays ficam na instrução e no validador local; o schema enviado não
+inclui `minItems/maxItems` devido à rejeição observada na chamada real.
+Formato REST: `generationConfig.responseFormat.text.mimeType: APPLICATION_JSON`
+e `schema`; não combinar com `responseMimeType/responseJsonSchema` legados.

@@ -1,7 +1,8 @@
 # Plano de execução — seis pessoas
 
 Status: plano reconciliado em 10/10/2026. Base Flask/Tailwind integrada;
-consumo de fontes, inferência/feedback, notícias e keynotes ainda pendentes.
+ingestão JSON fictícia e contexto/revisão implementados; Gemini real testado em
+amostra fictícia. Conexão aos canais, notícias e keynotes ainda pendentes.
 Referências: `spec.md`, `design.md`,
 `requisitos.md`, `contracts.md`. Responsáveis definidos pela equipe.
 
@@ -27,6 +28,20 @@ Implementação paralela após T00: integrar assim que a base permitir, sem mant
 duas implementações incompatíveis.
 
 ## Cronograma de referência — 10/10/2026 (São Paulo)
+
+T09 dividida em incrementos SDD:
+
+- **T09.1 — implementado:** fonte JSON fictícia, identidade/pendências, histórico,
+  versões e tela de fontes. CA40–CA46 automatizados; CA47 visual parcial, fluxo
+  completo e celular pendentes.
+- **T09.2/T09.3 — implementados no incremento 02:** extração estruturada,
+  evidências, fatos/hipóteses, revisão, correções e bloqueio por cliente, sem
+  perder decisões. 125 testes aprovados com provedor/transporte simulados;
+  chamada real com quatro fontes/sete propostas e cache verificado.
+  Fluxo visual completo/celular ainda pendente.
+
+Detalhes em [incremento 01](incrementos/01-fontes.md) e
+[registro para apresentação](../registro-desenvolvimento.md).
 
 Horários herdados do plano da branch; ajustar ao tempo realmente restante.
 A integração da base não comprova execução em duas máquinas nem conclusão

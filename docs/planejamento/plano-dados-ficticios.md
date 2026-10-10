@@ -1,8 +1,12 @@
 # Plano de dados fictícios e testes
 
-Status: proposta documental para a fonte simulada e testes de inferência/feedback,
-ainda não criados. A base já possui seed fictício (`backend/app/seed.py`) e testes de
-regras/API; esse seed não simula formulário versionado nem extração das conversas.
+Status: fonte simulada de ingestão criada em `backend/dados/fonte-demo.json`,
+com testes em `backend/tests/test_fontes.py`. Extração/feedback e seus resultados
+esperados permanecem planejados. Seed da base em `backend/app/seed.py`.
+
+Implementado: três formulários, nove conversas e duas identidades pendentes.
+Reimportação, isolamento, correção de versão, chegada fora de ordem e atomicidade
+são testados. Notícias, reuniões e extrações esperadas não constam ainda desse JSON.
 
 ## Objetivo
 

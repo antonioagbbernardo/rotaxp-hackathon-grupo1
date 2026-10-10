@@ -5,7 +5,8 @@ from flask import Flask, current_app, g
 
 # Dinheiro: TEXT com Decimal (nunca float). Datas: YYYY-MM-DD. Instantes: UTC ISO 8601.
 # O alerta NÃO é persistido (calculado sob demanda); só o tratamento (tratamento_alerta).
-TABELAS = ("tratamento_alerta", "avaliacao_relacionamento", "interacao", "data_importante",
+TABELAS = ("historico_assunto", "preferencia_assunto", "revisao_contexto", "item_contexto", "processamento_contexto",
+           "documento_fonte", "tratamento_alerta", "avaliacao_relacionamento", "interacao", "data_importante",
            "posicao", "cliente", "assessor")
 
 SCHEMA = """
@@ -62,6 +63,50 @@ CREATE TABLE IF NOT EXISTS tratamento_alerta (
     cliente_id INTEGER NOT NULL REFERENCES cliente(id),
     tratado_em TEXT NOT NULL,
     assessor_id INTEGER NOT NULL REFERENCES assessor(id)
+);
+CREATE TABLE IF NOT EXISTS documento_fonte (
+    id INTEGER PRIMARY KEY,
+    origem TEXT NOT NULL,
+    registro_id TEXT NOT NULL,
+    versao INTEGER NOT NULL CHECK (versao > 0),
+    cliente_referencia INTEGER,
+    cliente_id INTEGER REFERENCES cliente(id),
+    tipo TEXT NOT NULL CHECK (tipo IN ('interacao', 'formulario')),
+    canal TEXT CHECK (canal IN ('whatsapp', 'email', 'telefone', 'presencial')),
+    conteudo TEXT NOT NULL,
+    ocorrida_em TEXT NOT NULL,
+    importada_em TEXT NOT NULL,
+    interacao_id INTEGER REFERENCES interacao(id),
+    UNIQUE (origem, registro_id, versao)
+);
+CREATE INDEX IF NOT EXISTS documento_fonte_cliente ON documento_fonte(cliente_id);
+CREATE TABLE IF NOT EXISTS processamento_contexto (
+    id INTEGER PRIMARY KEY, cliente_id INTEGER NOT NULL REFERENCES cliente(id),
+    modelo TEXT NOT NULL, prompt_versao TEXT NOT NULL, assinatura TEXT NOT NULL,
+    documentos TEXT NOT NULL, estado TEXT NOT NULL, inicio_em TEXT NOT NULL, fim_em TEXT,
+    UNIQUE (cliente_id, modelo, prompt_versao, assinatura)
+);
+CREATE TABLE IF NOT EXISTS item_contexto (
+    id INTEGER PRIMARY KEY, cliente_id INTEGER NOT NULL REFERENCES cliente(id),
+    processamento_id INTEGER NOT NULL REFERENCES processamento_contexto(id),
+    categoria TEXT NOT NULL, assunto TEXT NOT NULL, sujeito TEXT NOT NULL, tipo TEXT NOT NULL,
+    valor_original TEXT NOT NULL, evidencias TEXT NOT NULL,
+    estado TEXT NOT NULL DEFAULT 'pendente', valor_revisado TEXT,
+    revisao INTEGER NOT NULL DEFAULT 0, adiado_ate TEXT, gerado_em TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS revisao_contexto (
+    id INTEGER PRIMARY KEY, item_id INTEGER NOT NULL REFERENCES item_contexto(id),
+    acao TEXT NOT NULL, motivo TEXT NOT NULL, valor TEXT, adiado_ate TEXT,
+    assessor_id INTEGER NOT NULL REFERENCES assessor(id), revisao INTEGER NOT NULL, revisada_em TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS preferencia_assunto (
+    cliente_id INTEGER NOT NULL REFERENCES cliente(id), assunto TEXT NOT NULL,
+    bloqueado INTEGER NOT NULL CHECK (bloqueado IN (0,1)), PRIMARY KEY (cliente_id, assunto)
+);
+CREATE TABLE IF NOT EXISTS historico_assunto (
+    id INTEGER PRIMARY KEY, cliente_id INTEGER NOT NULL REFERENCES cliente(id), assunto TEXT NOT NULL,
+    bloqueado INTEGER NOT NULL, motivo TEXT NOT NULL, assessor_id INTEGER NOT NULL REFERENCES assessor(id),
+    registrada_em TEXT NOT NULL
 );
 """
 

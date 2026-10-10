@@ -2,7 +2,11 @@
 
 **Situação atual:** base Flask/Tailwind implementada: clientes, detalhe, interações
 manuais, preferências, relacionamento e alertas de vencimento/aniversário.
-Consumo de fontes, inferência, revisão/feedback, NewsAPI e keynotes ainda planejados.
+Incremento SDD 01 implementa importação de fontes JSON fictícias com versões
+e pendências de identidade. Incremento 02 acrescenta extração Gemini e revisão
+persistida; 125 testes e extração Gemini real de quatro fontes fictícias,
+com sete propostas pendentes. Validação visual completa ainda pendente.
+Conexão real aos canais, NewsAPI e keynotes ainda planejados.
 **Última revisão:** 10/10/2026. Núcleo: consumir fontes existentes, inferir contexto
 e sugerir lembranças sob supervisão humana, incorporando feedback.
 
@@ -11,6 +15,9 @@ e sugerir lembranças sob supervisão humana, incorporando feedback.
 | Documento | Para que serve |
 | --- | --- |
 | [Visão geral](visao-geral.md) | Entender rapidamente o produto, frontend, backend e fluxo de reunião |
+| [Registro para apresentação](registro-desenvolvimento.md) | Entregas de front/back, evidências, decisões, limitações e roteiro do pitch |
+| [Incremento SDD 01](planejamento/incrementos/01-fontes.md) | Contrato, regras e aceites da entrada de fontes fictícias |
+| [Incremento SDD 02](planejamento/incrementos/02-contexto-revisao.md) | Extração por IA, evidências, revisão e bloqueio por cliente |
 | [Requisitos](planejamento/requisitos.md) | Consultar comportamentos, critérios de aceite e como implementar por etapa |
 | [Especificação curta](planejamento/spec.md) | Alinhar o fluxo principal e regras básicas |
 | [Contratos](planejamento/contracts.md) | Entidades, rotas `/api`, formato JSON e erros do MVP |

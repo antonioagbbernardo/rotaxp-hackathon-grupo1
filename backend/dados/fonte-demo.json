@@ -1,0 +1,147 @@
+{
+  "origem": "fonte-demo-ficticia",
+  "ficticio": true,
+  "documentos": [
+    {
+      "registro_id": "1-formulario",
+      "versao": 1,
+      "cliente_id": 1,
+      "tipo": "formulario",
+      "ocorrida_em": "2026-10-01T09:00:00-03:00",
+      "conteudo": {
+        "nome": "Ana (fictício)",
+        "objetivo": "Dados fictícios: organizar investimentos",
+        "aniversario": "12/10",
+        "interesses": "Fórmula 1",
+        "preferencias": "Revisar com o assessor"
+      }
+    },
+    {
+      "registro_id": "1-telefone",
+      "versao": 1,
+      "cliente_id": 1,
+      "tipo": "interacao",
+      "canal": "telefone",
+      "ocorrida_em": "2026-10-06T10:00:00-03:00",
+      "conteudo": "Dados fictícios: Ana comenta interesse em Fórmula 1."
+    },
+    {
+      "registro_id": "1-email",
+      "versao": 1,
+      "cliente_id": 1,
+      "tipo": "interacao",
+      "canal": "email",
+      "ocorrida_em": "2026-10-07T10:00:00-03:00",
+      "conteudo": "Dados fictícios: aguardo retorno sobre o vencimento do CDB."
+    },
+    {
+      "registro_id": "1-whatsapp",
+      "versao": 1,
+      "cliente_id": 1,
+      "tipo": "interacao",
+      "canal": "whatsapp",
+      "ocorrida_em": "2026-10-08T10:00:00-03:00",
+      "conteudo": "Dados fictícios: minha filha faz aniversário em novembro; o dia não foi informado."
+    },
+    {
+      "registro_id": "2-formulario",
+      "versao": 1,
+      "cliente_id": 2,
+      "tipo": "formulario",
+      "ocorrida_em": "2026-10-01T09:00:00-03:00",
+      "conteudo": {
+        "nome": "Bruno (fictício)",
+        "objetivo": "Dados fictícios: organizar investimentos",
+        "aniversario": "a confirmar",
+        "interesses": "somente assuntos financeiros",
+        "preferencias": "Não abordar assuntos pessoais"
+      }
+    },
+    {
+      "registro_id": "2-telefone",
+      "versao": 1,
+      "cliente_id": 2,
+      "tipo": "interacao",
+      "canal": "telefone",
+      "ocorrida_em": "2026-10-06T10:00:00-03:00",
+      "conteudo": "Dados fictícios: Bruno comenta interesse em somente assuntos financeiros."
+    },
+    {
+      "registro_id": "2-email",
+      "versao": 1,
+      "cliente_id": 2,
+      "tipo": "interacao",
+      "canal": "email",
+      "ocorrida_em": "2026-10-07T10:00:00-03:00",
+      "conteudo": "Dados fictícios: aguardo retorno sobre o vencimento do CDB."
+    },
+    {
+      "registro_id": "2-whatsapp",
+      "versao": 1,
+      "cliente_id": 2,
+      "tipo": "interacao",
+      "canal": "whatsapp",
+      "ocorrida_em": "2026-10-08T10:00:00-03:00",
+      "conteudo": "Dados fictícios: podemos retomar o assunto na próxima reunião?"
+    },
+    {
+      "registro_id": "3-formulario",
+      "versao": 1,
+      "cliente_id": 3,
+      "tipo": "formulario",
+      "ocorrida_em": "2026-10-01T09:00:00-03:00",
+      "conteudo": {
+        "nome": "Carla (fictício)",
+        "objetivo": "Dados fictícios: organizar investimentos",
+        "aniversario": "a confirmar",
+        "interesses": "corridas de rua",
+        "preferencias": "Revisar com o assessor"
+      }
+    },
+    {
+      "registro_id": "3-telefone",
+      "versao": 1,
+      "cliente_id": 3,
+      "tipo": "interacao",
+      "canal": "telefone",
+      "ocorrida_em": "2026-10-06T10:00:00-03:00",
+      "conteudo": "Dados fictícios: Carla comenta interesse em corridas de rua."
+    },
+    {
+      "registro_id": "3-email",
+      "versao": 1,
+      "cliente_id": 3,
+      "tipo": "interacao",
+      "canal": "email",
+      "ocorrida_em": "2026-10-07T10:00:00-03:00",
+      "conteudo": "Dados fictícios: aguardo retorno sobre o vencimento do CDB."
+    },
+    {
+      "registro_id": "3-whatsapp",
+      "versao": 1,
+      "cliente_id": 3,
+      "tipo": "interacao",
+      "canal": "whatsapp",
+      "ocorrida_em": "2026-10-08T10:00:00-03:00",
+      "conteudo": "Dados fictícios: podemos retomar o assunto na próxima reunião?"
+    },
+    {
+      "registro_id": "identidade-ausente",
+      "versao": 1,
+      "cliente_id": null,
+      "tipo": "interacao",
+      "canal": "whatsapp",
+      "ocorrida_em": "2026-10-09T10:00:00-03:00",
+      "conteudo": "Dados fictícios: meu nome é Ana Souza, mas o vínculo não foi confirmado. Não associar por nome."
+    },
+    {
+      "registro_id": "identidade-desconhecida",
+      "versao": 1,
+      "cliente_id": 999,
+      "tipo": "interacao",
+      "canal": "whatsapp",
+      "ocorrida_em": "2026-10-09T10:00:00-03:00",
+      "conteudo": "Dados fictícios: meu nome é Ana Souza, mas o vínculo não foi confirmado. Não associar por nome."
+    }
+  ]
+}
