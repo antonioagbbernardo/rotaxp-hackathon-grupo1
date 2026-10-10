@@ -1,8 +1,6 @@
 import { useState } from 'react'
-import { Badge } from '@/components/ui/Badge'
 import { Panel } from '@/components/ui/Panel'
 import wave from '@/assets/onda-pulse.png'
-import { getInitials } from '@/lib/format'
 import type { Client } from '@/types/client'
 import { AskAssistantForm } from './AskAssistantForm'
 import { InsightCard } from './InsightCard'
@@ -48,16 +46,7 @@ export function AssistantPanel({ client, onUpdated }: AssistantPanelProps) {
         </div>
       </header>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Badge className="w-38 text-[11px]">
-          {getInitials(client.name)} {client.name}
-        </Badge>
-        <Badge tone="positive" withDot className="w-38 text-[11px]">
-          {client.context?.fontes_novas ? 'Fontes novas para analisar' : client.context?.itens.some((i) => i.estado === 'pendente') ? 'Contexto para revisar' : 'Registros consultados'}
-        </Badge>
-      </div>
-
-      <div className="-mx-1 mt-3.5 min-h-0 flex-1 space-y-3.5 overflow-y-auto px-1 pb-1">
+      <div className="-mx-1 mt-4 min-h-0 flex-1 space-y-3.5 overflow-y-auto px-1 pb-1">
         <UserMessage>{assistant.question}</UserMessage>
 
         <ClientBriefing client={client} onUpdated={onUpdated} />
@@ -70,7 +59,7 @@ export function AssistantPanel({ client, onUpdated }: AssistantPanelProps) {
           ))}
         </ol>
 
-        <OpeningSuggestion openings={assistant.openings} sources={assistant.sources ?? []} />
+        <OpeningSuggestion openings={assistant.openings} />
 
         {followUps.map((entry, index) => (
           <div key={index} className="space-y-2">
