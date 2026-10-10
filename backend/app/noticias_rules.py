@@ -1,6 +1,8 @@
 """Regras puras de notícias: catálogo, elegibilidade, URLs e saída do provedor."""
 import hashlib
 import json
+import re
+import unicodedata
 from datetime import datetime, timedelta
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -11,6 +13,12 @@ CATALOGO = {
     'palmeiras': {'nome': 'Palmeiras', 'q': 'Palmeiras AND futebol'},
     'corinthians': {'nome': 'Corinthians', 'q': 'Corinthians AND futebol'},
 }
+
+
+def assuntos_do_interesse(texto):
+    texto = ''.join(c for c in unicodedata.normalize('NFD', texto.casefold()) if unicodedata.category(c) != 'Mn')
+    padroes = {'formula-1': r'\b(?:formula\s*1|f1)\b', 'palmeiras': r'\bpalmeiras\b', 'corinthians': r'\bcorinthians\b'}
+    return [assunto for assunto, padrao in padroes.items() if re.search(padrao, texto)]
 
 
 class ErroNoticias(Exception):

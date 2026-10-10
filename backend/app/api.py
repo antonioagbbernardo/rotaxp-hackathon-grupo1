@@ -23,6 +23,23 @@ from .seed import ASSESSOR_ID
 
 bp = Blueprint("api", __name__, url_prefix="/api")
 
+
+@bp.post('/pulse/clientes/<int:cliente_id>/humor')
+def inferir_humor(cliente_id):
+    from .humor import inferir
+    _cliente_ou_404(get_db(), cliente_id)
+    _sem_corpo()
+    return jsonify(inferir(cliente_id))
+
+
+@bp.post('/pulse/clientes/<int:cliente_id>/humor/revisar')
+def revisar_humor(cliente_id):
+    from .humor import revisar
+    from .agenda_rules import corpo
+    _cliente_ou_404(get_db(), cliente_id)
+    dados = corpo(request.get_json(silent=True), ('assinatura',), ('assinatura',))
+    return jsonify(revisar(cliente_id, dados['assinatura']))
+
 CANAIS = ("whatsapp", "email", "telefone", "presencial")
 ESTADOS = ("positivo", "atencao", "negativo")
 PRIORIDADES = ("alta", "media", "baixa")

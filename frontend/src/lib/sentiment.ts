@@ -17,7 +17,7 @@ export const sentimentLabel: Record<Sentiment, string> = {
   positive: 'positivo',
   negative: 'negativo',
   neutral: 'neutro',
-  unknown: 'sem avaliação',
+  unknown: 'não identificado',
 }
 
 export const priorityLabel = { alta: 'Alta', media: 'Média', baixa: 'Baixa' } as const

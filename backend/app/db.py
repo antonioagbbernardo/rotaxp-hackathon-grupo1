@@ -5,12 +5,17 @@ from flask import Flask, current_app, g
 
 # Dinheiro: TEXT com Decimal (nunca float). Datas: YYYY-MM-DD. Instantes: UTC ISO 8601.
 # O alerta NÃO é persistido (calculado sob demanda); só o tratamento (tratamento_alerta).
-TABELAS = ("nota_assessor", "chat_turno", "feedback_lembranca", "lembranca_contexto", "pauta_reuniao", "reuniao", "sessao_acesso", "descarte_noticia", "coleta_artigo_noticia", "artigo_noticia", "coleta_noticia", "vinculo_noticia",
+TABELAS = ("humor_inferido", "nota_assessor", "chat_turno", "feedback_lembranca", "lembranca_contexto", "pauta_reuniao", "reuniao", "sessao_acesso", "descarte_noticia", "coleta_artigo_noticia", "artigo_noticia", "coleta_noticia", "vinculo_noticia",
            "resumo_ia", "historico_assunto", "preferencia_assunto", "revisao_contexto", "item_contexto", "processamento_contexto",
            "documento_fonte", "tratamento_alerta", "avaliacao_relacionamento", "interacao", "data_importante",
            "posicao", "cliente", "assessor")
 
 SCHEMA = """
+CREATE TABLE IF NOT EXISTS humor_inferido (
+    cliente_id INTEGER PRIMARY KEY REFERENCES cliente(id), assinatura TEXT NOT NULL,
+    estado TEXT NOT NULL, iniciada_em TEXT NOT NULL, dados TEXT,
+    revisado_em TEXT, erro TEXT
+);
 CREATE TABLE IF NOT EXISTS chat_turno (
     id INTEGER PRIMARY KEY, cliente_id INTEGER NOT NULL REFERENCES cliente(id),
     request_id TEXT NOT NULL, pergunta TEXT NOT NULL, criada_em TEXT NOT NULL,

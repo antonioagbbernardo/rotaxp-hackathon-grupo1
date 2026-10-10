@@ -21,6 +21,8 @@ export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () 
   const [loading, setLoading] = useState(true)
   const [selectedClientId, setSelectedClientId] = useState(location.hash.match(/^#\/clientes\/(\d+)$/)?.[1] ?? '')
   const requestId = useRef(0)
+  const humorTentado = useRef(new Set<string>())
+  const noticiasTentadas = useRef(new Set<string>())
   const refresh = useCallback(async (signal?: AbortSignal) => {
     const request = ++requestId.current
     try {
@@ -65,6 +67,31 @@ export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () 
     return () => { window.clearInterval(interval); controller.abort() }
   }, [refresh])
   const selectedClient = data?.clients.find((client) => client.id === selectedClientId)
+  useEffect(() => {
+    const pendentes = data?.clients.filter((c) => c.newsState?.configurado && c.newsState.assuntos.some((a) => a.estado === 'nunca' || a.estado === 'desatualizado') && !noticiasTentadas.current.has(`${c.id}:${c.newsState.assuntos.map((a) => `${a.id}:${a.ultima_coleta}`).join('|')}`)) ?? []
+    if (!pendentes.length) return
+    for (const c of pendentes) noticiasTentadas.current.add(`${c.id}:${c.newsState!.assuntos.map((a) => `${a.id}:${a.ultima_coleta}`).join('|')}`)
+    void (async () => {
+      for (const c of pendentes) {
+        try { await api(`/api/clientes/${c.id}/noticias/atualizar`, { method: 'POST' }) }
+        catch { /* Erros de coleta aparecem na seção de notícias. */ }
+      }
+      await refresh().catch(() => {})
+    })()
+  }, [data, refresh])
+  useEffect(() => {
+    const pendentes = data?.clients.filter((c) => c.mood?.configurado && c.mood.estado === 'pendente' && !humorTentado.current.has(`${c.id}:${c.mood.assinatura}`)) ?? []
+    if (!pendentes.length) return
+    for (const c of pendentes) humorTentado.current.add(`${c.id}:${c.mood!.assinatura}`)
+    // Inferências em sequência e cache no servidor: uma chamada por conjunto de conversas.
+    void (async () => {
+      for (const c of pendentes) {
+        try { await api(`/api/pulse/clientes/${c.id}/humor`, { method: 'POST' }) }
+        catch { /* O estado/erro persistido aparece no cliente após a releitura. */ }
+      }
+      await refresh().catch(() => {})
+    })()
+  }, [data, refresh])
   const retry = () => { setLoading(true); void refresh().catch(() => {}) }
   // Gravação já concluída: falha de releitura aparece no banner, cujo retry
   // consulta a base sem repetir a gravação do formulário.
@@ -93,7 +120,7 @@ export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () 
 
         {selectedClient ? <>
         <div className="min-w-0 space-y-4 xl:overflow-y-auto">
-          <ClientSummary client={selectedClient} />
+          <ClientSummary key={`humor-${selectedClient.id}`} client={selectedClient} onUpdated={updated} />
           <div className="grid gap-4 md:grid-cols-2">
             <PerceptionHistory entries={selectedClient.perception} />
             <InvestmentProfile portfolio={selectedClient.portfolio} />

@@ -12,14 +12,13 @@ interface NewsCardProps {
 }
 
 export function NewsCard({ news, pronoun, onDiscard }: NewsCardProps) {
-  const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
   async function discard() {
     if (busy) return
     setBusy(true); setError('')
-    try { await onDiscard(news.id, reason) }
+    try { await onDiscard(news.id, 'Removida pelo assessor: não pertinente para este cliente.') }
     catch (e) { setError(e instanceof Error ? e.message : 'Não foi possível salvar o feedback.') }
     finally { setBusy(false) }
   }
@@ -50,18 +49,10 @@ export function NewsCard({ news, pronoun, onDiscard }: NewsCardProps) {
         <p className="mt-1.5 text-[9px] text-ink-subtle">
           {news.scenario} · Coletada {news.collectedAt ? formatDate(news.collectedAt) : formatElapsed(news.updatedMinutesAgo)}
         </p>
-        <details className="mt-4 border-t border-line pt-3 text-xs">
-          <summary className="cursor-pointer text-ink-muted">Não é relevante para este cliente</summary>
-          <form className="mt-3 space-y-2" onSubmit={(e) => { e.preventDefault(); void discard() }}>
-            <label className="block">Motivo do feedback
-              <textarea required maxLength={1000} value={reason} onChange={(e) => setReason(e.target.value)} disabled={busy}
-                className="mt-2 block min-h-18 w-full rounded-lg border border-line bg-surface p-2 text-xs" />
-            </label>
-            <p className="text-[10px] text-ink-muted">Oculta esta notícia apenas para este cliente e preserva o interesse.</p>
-            <Button type="submit" disabled={busy || !reason.trim()}>{busy ? 'Salvando…' : 'Salvar feedback'}</Button>
-            {error && <p role="alert" className="text-negative">{error}</p>}
-          </form>
-        </details>
+        <div className="mt-4 border-t border-line pt-3 text-xs">
+          <Button disabled={busy} onClick={() => { void discard() }}>{busy ? 'Removendo…' : 'Remover notícia'}</Button>
+          {error && <p role="alert" className="mt-2 text-negative">{error}</p>}
+        </div>
       </article>
     </Panel>
   )

@@ -96,6 +96,22 @@ def atualizar(c, cid=1):
     return r.get_json()['resultados'][0]
 
 
+def test_noticias_automaticas_sem_aprovar_ou_associar_e_remocao_persistente(ambiente):
+    app, c, g = ambiente
+    assert item(c)['estado'] == 'pendente'
+    automaticos = consultar(c)['vinculos']
+    assert len(automaticos) == 1 and automaticos[0]['automatico']
+    assert not g.chamadas
+    assert atualizar(c)['estado'] == 'atualizado'
+    assert atualizar(c, 3)['estado'] == 'reutilizado' and len(g.chamadas) == 1
+    artigo = consultar(c)['artigos'][0]
+    assert c.post('/api/clientes/1/noticias/descartar', json={'artigo_id': artigo['id'], 'motivo': 'Não pertinente.'}).status_code == 200
+    assert consultar(c)['artigos'] == [] and consultar(c, 3)['artigos']
+    with app.app_context():
+        assert get_db().execute('SELECT count(*) FROM vinculo_noticia').fetchone()[0] == 0
+    assert item(c)['estado'] == 'pendente'
+
+
 def test_get_sem_http_vinculo_explicito_cache_compartilhado_e_reinicio(ambiente):
     app, c, g = ambiente
     assert consultar(c)['artigos'] == [] and not g.chamadas
@@ -143,8 +159,9 @@ def test_vinculo_recusa_item_nao_elegivel(ambiente, mudanca):
     {'item_id': 1, 'assunto': 'formula-1', 'q': 'nome do cliente'}])
 def test_vinculo_recusa_entrada_invalida(ambiente, corpo):
     _, c, g = ambiente
+    antes = consultar(c)['vinculos']
     assert c.post('/api/clientes/1/noticias/vinculos', json=corpo).status_code == 400
-    assert consultar(c)['vinculos'] == [] and not g.chamadas
+    assert consultar(c)['vinculos'] == antes and not g.chamadas
 
 
 @pytest.mark.parametrize('mudanca', ['preferencia', 'contato', 'bloqueio', 'revisao', 'fonte', 'conflito'])
@@ -172,6 +189,11 @@ def test_releitura_oculta_vinculo_e_noticia_inelegiveis(ambiente, mudanca):
                 db.execute('INSERT INTO item_contexto (cliente_id,processamento_id,categoria,assunto,sujeito,tipo,valor_original,evidencias,gerado_em) SELECT cliente_id,processamento_id,categoria,assunto,sujeito,tipo,?,evidencias,gerado_em FROM item_contexto WHERE id=?',
                            ('Não acompanha mais.', i['id']))
             db.commit()
+    if mudanca in ('preferencia', 'contato'):
+        # Preparação automática de notícias não é autorização para contato pessoal.
+        assert consultar(c)['artigos'] and consultar(c)['vinculos']
+        assert c.post('/api/clientes/1/noticias/atualizar').status_code == 200
+        return
     assert consultar(c)['artigos'] == [] and consultar(c)['vinculos'] == []
     assert c.post('/api/clientes/1/noticias/atualizar').status_code == 400
 
