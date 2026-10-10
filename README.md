@@ -35,5 +35,6 @@ uv run --locked pytest
 | `backend/pyproject.toml` e `uv.lock` | Dependências Python |
 | `backend/package.json` e `package-lock.json` | Ferramentas para compilar CSS |
 | `docs/` | Requisitos, arquitetura, contratos e planejamento |
+| `frontend/` | Protótipo visual em React + TypeScript + Tailwind (dados fictícios, sem integração com a API) |
 
 [Comandos completos e detalhes da aplicação](backend/README.md).

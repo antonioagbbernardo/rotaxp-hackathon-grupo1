@@ -55,6 +55,7 @@ persistidas; não é retreinamento automático do modelo.
 | Incremento 01: fontes | Importação JSON, resultado/erro, pendências de identidade, versões e origem no detalhe/histórico | Validação pura, transação SQLite, documentos versionados e API/CLI compartilhados | Implementado: 34 testes novos + 47 anteriores = 81 aprovados; CSS e sintaxe JS verificados; visual parcial |
 | Incremento 02: contexto e feedback | Processamento, fila, evidências, quatro ações e bloqueio por cliente | Gemini REST, validação literal, cache, controle de concorrência, revisão/auditoria | 44 testes novos, total 125; testes simulados + extração real de 4 fontes/7 propostas. Visual completo pendente |
 | Notícias e reuniões | Notícias pertinentes e keynotes | NewsAPI compartilhada, cache, preparação de pauta | Planejado, não implementado |
+| Protótipo visual React (XP Pulse) | Tela do Figma em `frontend/` (React + TypeScript + Tailwind v4): clientes com busca/filtro, resumo, percepção, carteira, notícias e assistente com sugestão de abertura | Nenhum; dados fictícios locais em `frontend/src/data` | Build e lint aprovados; conferido no navegador em 1600px e 390px. Não integrado à API Flask; respostas do assistente são estáticas |
 
 ## Registro SDD por incremento
 
