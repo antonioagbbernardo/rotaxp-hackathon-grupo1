@@ -1,17 +1,13 @@
 import { Panel } from '@/components/ui/Panel'
 import { controlClass, MutationForm } from '@/components/ui/MutationForm'
 import { api } from '@/lib/api'
-import { formatCurrency, formatDate } from '@/lib/format'
+import { formatDate } from '@/lib/format'
 import type { Client } from '@/types/client'
 
 export function ClientWorkspace({ client, onUpdated }: { client: Client; onUpdated: () => Promise<void> }) {
   const pref = client.preferences
   return <div id={`registros-${client.id}`} className="min-w-0 space-y-4">
-    <Panel className="p-5">
-      <details><summary className="cursor-pointer text-sm font-medium leading-6">Posições e fontes</summary>
-        {client.positions?.length ? client.positions.map((p) => <p key={p.id} className="mt-2 text-[11px]">{p.ativo} · {formatCurrency(p.valor)} · vence {p.vencimento}<br /><span className="text-ink-muted">Fonte: posição #{p.id} · {p.fonte}</span></p>) : <p className="mt-2 text-xs text-ink-muted">Nenhuma posição cadastrada.</p>}
-      </details>
-    </Panel>
+
     <Panel className="p-5"><details><summary className="cursor-pointer text-sm font-medium">Formulário e conversas originais ({client.sourceDocuments?.length ?? 0})</summary>
       {client.sourceDocuments?.map((f) => <details key={f.id} className="mt-3 rounded-lg border border-line p-3">
         <summary className="cursor-pointer text-xs">{f.tipo === 'formulario' ? 'Formulário' : f.tipo === 'nota_assessor' ? 'Informação registrada pelo chat' : f.canal} · {f.registro_id} v{f.versao} · {f.atual ? 'atual' : 'anterior'}</summary>

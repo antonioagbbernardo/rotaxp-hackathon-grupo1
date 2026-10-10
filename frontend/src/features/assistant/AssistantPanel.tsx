@@ -3,7 +3,6 @@ import { Panel } from '@/components/ui/Panel'
 import wave from '@/assets/onda-pulse.png'
 import type { Client } from '@/types/client'
 import { AskAssistantForm } from './AskAssistantForm'
-import { InsightCard } from './InsightCard'
 import { OpeningSuggestion } from './OpeningSuggestion'
 import { UserMessage } from './UserMessage'
 import { api } from '@/lib/api'
@@ -77,14 +76,6 @@ export function AssistantPanel({ client, onUpdated }: AssistantPanelProps) {
         <UserMessage>{assistant.question}</UserMessage>
 
         <ClientBriefing client={client} onUpdated={onUpdated} />
-
-        <ol className="space-y-3">
-          {assistant.insights.map((insight, index) => (
-            <li key={insight.title}>
-              <InsightCard insight={insight} position={index + 1} />
-            </li>
-          ))}
-        </ol>
 
         <OpeningSuggestion openings={assistant.openings} />
 

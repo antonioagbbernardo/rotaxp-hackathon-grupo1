@@ -7,7 +7,7 @@ import { PerceptionHistory } from '@/features/client-overview/PerceptionHistory'
 import { RadarPerfil } from '@/features/client-overview/RadarPerfil'
 import { ClientSidebar } from '@/features/clients/ClientSidebar'
 import { NewsSection } from '@/features/news/NewsSection'
-import { ClientWorkspace } from '@/features/client-overview/ClientWorkspace'
+
 import { Button } from '@/components/ui/Button'
 import { api } from '@/lib/api'
 import type { PulseView } from '@/types/client'
@@ -124,7 +124,6 @@ export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () 
             <InvestmentProfile portfolio={selectedClient.portfolio} />
           </div>
           {data && <RadarPerfil client={selectedClient} hoje={data.generatedAt} />}
-          <ClientWorkspace key={selectedClient.id} client={selectedClient} onUpdated={updated} />
           <MeetingsSection key={`agenda-${selectedClient.id}`} clientId={selectedClient.id} revision={data.generatedAt} onUpdated={updated} />
           <RemindersSection key={`lembrancas-${selectedClient.id}`} clientId={selectedClient.id} revision={data.generatedAt} onUpdated={updated} />
           <NewsSection key={selectedClient.id} client={selectedClient} onUpdated={updated} />
