@@ -1,3 +1,4 @@
+from client_autenticado import cliente_autenticado
 import json
 from datetime import datetime
 from pathlib import Path
@@ -23,7 +24,7 @@ def app(tmp_path):
 
 @pytest.fixture
 def client(app):
-    return app.test_client()
+    return cliente_autenticado(app)
 
 
 def documento(**campos):
@@ -71,8 +72,8 @@ def test_ca40_importa_formulario_e_conversa_sem_alterar_decisoes_humanas(client)
 def test_ca41_reimportacao_idempotente_apos_reinicio(app, client):
     assert importar(client, lote()).status_code == 200
     antes = client.get("/api/clientes/1").get_json()["interacoes"]
-    nova = create_app({"TESTING": True, "DATABASE": app.config["DATABASE"],
-                       "CLOCK": relogio_fixo(AGORA)}).test_client()
+    nova = cliente_autenticado(create_app({"TESTING": True, "DATABASE": app.config["DATABASE"],
+                       "CLOCK": relogio_fixo(AGORA)}))
     r = importar(nova, lote())
     assert r.status_code == 200
     assert r.get_json() == {"importados": 0, "reutilizados": 1, "pendentes": 0}
@@ -188,7 +189,7 @@ def test_ca40_mock_e_cli_com_tres_clientes_e_pendencias(app, client):
 
 
 def test_rn16_reset_demo_remove_fontes_sem_quebrar_chaves_estrangeiras(app):
-    importar(app.test_client(), lote())
+    importar(cliente_autenticado(app), lote())
     resultado = app.test_cli_runner().invoke(args=["reset-demo"])
     assert resultado.exit_code == 0, resultado.output
     with app.app_context():
@@ -200,11 +201,11 @@ def test_ca45_cli_json_invalido_nao_grava(app, tmp_path):
     arquivo.write_text("{JSON inválido")
     resultado = app.test_cli_runner().invoke(args=["importar-fontes", str(arquivo)])
     assert resultado.exit_code != 0 and "JSON UTF-8 válido" in resultado.output
-    assert fontes(app.test_client()) == []
+    assert fontes(cliente_autenticado(app)) == []
 
 
 def test_rn16_base_vazia_exige_seed_sem_erro_de_banco(tmp_path):
     app = create_app({"TESTING": True, "DATABASE": str(tmp_path / "vazia.db"),
                       "CLOCK": relogio_fixo(AGORA)})
-    r = importar(app.test_client(), lote())
+    r = importar(cliente_autenticado(app), lote())
     assert r.status_code == 400 and "seed" in r.get_json()["erro"]["mensagem"]

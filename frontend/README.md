@@ -1,7 +1,7 @@
 # XP Pulse — frontend integrado
 
 Layout recebido da equipe, adaptado aos registros do Flask/SQLite, sem fallback
-para os mocks estáticos. Notícias aguardam a integração NewsAPI.
+para os mocks estáticos. Notícias vêm do cache NewsAPI compartilhado pelo backend.
 
 ## Stack
 
@@ -21,6 +21,9 @@ chaves no navegador. Prepare o backend conforme [README da raiz](../README.md).
 Para demonstração em uma origem, execute `npm run build` nesta pasta.
 O Flask serve `frontend/dist/` em `/`; o diretório é ignorado pelo Git.
 Mudou o frontend? Recompile para atualizar a demonstração na porta 5001.
+Login em `/login`, **admin** / **admin**, com logo centralizado no tema XP Pulse.
+Sem recuperação de senha. A sessão é validada antes de consultar os clientes;
+**Sair** encerra o acesso. Cookie HttpOnly e CSRF ficam sob controle do backend.
 
 ## Fluxos integrados
 
@@ -34,6 +37,10 @@ Mudou o frontend? Recompile para atualizar a demonstração na porta 5001.
   registros da base continuam acessíveis. Recargas não chamam o modelo.
 - Perguntas básicas usam `POST /api/pulse/clientes/{id}/perguntar`, por templates
   com fontes. Rascunhos são para revisão/cópia, sem envio automático.
+- Notícias: associação explícita entre interesse revisado e assunto do catálogo,
+  busca com reuso do cache diário e fonte/link/publicação/coleta. Descarte com
+  motivo vale só para o cliente; bloqueios/preferências/revisões ocultam resultados.
+  Recargas não chamam o provedor; há estado de falha, ausência e processamento.
 - Campos ausentes e notícias ainda não coletadas aparecem como ausência.
   `src/data/clients.ts` é referência visual antiga e não é importado pela aplicação.
 
@@ -50,6 +57,8 @@ Verificação visual e seus limites ficam no
 [registro do incremento](../docs/registro-desenvolvimento.md).
 Especificação: [incremento SDD 03](../docs/planejamento/incrementos/03-front-pulse.md).
 Síntese: [incremento SDD 04](../docs/planejamento/incrementos/04-resumo-openai.md).
+Notícias: [incremento SDD 05](../docs/planejamento/incrementos/05-noticias-newsapi.md).
+Login: [incremento SDD 06](../docs/planejamento/incrementos/06-login.md).
 
 ## Estrutura
 
@@ -60,8 +69,9 @@ src/
 │   └── ui/            # Primitivos e formulário de gravação
 ├── features/
 │   ├── clients/          # Lista, busca/filtros e importação de fontes
+│   ├── auth/             # Tela de login e composição visual do acesso
 │   ├── client-overview/  # Resumo, carteira, contexto/revisão e registros
-│   ├── news/             # Área de notícias, aguardando NewsAPI
+│   ├── news/             # Notícias NewsAPI, associação e feedback
 │   └── assistant/        # Consultas com fontes e rascunhos
 ├── hooks/             # useClientFilters, useClipboard
 ├── lib/               # API, erros e valores decimais exatos

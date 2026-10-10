@@ -1,8 +1,9 @@
 # Requisitos e etapas de implementação do MVP
 
 **Status:** React XP Pulse integrado ao Flask/SQLite, ingestão JSON fictícia e contexto/revisão implementados;
-Gemini testado com simulação e uma amostra fictícia real. Fonte real,
-lembranças derivadas, notícias e reuniões ainda planejadas.
+Gemini testado com simulação e uma amostra fictícia real. Síntese OpenAI e
+NewsAPI com cache/feedback implementados; fonte real, lembranças derivadas,
+agendamento automático e reuniões ainda planejados.
 **Referências:** [especificação](spec.md), [arquitetura](design.md) e [tarefas](tasks.md).
 Integração do front: [incremento 03, RN33–RN39 e CA57–CA64](incrementos/03-front-pulse.md).
 **Usuário principal proposto:** assessor de investimentos.
@@ -97,9 +98,10 @@ decidir quais cabem no hackathon antes de incluí-las como compromisso de entreg
 - **RF20 — Contexto rastreável:** exibir os artigos usados e distinguir atualização
   de busca de atualidade da notícia; o atraso depende do plano do NewsAPI.
 
-Esses requisitos detalham a nova direção; agendamento e integração ainda não
-foram implementados. Se usados, o papel e o provedor do especialista de IA
-permanecem decisões pendentes.
+RF17/RF20 implementados no [incremento 05](incrementos/05-noticias-newsapi.md):
+coleta explícita/CLI, assuntos associados pelo assessor, cache diário, orçamento
+e fontes. RF18 permanece parcial (serviço diário, sem agendador instalado);
+RF19 depende de reuniões. Sem especialista de IA para notícias neste recorte.
 
 ### Preparação de reuniões — keynotes
 
@@ -154,7 +156,7 @@ As regras da base foram definidas pela equipe e estão em `spec.md`; não são r
 > pendentes, e relacionamento manual **não** altera prioridade (RN11);
 > alertas calculados sob demanda com tratamento persistido (RN14/RN15);
 > preferências canal/intervalo/permissão pessoal (RN13); `ocorrida_em` e
-> `registrada_em` (RN02); assessor único sem autenticação, só local, sem `403`.
+> `registrada_em` (RN02); assessor único local, com login/CSRF no incremento 06.
 
 - **RN01/RN02:** interação exige cliente existente, canal válido e conteúdo;
   ordenação deve ter desempate estável. Importações futuras podem chegar fora de ordem.
@@ -370,8 +372,7 @@ precisam de contrato aprovado e não são endpoints disponíveis hoje.
 
 Definir antes de implementar: representação de valores, datas, identificadores,
 paginação se necessária e respostas para entrada inválida e ausência. Acesso
-negado só se aplica quando autenticação/autorização forem implementadas; a base
-local não tem `403`. Os caminhos ilustrativos de extensões devem ser alinhados
+negado e CSRF estão definidos no incremento 06 (401/403). Os caminhos ilustrativos de extensões devem ser alinhados
 aos nomes em português dos contratos atuais antes da implementação.
 
 ## 7. Aceite e plano de testes
@@ -458,3 +459,11 @@ e IA generativa são candidatos antes de comprometer o fluxo demonstrável.
 **Pronto para apresentar:** cliente consultável, fonte explicável, interação
 importada, sugestão com evidência e revisão, feedback aplicado, alerta demonstrável,
 pauta com fontes, limitações registradas e execução reproduzível.
+
+## RF31 — login de demonstração (incremento 06)
+
+Autorizado pelo usuário após o incremento de notícias: tela `/login`, logo
+centralizado no design XP Pulse e credenciais `admin` / `admin`. Sessão validada
+no backend protege painel e APIs; logout e expiração retiram acesso. Escritas
+exigem CSRF. Sem recuperação de senha ou perfis multiassessor. RN53–RN58 e
+CA79–CA84 definidos antes do código em [incremento 06](incrementos/06-login.md).

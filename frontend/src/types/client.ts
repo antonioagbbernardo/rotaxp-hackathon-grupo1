@@ -40,6 +40,22 @@ export interface NewsItem {
   relevance: string
   scenario: string
   updatedMinutesAgo: number
+  url?: string
+  source?: string
+  publishedAt?: string
+  collectedAt?: string
+  topic?: string
+  description?: string
+}
+
+export interface NewsState {
+  configurado: boolean
+  catalogo: { id: string; nome: string }[]
+  interesses: { id: number; revisao: number; valor: string; fontes: string[] }[]
+  vinculos: { id: number; item_id: number; revisao: number; assunto: string; interesse: string; fontes: string[] }[]
+  assuntos: { id: string; nome: string; estado: 'nunca' | 'atualizado' | 'desatualizado' | 'falhou' | 'processando'; ultima_coleta: string | null; ultima_tentativa: string | null; erro: { codigo: string; mensagem: string } | null }[]
+  limite_diario: number | null
+  chamadas_hoje: number
 }
 
 export interface Insight {
@@ -96,6 +112,7 @@ export interface Client {
   perception: PerceptionEntry[]
   portfolio: Portfolio
   news: NewsItem[]
+  newsState?: NewsState
   assistant: AssistantBrief
   priority?: 'alta' | 'media' | 'baixa'
   relationshipLabel?: string

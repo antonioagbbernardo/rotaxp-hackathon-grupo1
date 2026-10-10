@@ -58,7 +58,8 @@ Nunca use `pip` ou `python` direto no host: use `uv run`.
   mensagem de ausência, nunca conclusão sobre o cliente.
 - **Dinheiro** como `Decimal`/texto, nunca `float`. Instantes em UTC no banco.
 - **Dados:** apenas fictícios e identificados. Execução local em `127.0.0.1`,
-  sem autenticação no MVP. Não colocar dado real, segredo ou `.env` no Git.
+  com login de demonstração autorizado no incremento 06. Não colocar dado real,
+  segredo de sessão ou `.env` no Git. APIs de dados exigem sessão; escritas exigem CSRF.
 - **Erros:** identifique a entrada inválida (`erro.campo`); nada de fallback
   silencioso. Entrada inválida não persiste registro.
 - **API/contratos:** mudou rota, campo ou erro? Atualize `contracts.md` na mesma
@@ -90,7 +91,7 @@ Nunca use `pip` ou `python` direto no host: use `uv run`.
 - **Congelamento do código: 10/10/2026, 17h.** O repositório é clonado às 17h30.
 
 ## Fora do escopo (não implementar sem decisão da equipe)
-Login/permissões, envio de mensagens ou atas, integrações de canais, app nativo,
+Permissões multiassessor, envio de mensagens ou atas, integrações de canais, app nativo,
 análise tributária, dispensar/silenciar alertas. NewsAPI, reuniões e keynotes são
 a tarefa T08, depois do fluxo principal validado. Consumo de fontes existentes,
 extração, supervisão e feedback são a evolução T09 autorizada pelo usuário.
@@ -100,6 +101,12 @@ IA para extração não altera o resumo por template da base.
 Incremento 04 autorizado: síntese OpenAI separada (RN40–RN45), gerada por POST,
 com fontes validadas e cache SQLite. GET não chama provedor. O relacionamento
 humano é exibido diretamente, sem reinterpretação na síntese. Chaves no `.env`.
+Incremento 05 autorizado: notícias por catálogo/vínculo humano com interesse
+elegível, coleta explícita/CLI, cache diário compartilhado, cota local e feedback.
+GET não coleta. Notícias não alteram alertas, prioridade, humor ou síntese OpenAI.
+Agendador automático e reuniões/keynotes continuam fora deste recorte.
+Incremento 06 autorizado explicitamente: login `/login`, `admin` / `admin`,
+sessão com validade/revogação, CSRF e painel protegido. Sem recuperação de senha.
 
 ## Materiais locais
 `material-local/` (PDF do evento, comandos, guias) é pessoal, fica fora do Git e

@@ -33,8 +33,13 @@ async function api(caminho, opcoes = {}) {
     init.headers["Content-Type"] = "application/json";
     init.body = JSON.stringify(opcoes.corpo);
   }
+  if (!["GET", "HEAD"].includes(init.method)) {
+    const sessao = await api("/api/auth/sessao");
+    init.headers["X-CSRF-Token"] = sessao.csrf_token;
+  }
   const resp = await fetch(caminho, init);
   const dados = await resp.json().catch(() => ({}));
+  if (resp.status === 401 && dados.erro?.codigo === "sessao_necessaria") location.replace("/login");
   if (!resp.ok) throw new Error(dados.erro?.mensagem
     ? `${dados.erro.campo ? dados.erro.campo + ": " : ""}${dados.erro.mensagem}` : `Erro ${resp.status}`);
   return dados;

@@ -1,3 +1,4 @@
+from client_autenticado import cliente_autenticado
 from datetime import date, datetime, timedelta
 
 import pytest
@@ -22,7 +23,7 @@ def app(tmp_path):
 
 @pytest.fixture
 def client(app):
-    return app.test_client()
+    return cliente_autenticado(app)
 
 
 def clientes(client, **params):
@@ -76,7 +77,7 @@ def test_ca03_registrar_interacao_persiste_apos_reiniciar_aplicacao(app, client,
     r = client.post("/api/clientes/5/interacoes", json={"canal": "email", "texto": " Olá "})
     assert r.status_code == 201
     app2 = create_app({"TESTING": True, "DATABASE": app.config["DATABASE"], "CLOCK": relogio_fixo(AGORA)})
-    d = app2.test_client().get("/api/clientes/5").get_json()
+    d = cliente_autenticado(app2).get("/api/clientes/5").get_json()
     assert [i["texto"] for i in d["interacoes"]] == ["Olá"]
 
 
@@ -123,7 +124,7 @@ def test_ca08_tratar_alerta_reduz_pendencias_persiste_e_e_idempotente(app, clien
     assert client.post("/api/alertas/tratar", json=corpo).status_code == 200  # idempotente
     assert por_nome(client, "Bruno")["alertas_pendentes"] == antes - 1
     app2 = create_app({"TESTING": True, "DATABASE": app.config["DATABASE"], "CLOCK": relogio_fixo(AGORA)})
-    c2 = app2.test_client()
+    c2 = cliente_autenticado(app2)
     d = c2.get("/api/clientes/2").get_json()
     assert next(x for x in d["alertas"] if x["chave_ocorrencia"] == a["chave_ocorrencia"])["estado"] == "tratado"
     with app.app_context():
@@ -187,7 +188,7 @@ def test_ca38_resultado_independe_do_dia_real(tmp_path):
     with app.app_context():
         init_db()
         seed_db(outro.date(), outro)
-    nomes = [c["nome"].split()[0] for c in app.test_client().get("/api/clientes").get_json()["clientes"]]
+    nomes = [c["nome"].split()[0] for c in cliente_autenticado(app).get("/api/clientes").get_json()["clientes"]]
     assert nomes == ["Bruno", "Ana", "Carla", "Diego", "Eva"]
 
 

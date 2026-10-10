@@ -3,7 +3,7 @@
 Painel para poupar a busca do assessor e preparar o relacionamento com o investidor.
 React/TypeScript/Tailwind em [frontend/](frontend/README.md), API Flask e SQLite em
 [backend/](backend/README.md), especificações e registro do pitch em [docs/](docs/README.md).
-Dados fictícios; execução local sem autenticação.
+Dados fictícios; execução local com login de demonstração.
 
 ## Executar a demonstração
 
@@ -21,9 +21,12 @@ uv run flask --app app importar-fontes dados/fonte-demo.json
 uv run flask --app app run -p 5001
 ```
 
-Acesse http://127.0.0.1:5001. O seed só popula base vazia; repetir a importação
+Acesse http://127.0.0.1:5001/login com usuário **admin** e senha **admin**.
+O painel e as APIs exigem sessão; o botão **Sair** encerra o acesso.
+O seed só popula base vazia; repetir a importação
 não duplica as versões. O build é local/ignorado: precisa ser gerado após o clone.
-Sem build, `/` mostra a interface anterior, também disponível em `/legacy`.
+O build é necessário para a tela de login. A interface anterior em `/legacy`
+também exige sessão. Não há recuperação de senha nesta versão.
 
 Para desenvolvimento, mantenha o Flask na porta 5001 e, em outro terminal:
 
@@ -33,10 +36,18 @@ npm run dev
 ```
 
 Acesse http://127.0.0.1:5173. O Vite encaminha `/api` ao Flask.
-Credenciais OpenAI/Gemini ficam somente em `backend/.env` (modelo em
+Credenciais OpenAI/Gemini/NewsAPI ficam somente em `backend/.env` (modelo em
 `backend/.env.example`). Extração Gemini é explícita na tela de contexto;
 o botão **Preparar resumo com IA** usa OpenAI. Sem chave, os registros continuam
 consultáveis. Reinicie o Flask após configurar ou alterar o `.env`.
+
+Para notícias, configure `NEWSAPI_API_KEY` (a chave local anterior `NEWSAPI_KEY`
+também é aceita). No cliente, revise um interesse e confira as preferências;
+associe-o a Fórmula 1, Palmeiras ou Corinthians e clique **Buscar notícias**.
+Resultados do dia são compartilhados entre clientes. **Não é relevante** salva
+feedback apenas para o cliente escolhido. Coleta diária também pela CLI:
+`uv run --locked flask --app app coletar-noticias`, dentro de `backend/`.
+Esse comando não instala agendamento automático.
 
 ### Frontend React em desenvolvimento
 
@@ -69,8 +80,9 @@ O painel integra lista/prioridade, posições, histórico, fontes, revisão,
 bloqueios, preferências, relacionamento e alertas. Perguntas básicas e rascunhos
 usam templates com fontes. Gemini extrai contexto revisável; OpenAI redige
 uma síntese com fontes em três seções, reutilizada enquanto os fatos estiverem
-iguais. Relacionamento humano e prioridade calculada aparecem separados. NewsAPI e keynotes
-continuam planejados, sem notícias estáticas apresentadas como coleta real.
+iguais. Relacionamento humano e prioridade calculada aparecem separados. NewsAPI
+coleta por assunto revisado com cache diário, cota e fontes; reuniões/keynotes
+e agendador automático continuam planejados.
 
 ## Estrutura
 

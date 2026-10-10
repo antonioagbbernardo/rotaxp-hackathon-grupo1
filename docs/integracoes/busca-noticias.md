@@ -1,7 +1,11 @@
 # Busca de notícias — atualização diária e preparação de reuniões
 
-Status: desenho documental. NewsAPI.org foi escolhido pela equipe como fonte;
-plano contratado, horários, limites e uso de IA ainda estão pendentes.
+Status: primeiro recorte implementado no [incremento 05](../planejamento/incrementos/05-noticias-newsapi.md).
+NewsAPI por assunto associado pelo assessor, coleta pela tela/CLI, cache diário,
+limite local padrão de 20 tentativas/dia e feedback individual. Uma consulta real
+compartilhada por dois clientes fictícios foi verificada. Catálogo inicial:
+Fórmula 1, Palmeiras e Corinthians. Sem síntese por IA de notícias.
+Agendador automático e gatilhos de reunião continuam propostas abaixo.
 
 Interpretação da proposta: a rotina diária pode ser antecipada quando há uma
 reunião próxima. Atualizar a visão atual preserva notícias, fontes e históricos;
@@ -31,6 +35,9 @@ delimitada ao modelo; não exige uma infraestrutura de múltiplos agentes.
 1. Usar assuntos extraídos do formulário/conversas existentes e revisados pelo
    assessor, por exemplo Fórmula 1 e determinado time. Hipóteses pendentes de
    confirmação ficam na revisão de contexto.
+   No recorte implementado, o assessor associa explicitamente o interesse a um
+   assunto do catálogo. Revisão nova, bloqueio, evidência antiga, conflito ou
+   preferência/intervalo impedem uso do vínculo. Não inferimos a consulta do texto.
 2. Usar consultas revisadas pela equipe, evitando enviar nome, carteira ou
    conversas do investidor ao NewsAPI.
 3. Buscar cada consulta uma vez por ciclo e armazenar resultados compartilhados.
@@ -135,6 +142,8 @@ link à fonte. [Campos da resposta](https://newsapi.org/docs/endpoints/everythin
 - Chave guardada no backend, enviada no cabeçalho `X-Api-Key`; sem chave no
   frontend, repositório ou logs.
 - Timeout e retries limitados para falhas temporárias, com espera progressiva.
+  Recorte 05: timeout de 15 s, sem retries automáticos; retry humano após 15 min.
+  HTTP 429 suspende consultas por 30 min, cota externa pelo dia local.
 - Erro de chave/parâmetro exige correção; não deve gerar loop de tentativas.
 - Para HTTP 429 e cota esgotada, adiar consultas e preservar o cache.
 - Separar “não houve notícia” de “a consulta falhou”.
@@ -156,12 +165,12 @@ As respostas do provedor incluem códigos como `rateLimited` e `apiKeyExhausted`
 - **BN09:** cancelar/reagendar uma reunião evita disparos antigos.
 - **BN10:** a interface distingue notícia, evento simulado e cache desatualizado.
 
-## 8. Ordem sugerida de implementação futura
+## 8. Próximos recortes
 
-1. Fixar poucos assuntos de demonstração e parâmetros das consultas.
-2. Definir armazenamento e contrato de retorno, incluindo data e origem.
-3. Validar testes de cache, duplicidade e seleção por interesse com respostas fictícias.
-4. Integrar uma consulta real do NewsAPI e tratar suas falhas.
+1. Assuntos e parâmetros fixos: implementado no incremento 05.
+2. Armazenamento/contrato, origem, publicação e coleta: implementados.
+3. Cache, duplicidade, seleção, orçamento e falhas: 41 testes novos aprovados.
+4. Consulta real: uma chamada, três artigos exibidos por cliente e reuso confirmado.
 5. Acrescentar agendamento diário e contexto de reuniões.
 6. Acrescentar IA opcional após verificar pertinência e custo da coleta.
 

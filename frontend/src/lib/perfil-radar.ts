@@ -1,5 +1,5 @@
 /**
- * Radar de perfil do investidor — heurística de demonstração (incremento 05).
+ * Radar de perfil do investidor — heurística de demonstração (incremento 07).
  * Estimativa sobre posições fictícias; não é suitability nem recomendação.
  * Os pesos abaixo são o ponto de troca por um modelo de ML.
  */
