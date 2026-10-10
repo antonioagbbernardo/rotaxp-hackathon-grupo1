@@ -8,7 +8,7 @@ export function ClientWorkspace({ client, onUpdated }: { client: Client; onUpdat
   const pref = client.preferences
   return <div id={`registros-${client.id}`} className="min-w-0 space-y-4">
     <Panel className="p-5">
-      <details className="mt-4"><summary className="cursor-pointer text-xs">Posições e fontes</summary>
+      <details><summary className="cursor-pointer text-sm font-medium leading-6">Posições e fontes</summary>
         {client.positions?.length ? client.positions.map((p) => <p key={p.id} className="mt-2 text-[11px]">{p.ativo} · {formatCurrency(p.valor)} · vence {p.vencimento}<br /><span className="text-ink-muted">Fonte: posição #{p.id} · {p.fonte}</span></p>) : <p className="mt-2 text-xs text-ink-muted">Nenhuma posição cadastrada.</p>}
       </details>
     </Panel>
