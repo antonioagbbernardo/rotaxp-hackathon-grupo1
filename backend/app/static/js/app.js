@@ -1,6 +1,8 @@
 // Interface do MVP: lista priorizada, detalhe com resumo/alertas e formulários.
 // Todo texto vindo da API entra via nodes de texto (sem innerHTML).
 const app = document.getElementById("app");
+let telaAtual = 0;
+let pedidoDetalhe = 0;
 
 const ROTULO_PRIORIDADE = { alta: "Alta", media: "Média", baixa: "Baixa" };
 const COR_PRIORIDADE = {
@@ -62,28 +64,41 @@ const montar = (...nos) => app.replaceChildren(...nos.filter(Boolean));
 function formulario(onEnviar, ...filhos) {
   const erro = h("p", { className: "text-sm text-red-700 mt-2", role: "alert" });
   const form = h("form", {}, ...filhos, erro);
+  let enviando = false;
   form.addEventListener("submit", async (ev) => {
     ev.preventDefault();
+    if (enviando) return;
+    const dados = new FormData(form);
+    const controles = [...form.querySelectorAll("button, input, select, textarea")];
+    const desabilitados = controles.map((controle) => controle.disabled);
+    enviando = true;
+    controles.forEach((controle) => { controle.disabled = true; });
     erro.textContent = "";
     try {
-      await onEnviar(new FormData(form));
+      await onEnviar(dados);
     } catch (e) {
       erro.textContent = e.message;
+    } finally {
+      controles.forEach((controle, i) => { controle.disabled = desabilitados[i]; });
+      enviando = false;
     }
   });
   return form;
 }
 
 // ---------- Lista ----------
-async function viewLista() {
+async function viewLista(tela) {
   const estado = { q: "", prioridade: "" };
   const lista = h("div");
+  let pedidoLista = 0;
   async function carregar() {
+    const pedido = ++pedidoLista;
     const params = new URLSearchParams();
     if (estado.q) params.set("q", estado.q);
     if (estado.prioridade) params.set("prioridade", estado.prioridade);
     try {
       const { clientes } = await api(`/api/clientes?${params}`);
+      if (tela !== telaAtual || pedido !== pedidoLista) return;
       lista.replaceChildren(
         ...(clientes.length
           ? clientes.map((c) =>
@@ -98,6 +113,7 @@ async function viewLista() {
           : [aviso("Nenhum cliente encontrado.")])
       );
     } catch (e) {
+      if (tela !== telaAtual || pedido !== pedidoLista) return;
       lista.replaceChildren(h("p", { className: "text-red-700", role: "alert" }, e.message));
     }
   }
@@ -112,16 +128,20 @@ async function viewLista() {
 }
 
 // ---------- Detalhe ----------
-async function viewDetalhe(id) {
+async function viewDetalhe(id, tela) {
+  const pedido = ++pedidoDetalhe;
+  const atual = () => tela === telaAtual && pedido === pedidoDetalhe;
   let d;
   try {
     d = await api(`/api/clientes/${id}`);
   } catch (e) {
+    if (!atual()) return;
     app.replaceChildren(h("a", { href: "#/", className: "underline text-sm" }, "← Clientes"),
       h("p", { className: "text-red-700 mt-2", role: "alert" }, e.message));
     return;
   }
-  const recarregar = () => viewDetalhe(id);
+  if (!atual()) return;
+  const recarregar = () => tela === telaAtual ? viewDetalhe(id, tela) : Promise.resolve();
   const pref = d.cliente.preferencias;
   const pendentes = d.alertas.filter((a) => a.estado === "pendente");
   const tratados = d.alertas.filter((a) => a.estado === "tratado");
@@ -136,7 +156,7 @@ async function viewDetalhe(id) {
       a.estado === "pendente"
         ? h("button", { className: "mt-1 text-sm underline", onClick: async (ev) => {
             ev.target.disabled = true;
-            try { await api("/api/alertas/tratar", { method: "POST", corpo: { cliente_id: d.cliente.id, chave_ocorrencia: a.chave_ocorrencia } }); recarregar(); }
+            try { await api("/api/alertas/tratar", { method: "POST", corpo: { cliente_id: d.cliente.id, chave_ocorrencia: a.chave_ocorrencia } }); await recarregar(); }
             catch (e) { ev.target.disabled = false; ev.target.after(h("span", { className: "text-red-700 text-sm ml-2", role: "alert" }, e.message)); }
           } }, "Marcar como tratado")
         : h("span", { className: "text-xs text-slate-500" }, "Tratado"));
@@ -145,7 +165,7 @@ async function viewDetalhe(id) {
       const corpo = { canal: fd.get("canal"), texto: fd.get("texto"), proximos_passos: fd.get("proximos_passos") };
       if (fd.get("ocorrida_em")) corpo.ocorrida_em = fd.get("ocorrida_em");
       await api(`/api/clientes/${id}/interacoes`, { method: "POST", corpo });
-      recarregar();
+      await recarregar();
     },
     campo("Canal", h("select", { name: "canal", className: estiloControle },
       ...Object.entries(CANAIS).map(([v, t]) => h("option", { value: v, selected: v === pref.canal_preferido }, t)))),
@@ -156,7 +176,7 @@ async function viewDetalhe(id) {
 
   const formRelacionamento = formulario(async (fd) => {
       await api(`/api/clientes/${id}/relacionamento`, { method: "POST", corpo: { estado: fd.get("estado"), justificativa: fd.get("justificativa") } });
-      recarregar();
+      await recarregar();
     },
     campo("Estado", h("select", { name: "estado", className: estiloControle },
       ...Object.entries(ESTADOS).map(([v, t]) => h("option", { value: v, selected: d.relacionamento?.estado === v }, t)))),
@@ -169,7 +189,7 @@ async function viewDetalhe(id) {
         intervalo_minimo_dias: Number(fd.get("intervalo_minimo_dias")),
         permite_assuntos_pessoais: fd.get("permite") === "on",
       } });
-      recarregar();
+      await recarregar();
     },
     campo("Canal preferido", h("select", { name: "canal_preferido", className: estiloControle },
       h("option", { value: "" }, "Sem preferência"),
@@ -210,15 +230,33 @@ async function viewDetalhe(id) {
             h("li", { className: "mb-1" }, `${p.ativo} · R$ ${p.valor} · vence em ${fmtDia(p.vencimento)}`,
               h("span", { className: "block text-xs text-slate-500" }, p.fonte))))
         : aviso("Nenhuma posição cadastrada.")),
+    secao("Datas importantes",
+      d.datas_importantes.length
+        ? h("ul", { className: "text-sm" }, ...d.datas_importantes.map((data) =>
+            h("li", { className: "mb-1" },
+              `Aniversário ${data.vinculo === "cliente" ? "do cliente" : `de familiar (${data.descricao})`} · ${String(data.dia).padStart(2, "0")}/${String(data.mes).padStart(2, "0")}`,
+              h("span", { className: "block text-xs text-slate-500" }, `data_importante #${data.id} · ${data.fonte}`))))
+        : aviso("Nenhuma data importante cadastrada.")),
+    secao("Histórico de avaliações",
+      d.historico_avaliacoes.length
+        ? h("ul", { className: "text-sm" }, ...d.historico_avaliacoes.map((avaliacao) =>
+            h("li", { className: "border-t border-slate-100 py-2 first:border-0" },
+              h("strong", {}, `Relacionamento: ${ESTADOS[avaliacao.estado]} · ${fmtData(avaliacao.avaliada_em)}`),
+              h("p", {}, avaliacao.justificativa),
+              h("p", { className: "text-xs text-slate-500" }, `Assessor #${avaliacao.assessor_id} · avaliacao_relacionamento #${avaliacao.id}`))))
+        : aviso("Não avaliado")),
     secao("Avaliar relacionamento", formRelacionamento),
     secao("Preferências de contato", formPreferencias));
 }
 
 // ---------- Roteamento ----------
 function rotear() {
+  const tela = ++telaAtual;
+  montar(aviso("Carregando…"));
   const m = location.hash.match(/^#\/clientes\/(\d+)$/);
-  (m ? viewDetalhe(Number(m[1])) : viewLista()).catch((e) =>
-    app.replaceChildren(h("p", { className: "text-red-700", role: "alert" }, `Erro ao carregar: ${e.message}`)));
+  (m ? viewDetalhe(Number(m[1]), tela) : viewLista(tela)).catch((e) => {
+    if (tela === telaAtual) montar(h("p", { className: "text-red-700", role: "alert" }, `Erro ao carregar: ${e.message}`));
+  });
 }
 window.addEventListener("hashchange", rotear);
 rotear();

@@ -164,7 +164,7 @@ def registrar_interacao(cliente_id: int):
         raise ErroApi("entrada_invalida", "proximos_passos deve ser texto.", campo="proximos_passos")
     agora = _clock().agora()
     bruto = corpo.get("ocorrida_em")
-    if bruto in (None, ""):
+    if "ocorrida_em" not in corpo:
         ocorrida = agora
     else:
         try:
@@ -215,7 +215,7 @@ def alterar_preferencias(cliente_id: int):
         novo["canal_preferido"] = v
     if "intervalo_minimo_dias" in corpo:
         v = corpo["intervalo_minimo_dias"]
-        if isinstance(v, bool) or v not in INTERVALOS_VALIDOS:
+        if isinstance(v, bool) or not isinstance(v, int) or v not in INTERVALOS_VALIDOS:
             raise ErroApi("entrada_invalida", "intervalo_minimo_dias deve ser 7, 14 ou 30.",
                           campo="intervalo_minimo_dias")
         novo["intervalo_minimo_dias"] = v

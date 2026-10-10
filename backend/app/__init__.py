@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 
 from .clock import Clock
 
@@ -22,6 +22,19 @@ def create_app(config: dict | None = None) -> Flask:
     with app.app_context():
         db.init_db()  # CREATE IF NOT EXISTS: a API não falha em base nova
     app.register_blueprint(api.bp)
+
+    @app.errorhandler(404)
+    @app.errorhandler(405)
+    def erro_de_roteamento(erro):
+        if request.path != "/api" and not request.path.startswith("/api/"):
+            return erro
+        codigo, mensagem = (
+            ("nao_encontrado", "Rota inexistente.") if erro.code == 404 else
+            ("metodo_nao_permitido", "Método não permitido para esta rota."))
+        resposta = erro.get_response()  # conserva os cabeçalhos HTTP, inclusive Allow
+        resposta.data = app.json.dumps({"erro": {"codigo": codigo, "campo": None, "mensagem": mensagem}})
+        resposta.content_type = "application/json"
+        return resposta
 
     @app.get("/")
     def index():

@@ -27,10 +27,23 @@ def relogio_fixo(instante: datetime) -> Clock:
 
 def parse_instante(texto: str) -> datetime:
     """ISO 8601 -> datetime em UTC. Sem fuso explícito = America/Sao_Paulo. ValueError se inválido."""
+    if not isinstance(texto, str):
+        raise ValueError("O instante exige data e hora em ISO 8601.")
+    try:
+        date.fromisoformat(texto)
+    except ValueError:
+        pass
+    else:
+        raise ValueError("O instante exige data e hora em ISO 8601.")
     valor = datetime.fromisoformat(texto)
     if valor.tzinfo is None:
         valor = valor.replace(tzinfo=TZ)
-    return valor.astimezone(UTC)
+    try:
+        utc = valor.astimezone(UTC)
+        utc.astimezone(TZ)  # precisa ser representável também nas consultas por data local
+    except OverflowError:
+        raise ValueError("O instante está fora do intervalo de datas suportado.") from None
+    return utc
 
 
 def formatar_utc(instante: datetime) -> str:

@@ -12,6 +12,8 @@ equipe.
 - Identificadores: inteiro.
 - Erros: inexistente → 404; entrada inválida → 400; nenhum registro persistido
   em caso de erro. Não há `403` no MVP (sem autenticação).
+- Em `/api/*`, rota inexistente → 404 (`nao_encontrado`) e método não permitido
+  → 405 (`metodo_nao_permitido`), ambos no formato JSON de erro, com `campo` nulo.
 
 ## Entidades (campos mínimos)
 
