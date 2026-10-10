@@ -1,5 +1,7 @@
 import { Avatar } from "@/components/ui/Avatar";
 import logo from "@/assets/logo-xp-pulse.png";
+import { LogOut } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 interface Advisor {
   name: string;
@@ -8,9 +10,11 @@ interface Advisor {
 
 interface AppHeaderProps {
   advisor: Advisor;
+  onLogout: () => void;
+  loggingOut: boolean;
 }
 
-export function AppHeader({ advisor }: AppHeaderProps) {
+export function AppHeader({ advisor, onLogout, loggingOut }: AppHeaderProps) {
   return (
     <header className="flex h-19 shrink-0 items-center justify-between gap-6 bg-header px-6">
       <div className="flex items-center gap-4">
@@ -28,6 +32,10 @@ export function AppHeader({ advisor }: AppHeaderProps) {
             <p className="text-[10px] text-ink-muted">{advisor.role}</p>
           </div>
         </div>
+        <Button onClick={onLogout} disabled={loggingOut} className="flex shrink-0 items-center gap-2" aria-label="Sair do XP Pulse">
+          <LogOut size={14} aria-hidden="true" />
+          {loggingOut ? "Saindo…" : "Sair"}
+        </Button>
       </div>
     </header>
   );

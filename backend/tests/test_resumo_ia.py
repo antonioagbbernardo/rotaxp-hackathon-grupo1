@@ -1,3 +1,4 @@
+from client_autenticado import cliente_autenticado, renovar_acesso
 import io
 import json
 from datetime import datetime, timedelta
@@ -42,7 +43,7 @@ def ambiente(tmp_path):
                       'OPENAI_API_KEY': '', 'FRONTEND_DIST': str(tmp_path / 'dist')})
     with app.app_context():
         seed_db(AGORA.date(), AGORA)
-    return app, app.test_client(), gerador
+    return app, cliente_autenticado(app), gerador
 
 
 def ana(c):
@@ -64,7 +65,7 @@ def test_get_sem_chamada_fatos_separados_cache_persistente(ambiente):
     resumo = r.get_json()['resumo']
     assert resumo['visao_geral']['fontes'] == ['cliente #1']
     assert gerar(c).get_json()['reutilizado'] and len(g.chamadas) == 1
-    outro = create_app(dict(app.config)).test_client()
+    outro = cliente_autenticado(create_app(dict(app.config)))
     assert ana(outro)['assistant']['aiSummary']['resumo'] == resumo
     assert ana(c)['priority'] == original['priority']
     assert ana(c)['relationshipLabel'] == original['relationshipLabel']
@@ -86,6 +87,7 @@ def test_mudancas_invalidam_cache(ambiente, mudanca):
             get_db().commit()
     elif mudanca == 'data':
         app.config['CLOCK'] = relogio_fixo(AGORA + timedelta(days=1))
+        renovar_acesso(c)
     else:
         g.modelo = 'modelo-novo'
     assert ana(c)['assistant']['aiSummary']['resumo'] is None
@@ -151,7 +153,7 @@ def test_requisicao_concorrente_e_retomada_de_tentativa(ambiente):
     app, c, g = ambiente
     resultados = []
     def concorrente():
-        resultados.append(app.test_client().post('/api/pulse/clientes/1/resumo-ia').status_code)
+        resultados.append(cliente_autenticado(app).post('/api/pulse/clientes/1/resumo-ia').status_code)
     g.ao_gerar = concorrente
     assert gerar(c).status_code == 200
     assert resultados == [409] and len(g.chamadas) == 1
@@ -186,7 +188,7 @@ def test_tentativa_antiga_nao_sobrescreve_a_retomada(ambiente):
     def retomar():
         app.config['CLOCK'] = relogio_fixo(AGORA + timedelta(minutes=3))
         g.ao_gerar = None
-        retomada.append(app.test_client().post('/api/pulse/clientes/1/resumo-ia'))
+        retomada.append(cliente_autenticado(app).post('/api/pulse/clientes/1/resumo-ia'))
     g.ao_gerar = retomar
     antiga = gerar(c)
     assert antiga.status_code == 409

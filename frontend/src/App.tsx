@@ -1,102 +1,94 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { AppHeader } from '@/components/layout/AppHeader'
-import { AssistantPanel } from '@/features/assistant/AssistantPanel'
-import { ClientSummary } from '@/features/client-overview/ClientSummary'
-import { InvestmentProfile } from '@/features/client-overview/InvestmentProfile'
-import { PerceptionHistory } from '@/features/client-overview/PerceptionHistory'
-import { ClientSidebar } from '@/features/clients/ClientSidebar'
-import { NewsSection } from '@/features/news/NewsSection'
-import { ClientWorkspace } from '@/features/client-overview/ClientWorkspace'
-import { SourceImporter } from '@/features/clients/SourceImporter'
+import { useEffect, useState } from 'react'
+import { LoaderCircle } from 'lucide-react'
+import { Dashboard } from '@/Dashboard'
+import { AuthShell, LoginPage } from '@/features/auth/LoginPage'
 import { Button } from '@/components/ui/Button'
-import { api } from '@/lib/api'
-import type { PulseView } from '@/types/client'
+import { consultarSessao, entrar, sair } from '@/lib/auth'
+import type { Sessao } from '@/lib/auth'
+import { SESSION_REQUIRED_EVENT, setCsrfToken } from '@/lib/api'
+
+function atualizarRota(autenticado: boolean, limparSelecao = false) {
+  const caminho = autenticado ? '/' : '/login'
+  const hash = limparSelecao ? '' : location.hash
+  if (location.pathname !== caminho || (limparSelecao && location.hash)) {
+    history.replaceState(null, '', `${caminho}${hash}`)
+  }
+}
 
 export function App() {
-  const [data, setData] = useState<PulseView | null>(null)
+  const [sessao, setSessao] = useState<Sessao | null>(null)
+  const [ready, setReady] = useState(false)
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [selectedClientId, setSelectedClientId] = useState(location.hash.match(/^#\/clientes\/(\d+)$/)?.[1] ?? '')
-  const requestId = useRef(0)
-  const refresh = useCallback(async (signal?: AbortSignal) => {
-    const request = ++requestId.current
-    try {
-      const result = await api<PulseView>('/api/pulse', { signal })
-      if (signal?.aborted || request !== requestId.current) return
-      setData(result)
-      setError('')
-      setSelectedClientId((current) => result.clients.some((c) => c.id === current) ? current : result.clients[0]?.id ?? '')
-    } catch (e) {
-      if (signal?.aborted || request !== requestId.current) return
-      setError(e instanceof Error ? e.message : 'Não foi possível carregar os clientes.')
-      throw e
-    } finally {
-      if (!signal?.aborted && request === requestId.current) setLoading(false)
-    }
-  }, [])
+  const [notice, setNotice] = useState('')
+  const [attempt, setAttempt] = useState(0)
+  const [loggingOut, setLoggingOut] = useState(false)
+  const [logoutError, setLogoutError] = useState('')
+
   useEffect(() => {
     const controller = new AbortController()
-    const request = ++requestId.current
-    api<PulseView>('/api/pulse', { signal: controller.signal }).then((result) => {
-      if (controller.signal.aborted || request !== requestId.current) return
-      setData(result); setError('')
-      setSelectedClientId((current) => result.clients.some((c) => c.id === current) ? current : result.clients[0]?.id ?? '')
+    consultarSessao(controller.signal).then((result) => {
+      if (controller.signal.aborted) return
+      setSessao(result)
+      setReady(true)
+      atualizarRota(result.autenticado)
     }).catch((e: unknown) => {
-      if (!controller.signal.aborted && request === requestId.current) setError(e instanceof Error ? e.message : 'Não foi possível carregar os clientes.')
-    }).finally(() => {
-      if (!controller.signal.aborted && request === requestId.current) setLoading(false)
+      if (!controller.signal.aborted) setError(e instanceof Error ? e.message : 'Não foi possível verificar seu acesso.')
     })
     return () => controller.abort()
-  }, [])
+  }, [attempt])
+
   useEffect(() => {
-    const changed = () => {
-      const id = location.hash.match(/^#\/clientes\/(\d+)$/)?.[1]
-      if (id && data?.clients.some((c) => c.id === id)) setSelectedClientId(id)
+    const expirou = () => {
+      setCsrfToken('')
+      setSessao(null)
+      setReady(true)
+      setNotice('Sua sessão foi encerrada. Entre novamente para continuar.')
+      atualizarRota(false)
     }
-    window.addEventListener('hashchange', changed)
-    return () => window.removeEventListener('hashchange', changed)
-  }, [data])
-  const selectedClient = data?.clients.find((client) => client.id === selectedClientId)
-  const retry = () => { setLoading(true); void refresh().catch(() => {}) }
-  // Gravação já concluída: falha de releitura aparece no banner, cujo retry
-  // consulta a base sem repetir a gravação do formulário.
-  const updated = () => { setLoading(true); return refresh().catch(() => {}) }
+    window.addEventListener(SESSION_REQUIRED_EVENT, expirou)
+    return () => window.removeEventListener(SESSION_REQUIRED_EVENT, expirou)
+  }, [])
 
-  return (
-    <div className="flex min-h-dvh flex-col xl:h-dvh">
-      <AppHeader advisor={data?.advisor ?? { name: 'Carregando assessor', role: 'Assessor de investimentos' }} />
-      <div className="px-4 pt-3 text-xs text-ink-muted" aria-live="polite">
-        {loading && <p>Carregando dados do backend…</p>}
-        {error && <div role="alert" className="flex flex-wrap items-center gap-3 text-negative">{error}<Button onClick={retry}>Tentar novamente</Button></div>}
-        {!loading && !error && data && <p>Dados fictícios persistidos · Contexto para poupar sua busca; a decisão continua com o assessor.</p>}
-      </div>
+  useEffect(() => {
+    const rotear = () => { if (ready) atualizarRota(Boolean(sessao?.autenticado)) }
+    window.addEventListener('popstate', rotear)
+    return () => window.removeEventListener('popstate', rotear)
+  }, [ready, sessao])
 
-      {data && <main className="grid min-w-0 flex-1 gap-4 p-4 sm:gap-6 sm:p-6 lg:grid-cols-[280px_minmax(0,1fr)] xl:min-h-0 xl:grid-cols-[280px_minmax(0,1fr)_400px]">
-        <div className="min-w-0 space-y-4 xl:overflow-y-auto">
-        <ClientSidebar
-          clients={data.clients}
-          selectedClientId={selectedClient?.id ?? ''}
-          onSelectClient={(id) => { setSelectedClientId(id); location.hash = `/clientes/${id}` }}
-        />
-        <SourceImporter onUpdated={updated} />
-        </div>
+  async function login(usuario: string, senha: string) {
+    const result = await entrar(usuario, senha)
+    if (!result.autenticado) throw new Error('Não foi possível confirmar seu acesso. Tente novamente.')
+    setSessao(result)
+    setNotice('')
+    setLogoutError('')
+    atualizarRota(true)
+  }
 
-        {selectedClient ? <>
-        <div className="min-w-0 space-y-4 xl:overflow-y-auto">
-          <ClientSummary client={selectedClient} />
-          <div className="grid gap-4 md:grid-cols-2">
-            <PerceptionHistory entries={selectedClient.perception} />
-            <InvestmentProfile portfolio={selectedClient.portfolio} />
-          </div>
-          <ClientWorkspace key={selectedClient.id} client={selectedClient} onUpdated={updated} />
-          <NewsSection client={selectedClient} />
-        </div>
+  async function logout() {
+    if (loggingOut) return
+    setLoggingOut(true)
+    setLogoutError('')
+    try {
+      const result = await sair()
+      setSessao(result)
+      setNotice('')
+      atualizarRota(false, true)
+    } catch (e) {
+      setLogoutError(e instanceof Error ? e.message : 'Não foi possível sair. Tente novamente.')
+    } finally {
+      setLoggingOut(false)
+    }
+  }
 
-        <div className="flex min-h-0 flex-col lg:col-span-2 xl:col-span-1">
-          <AssistantPanel key={selectedClient.id} client={selectedClient} onUpdated={updated} />
-        </div>
-        </> : <div className="p-5 text-sm text-ink-muted">Nenhum cliente cadastrado. Inicialize a base fictícia com o comando seed do backend.</div>}
-      </main>}
+  if (!ready) return <AuthShell>
+    <div className="flex flex-col items-center gap-4 text-center">
+      {error ? <><p role="alert" className="text-sm leading-6 text-negative">{error}</p>
+        <Button onClick={() => { setError(''); setAttempt((current) => current + 1) }}>Tentar novamente</Button></>
+        : <><LoaderCircle aria-hidden="true" size={24} className="animate-spin text-brand" />
+          <p role="status" className="text-sm text-ink-muted">Verificando seu acesso…</p></>}
     </div>
-  )
+  </AuthShell>
+
+  if (!sessao?.autenticado) return <LoginPage onLogin={login} notice={notice} />
+  return <Dashboard onLogout={() => { void logout() }} loggingOut={loggingOut} logoutError={logoutError} />
 }

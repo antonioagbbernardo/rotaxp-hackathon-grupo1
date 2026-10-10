@@ -1,3 +1,4 @@
+from client_autenticado import cliente_autenticado
 from datetime import datetime
 
 import pytest
@@ -20,7 +21,7 @@ def ambiente(tmp_path):
                       "FRONTEND_DIST": str(tmp_path / "dist")})
     with app.app_context():
         seed_db(AGORA.date(), AGORA)
-    return app, app.test_client(), extrator
+    return app, cliente_autenticado(app), extrator
 
 
 def clientes(c):
@@ -147,4 +148,4 @@ def test_build_servido_pelo_flask_e_legacy_preservado(ambiente, tmp_path):
 
 def test_base_vazia_nao_faz_fallback_mock(tmp_path):
     app = create_app({'TESTING': True, 'DATABASE': str(tmp_path / 'vazia.db')})
-    assert clientes(app.test_client()) == []
+    assert clientes(cliente_autenticado(app)) == []

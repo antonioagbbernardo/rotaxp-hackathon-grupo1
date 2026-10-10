@@ -105,6 +105,25 @@ em [registro de desenvolvimento](../registro-desenvolvimento.md).
 | CA70 | `test_configuracao_entrada_grande_e_corpo_sem_chamada`, `test_transporte_*` | Configuração, limite, schema, timeout, HTTP 401/429, recusa e saída incompleta |
 | CA71 | `test_requisicao_concorrente_e_retomada_de_tentativa`, `test_tentativa_antiga_nao_sobrescreve_a_retomada` | Concorrência, retomada e preservação do resultado mais recente |
 
+## Notícias (CA72–CA78): incremento 05
+
+Execução atual: **329 testes backend**, incluindo 41 novos em `test_noticias.py`.
+Provedor/transporte simulados nos testes; uma chamada real compartilhada entre
+dois clientes fictícios documentada no registro, sem chamadas Gemini/OpenAI.
+
+| CA | Testes em `test_noticias.py` | Evidência |
+| --- | --- | --- |
+| CA72 | `test_vinculo_recusa_*`, `test_releitura_oculta_*`, `test_item_alheio_*` | Revisão humana, tipo/sujeito/categoria, origem atual, conflito, bloqueio, preferência, contato e cliente |
+| CA73 / CA16 | `test_get_sem_http_vinculo_explicito_cache_compartilhado_e_reinicio`, `test_vazio_e_sucesso_cli_reutiliza_e_novo_dia_coleta` | GET, reuso entre clientes, vazio, CLI, persistência e novo dia |
+| CA74 / CA18 | `test_erro_preserva_cache_intervalo_e_recuperacao`, `test_sem_chave_*`, `test_transporte_falhas_*` | Preservação de cache, intervalo, credencial, timeout, formato e limites externos |
+| CA75 | `test_cota_conta_falha_*`, `test_erro_global_*`, `test_concorrencia_e_tentativa_antiga_nao_sobrescrevem` | Orçamento, fuso/dia local, suspensão global, lease e tentativa substituída |
+| CA76 | `test_deduplicacao_limite_janela_e_artigos_removidos`, `test_saida_invalida_nao_persiste_parcial`, `test_transportadora_*` | URLs, publicação, janela, fonte, limite e cabeçalho sem dados pessoais |
+| CA77 / CA31–CA32 (notícia) | `test_feedback_motivo_isolamento_idempotencia_persistencia` | Motivo, cliente, idempotência, persistência e base inalterada |
+| CA78 | Manual, além dos contratos de API | Desktop: associação/busca/reuso/feedback; DOM móvel 390/390 px. Inspeção visual móvel dos cartões parcial; sem celular físico |
+
+`test_pergunta_noticias_le_cache_com_fontes_e_respeita_bloqueio` verifica consulta
+com fonte/link sem HTTP novo e sem expor notícia de assunto bloqueado.
+
 ## Sem teste e sem implementação
 
 | CA | Tema | Tarefa |
@@ -112,7 +131,7 @@ em [registro de desenvolvimento](../registro-desenvolvimento.md).
 | CA11 | Resumo mostra nova conversa importada como fonte | T09 |
 | CA13 | Evento repetido mantém um alerta | T08/CA06 |
 | CA15 | Falha ao salvar preserva o texto (interface) | Verificação manual/E2E |
-| CA16–CA25 | NewsAPI, reuniões, keynotes | T08 (sem contrato de rotas) |
+| CA17, CA19–CA25 | Reuniões, antecipação da coleta e keynotes | Próximo recorte T08 |
 
 ## Decisões pendentes da equipe (não resolvidas por teste)
 
@@ -130,3 +149,15 @@ em [registro de desenvolvimento](../registro-desenvolvimento.md).
 3. Antes de mergear `test/aceite-congelados`, conferir os 17 testes removidos no
    commit "reduz a suíte ao essencial".
 4. Marcar os testes com o ID do CA para a rastreabilidade não depender de leitura.
+
+## Incremento 06 — login (RF31, CA79–CA84)
+
+23 casos em `test_autenticacao.py`: mapa completo de APIs protegido, login e
+validação de campos, CSRF, cookie adulterado, validade absoluta, revogação,
+reinício/chave 0600 e cache HTTP. Testes de domínio fazem login HTTP real.
+Seis casos frontend em `auth.test.mjs`: envio de token/cookie, evento 401,
+credenciais inválidas, renovação de sessão no login/logout e erro de rede.
+
+Execução atual: **352 backend + 11 frontend**, lint/build aprovados. Desktop do
+login conferido; mobile e conferência visual adicional adiados a pedido do
+usuário. As evidências visuais anteriores conservam seus limites individuais.

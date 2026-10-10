@@ -55,7 +55,7 @@ export function ClientCard({ client, isSelected, onSelect }: ClientCardProps) {
             {hasPositiveNews && <span className="font-medium text-positive">Notícia positiva</span>}
             {hasPositiveNews && hasNegativeNews && ' · '}
             {hasNegativeNews && <span className="font-medium text-negative">Notícia negativa</span>}
-            {!hasPositiveNews && !hasNegativeNews && <span className="text-ink-muted">Sem notícias novas</span>}
+            {!hasPositiveNews && !hasNegativeNews && <span className="text-ink-muted">{client.news.length ? `${client.news.length} notícia(s) para revisar` : 'Sem notícias para revisar'}</span>}
           </p>
         </div>
       </div>

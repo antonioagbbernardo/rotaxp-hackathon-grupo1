@@ -10,6 +10,7 @@ from .db import get_db
 from .fontes import consultar_fontes
 from .resumo import montar_resumo
 from . import resumo_ia
+from . import noticias
 from .resumo_ia_rules import apresentar_fato
 
 
@@ -29,6 +30,7 @@ def montar_cliente(c, incluir_resumo_ia=True):
     resumo = montar_resumo(dict(c), ctx["posicoes"], ctx["ultima"],
                           ctx["avaliacoes"][0] if ctx["avaliacoes"] else None, clock.hoje(), ctx["ultima_data"])
     revisao = contexto.consultar(c["id"])
+    novidades = noticias.consultar(c['id'], revisao['itens'])
     confirmados = [i for i in revisao["itens"] if i["estado"] in ("confirmado", "corrigido")
                    and i["sujeito"] == "cliente" and i["evidencia_atual"] and not i["conflitos"]]
     pendentes = [i for i in revisao["itens"] if i["estado"] == "pendente" and i["evidencia_atual"]]
@@ -75,7 +77,8 @@ def montar_cliente(c, incluir_resumo_ia=True):
                         "reason": r["justificativa"], "date": r["avaliada_em"]} for r in reversed(ctx["avaliacoes"])],
         "portfolio": {"total": format(sum((Decimal(p["valor"]) for p in ctx["posicoes"]), Decimal("0")), ".2f") if ctx["posicoes"] else None,
                       "goal": next((valor(i) for i in confirmados if i["categoria"] == "objetivo"), "Objetivo ainda não revisado"), "allocation": []},
-        "news": [], "assistant": {"question": "O que preciso revisar antes do contato?",
+        "news": novidades['artigos'], "newsState": {k: v for k, v in novidades.items() if k != 'artigos'},
+        "assistant": {"question": "O que preciso revisar antes do contato?",
           "summary": "\n".join(linhas_resumo), "summaryItems": linhas_resumo,
           "insights": insights, "openings": aberturas, "sources": fontes_abertura,
           "summarySources": fontes_resumo},
@@ -102,7 +105,15 @@ def responder(cliente, pergunta):
     texto = "".join(ch for ch in unicodedata.normalize("NFD", pergunta.casefold()) if unicodedata.category(ch) != "Mn")
     fontes = []
     if any(k in texto for k in ("noticia", "mercado hoje")):
-        resposta = "Notícias não estão disponíveis nesta base."
+        if cliente['news']:
+            resposta = 'Notícias coletadas para revisão; não representam análise de mercado em tempo real.\n'
+            resposta += '\n'.join(f"{a['title']} · {a['source']} · publicada {a['publishedAt']} · coletada {a['collectedAt']}" for a in cliente['news'])
+            estados = cliente.get('newsState', {}).get('assuntos', [])
+            if any(a['estado'] != 'atualizado' for a in estados):
+                resposta += '\nA coleta está desatualizada ou indisponível; confira o estado na seção Notícias.'
+            fontes = [f"{a['source']} · {a['url']} · {a['publishedAt']}" for a in cliente['news']]
+        else:
+            resposta = 'Não há notícias disponíveis para este cliente. Confira interesses e estado da coleta na seção Notícias.'
     elif any(k in texto for k in ("prefer", "canal", "intervalo")):
         p = cliente["preferences"]
         resposta = f"Canal preferido: {p['canal_preferido'] or 'não informado'}. Intervalo mínimo: {p['intervalo_minimo_dias']} dias. Assuntos pessoais: {'permitidos' if p['permite_assuntos_pessoais'] else 'não permitidos'}."

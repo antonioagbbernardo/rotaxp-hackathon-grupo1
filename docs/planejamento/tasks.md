@@ -2,7 +2,8 @@
 
 Status: plano reconciliado em 10/10/2026. React XP Pulse integrado ao Flask/SQLite;
 ingestão JSON fictícia e contexto/revisão implementados; Gemini real testado em
-amostra fictícia. Conexão aos canais, notícias e keynotes ainda pendentes.
+amostra fictícia. Síntese OpenAI e NewsAPI com cache/feedback implementados.
+Conexão aos canais, agendamento automático, reuniões e keynotes ainda pendentes.
 Referências: `spec.md`, `design.md`,
 `requisitos.md`, `contracts.md`. Responsáveis definidos pela equipe.
 
@@ -20,6 +21,7 @@ Referências: `spec.md`, `design.md`,
 | T08 — Notícias, reuniões e keynotes | Reunião agendada com pauta, fontes, notas preservadas e conclusão; NewsAPI com cache | T01–T05; contratos em T00 | CA16–CA25 | Pessoas 3, 4, 5 e 6 |
 | T06 — Integração | Fluxo completo revisado, inclusive falhas e celular | T01–T05, T08 e T09 | Todos | Pessoa 6 + autores |
 | T07 — Entrega | README testado em clone limpo, pitch ≤ 5 min, push | T06 | Demo reproduzível | Pessoas 1 e 6 + equipe |
+| T10 — Login (incremento 06) | `/login`, admin/admin, sessão/CSRF, painel/API protegidos e logout | T06 | CA79–CA84 | Pedido explícito do usuário |
 | Opcional | Eventos externos/simulados (CA06) | T06 concluída | CA06 | Quem estiver livre |
 
 Pessoa 1 mantém a especificação e apoia testes. Pessoa 6 integra desde a base.
@@ -45,6 +47,12 @@ T09 dividida em incrementos SDD:
   revisão, bloqueio, alertas, contatos, relacionamento, preferências e consulta
   por templates. 143 testes backend, cinco frontend, build/lint; navegador
   desktop e viewport móvel de 390 × 844. T08 permanece pendente.
+
+- **T08 — incremento 05 implementado (primeiro recorte):** associação humana
+  a três assuntos, NewsAPI, cache diário compartilhado, cota e descarte de notícia
+  por cliente. 41 testes novos; total 329 backend, cinco frontend, lint/build.
+  Uma chamada real compartilhada por dois clientes fictícios. Coleta pela tela
+  e CLI; agendador automático, reuniões e keynotes continuam pendentes.
 
 Detalhes em [incremento 01](incrementos/01-fontes.md) e
 [registro para apresentação](../registro-desenvolvimento.md).

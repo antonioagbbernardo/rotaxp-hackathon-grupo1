@@ -6,10 +6,12 @@ contexto, lembranças e preparação de reuniões, com decisão final do assesso
 **Estado atual:** painel React/TypeScript/Tailwind integrado ao Flask/SQLite.
 Extração Gemini com evidências e revisão humana implementadas;
 Síntese OpenAI em três seções com fontes e cache implementada;
-288 testes backend e cinco frontend, após integrar a cobertura da equipe.
+352 testes backend e 11 frontend, incluindo notícias compartilhadas e login.
 Gemini: quatro fontes fictícias geraram sete propostas;
 OpenAI: síntese real de um cliente fictício validada, sem mudar os registros.
-Lembranças derivadas, notícias e reuniões são evolução.
+NewsAPI: associação humana, cache diário, cota e feedback individual implementados;
+uma chamada real compartilhada por dois clientes fictícios.
+Lembranças derivadas, agendador automático e reuniões são evolução.
 **Atualizado em:** 10/10/2026. Acesso à fonte real pendente; modelo configurável.
 
 **Propósito:** poupar tempo do assessor e melhorar sua relação com o investidor.
@@ -27,7 +29,17 @@ fontes e conduz o atendimento; GET apenas reutiliza o cache quando válido.
 Também importa formulário/conversas de JSON fictício, preserva versões e
 separa identidades pendentes. Essa entrada simulada não é uma conexão aos canais reais.
 
+**Notícias já disponíveis:** revisar interesse → associar ao catálogo → buscar
+uma vez por assunto/dia → mostrar fonte e datas → marcar irrelevância com motivo.
+Se dois clientes acompanham Fórmula 1, ambos reutilizam a coleta. O descarte
+oculta aquela notícia só para o cliente escolhido, mantendo seu interesse.
+Nenhuma notícia altera humor, prioridade ou recomendação financeira.
+
 ## Nosso ponto de partida
+
+**Acesso:** `/login`, com usuário e senha `admin`. Logo centralizado, design
+escuro/amarelo XP, sessão de oito horas, API protegida e botão Sair. Sem opção
+de recuperação de senha neste recorte. A decisão do assessor permanece central.
 
 Já existe um local com:
 
@@ -102,7 +114,8 @@ lembranças não enviam mensagens automaticamente ao investidor.
 | Síntese para atendimento | OpenAI configurável; apenas fatos selecionados, fontes por trecho e cache SQLite |
 | Banco de contexto | Guarda fontes, fatos, hipóteses, revisões, lembranças e feedback |
 | Regras de pertinência | Consideram preferências, atualidade, pendências e feedback |
-| Agendador e NewsAPI | Atualizam assuntos diariamente e antes de reuniões quando necessário |
+| NewsAPI e cache | Coleta pela tela/CLI, compartilhada por assunto/dia, com cota e feedback individual |
+| Agendador futuro | Automatizar rotina diária e antecipar coleta antes de reuniões |
 | API | Entrega dados às telas e valida ações de revisão |
 
 A fonte guarda o registro original. O contexto organiza o que entendemos dele.
@@ -166,7 +179,8 @@ e limites do provedor estão em [busca de notícias](integracoes/busca-noticias.
 | Formulário e fonte de conversas já existem | Premissa confirmada pelo usuário |
 | Inferir contexto dessas fontes | Núcleo confirmado |
 | Lembranças, revisão final humana e feedback | Incluídos no planejamento |
-| NewsAPI, atualização diária e keynotes | Direção definida; parâmetros pendentes |
+| NewsAPI | Coleta manual/CLI, cache diário, fontes e feedback implementados; três assuntos e limite local configurável |
+| Agendador e keynotes | Pendentes; janela de reunião ainda proposta |
 | Stack | Flask + SQLite + React/TypeScript + Tailwind/Vite integrados |
 | Modelos de IA | Gemini para extração revisável e OpenAI (`gpt-4.1-mini` configurável) para síntese; chamadas reais em amostras fictícias |
 | Contrato da fonte e acesso | JSON fictício definido; fonte real pendente |
