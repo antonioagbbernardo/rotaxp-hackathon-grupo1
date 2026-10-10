@@ -25,9 +25,11 @@ def montar_cliente(c, incluir_resumo_ia=True):
     # Mesma leitura/regras das rotas existentes, sem outra lógica de prioridade.
     from .api import _contexto, _preferencias, _relacionamento
     from .chat import notas
+    from .humor import consultar as consultar_humor
     db, clock = get_db(), current_app.config["CLOCK"]
     ctx = _contexto(db, c, clock.hoje())
     rel = _relacionamento(ctx["avaliacoes"])
+    humor = consultar_humor(c['id'])
     resumo = montar_resumo(dict(c), ctx["posicoes"], ctx["ultima"],
                           ctx["avaliacoes"][0] if ctx["avaliacoes"] else None, clock.hoje(), ctx["ultima_data"])
     revisao = contexto.consultar(c["id"])
@@ -67,7 +69,7 @@ def montar_cliente(c, incluir_resumo_ia=True):
         "relationshipLabel": rel["rotulo"] if rel else "Não avaliado",
         "interests": list(dict.fromkeys(valor(i) for i in confirmados if i["categoria"] == "interesse")),
         "tags": [{"label": c["perfil"]}] if c["perfil"] else [],
-        "sentiment": {"positivo": "positive", "negativo": "negative", "atencao": "neutral"}.get(rel["estado"] if rel else None, "unknown"),
+        "sentiment": humor['sentiment'], "mood": humor,
         "headline": f"{len(alertas)} pendência(s) · {len(pendentes)} proposta(s) para revisar",
         "updatedMinutesAgo": max(0, int((clock.agora() - parse_instante(atualizado)).total_seconds() // 60)) if atualizado else None,
         "clientSince": None, "lastContactDays": (clock.hoje() - ctx["ultima_data"]).days if ctx["ultima_data"] else None,

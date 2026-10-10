@@ -5,6 +5,9 @@ import { SentimentFace } from '@/components/ui/SentimentFace'
 import { priorityLabel, priorityTone, sentimentLabel } from '@/lib/sentiment'
 import { formatMonth } from '@/lib/format'
 import type { Client, ClientStatus } from '@/types/client'
+import { useState } from 'react'
+import { api } from '@/lib/api'
+import { Button } from '@/components/ui/Button'
 
 const statusBadge: Record<ClientStatus, { label: string; tone: BadgeTone }> = {
   opportunity: { label: "Oportunidade", tone: "positive" },
@@ -14,10 +17,21 @@ const statusBadge: Record<ClientStatus, { label: string; tone: BadgeTone }> = {
 
 interface ClientSummaryProps {
   client: Client;
+  onUpdated?: () => Promise<void>;
 }
 
-export function ClientSummary({ client }: ClientSummaryProps) {
+export function ClientSummary({ client, onUpdated }: ClientSummaryProps) {
   const status = statusBadge[client.status];
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  async function atualizarHumor(revisar = false) {
+    setBusy(true); setError('')
+    try {
+      await api(`/api/pulse/clientes/${client.id}/humor${revisar ? '/revisar' : ''}`, { method: 'POST', ...(revisar ? { body: { assinatura: client.mood?.assinatura } } : {}) })
+      await onUpdated?.()
+    } catch (e) { setError(e instanceof Error ? e.message : 'Não foi possível analisar as interações.') }
+    finally { setBusy(false) }
+  }
 
   return (
     <Panel className="px-6 pt-6 pb-4">
@@ -37,8 +51,18 @@ export function ClientSummary({ client }: ClientSummaryProps) {
           </p>
           <p className="mt-2 flex items-center gap-2 text-xs">
             <SentimentFace sentiment={client.sentiment} className="size-5" label={`Humor: ${sentimentLabel[client.sentiment]}`} />
-            <span>Humor do relacionamento: <strong className="font-medium">{client.relationshipLabel ?? 'Não avaliado'}</strong></span>
+            <span>Humor inferido: <strong className="font-medium">{sentimentLabel[client.sentiment]}</strong></span>
           </p>
+          {client.mood && <div className="mt-2 space-y-2 text-[11px] text-ink-muted">
+            <p>{client.mood.motivo}</p>
+            {client.mood.evidencias.map((e, i) => <blockquote key={`${e.fonte}-${i}`} className="border-l-2 border-brand pl-2">“{e.trecho}” <span className="block text-[10px]">Fonte: {e.fonte.replace('interacao-', 'interação #')}</span></blockquote>)}
+            <p>{client.mood.estado === 'atualizado' ? (client.mood.revisado_em ? 'Inferência revisada pelo assessor.' : 'Hipótese baseada nas conversas · confira as evidências.') : client.mood.estado === 'pendente' && client.mood.configurado ? 'Analisando as interações…' : client.mood.estado === 'processando' ? 'Análise em andamento…' : ''}</p>
+            {!client.mood.configurado && <p>Configure a chave OpenAI no backend para inferir o humor.</p>}
+            {client.mood.estado === 'atualizado' && !client.mood.revisado_em && <Button disabled={busy} onClick={() => { void atualizarHumor(true) }}>Marcar como revisado</Button>}
+            {client.mood.estado === 'falhou' && <Button disabled={busy} onClick={() => { void atualizarHumor() }}>{busy ? 'Analisando…' : 'Tentar inferir novamente'}</Button>}
+            {error && <p role="alert" className="text-negative">{error}</p>}
+          </div>}
+          <p className="mt-2 text-[11px] text-ink-muted">Avaliação do assessor: {client.relationshipLabel ?? 'Não avaliado'}</p>
           <ul className="mt-3 flex flex-wrap gap-2">
             {client.tags.map((tag) => (
               <li key={tag.label}>

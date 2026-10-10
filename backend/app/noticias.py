@@ -9,7 +9,7 @@ from . import contexto
 from .clock import TZ, formatar_utc, parse_instante
 from .db import get_db
 from .newsapi import NewsAPI
-from .noticias_rules import CATALOGO, ErroNoticias, interesse_elegivel, validar_artigos, versao_consulta
+from .noticias_rules import CATALOGO, ErroNoticias, interesse_elegivel, validar_artigos, versao_consulta, assuntos_do_interesse
 from .seed import ASSESSOR_ID
 
 
@@ -49,6 +49,20 @@ def _vinculos(cid, interesses):
     return [{'id': r['id'], 'item_id': r['item_id'], 'revisao': r['revisao'], 'assunto': r['assunto'],
              'interesse': _valor(interesses[r['item_id']]), 'fontes': _fontes(interesses[r['item_id']])}
             for r in rows if r['item_id'] in interesses and r['revisao'] == interesses[r['item_id']]['revisao'] and r['assunto'] in CATALOGO]
+
+
+def _assuntos_automaticos(cid, itens=None):
+    itens = contexto.consultar(cid)['itens'] if itens is None else itens
+    legados = _vinculos(cid, _interesses(cid, itens))
+    ids_legados = {v['item_id'] for v in legados}
+    # Ler notícias não é contatar o cliente: a cadência não impede a preparação.
+    # Propostas com evidência literal podem sugerir notícias, sem confirmar o contexto.
+    return legados + [{'id': f"automatico-{i['id']}-{assunto}", 'item_id': i['id'], 'revisao': i['revisao'],
+             'assunto': assunto, 'interesse': _valor(i), 'fontes': _fontes(i), 'automatico': True}
+            for i in itens if i['id'] not in ids_legados and i['categoria'] == 'interesse' and i['tipo'] == 'fato' and i['sujeito'] == 'cliente'
+            and i['estado'] in ('pendente', 'confirmado', 'corrigido') and i['evidencia_atual']
+            and not i['conflitos'] and not i['bloqueado']
+            for assunto in assuntos_do_interesse(_valor(i))]
 
 
 def vincular(cid, corpo):
@@ -96,7 +110,7 @@ def _chamadas_hoje():
 def consultar(cid, itens=None):
     db, clock = get_db(), current_app.config['CLOCK']
     interesses = _interesses(cid, itens)
-    vinculos = _vinculos(cid, interesses)
+    vinculos = _assuntos_automaticos(cid, itens)
     assuntos, artigos = [], {}
     descartadas = {r[0] for r in db.execute('SELECT artigo_id FROM descarte_noticia WHERE cliente_id=?', (cid,))}
     for assunto in sorted({v['assunto'] for v in vinculos}):
@@ -121,7 +135,7 @@ def consultar(cid, itens=None):
             if a['url'] in descartadas or parse_instante(a['publishedAt']) < clock.agora() - timedelta(days=7):
                 continue
             artigos.setdefault(a['url'], {**a, 'id': a['url'], 'sentiment': 'unknown', 'scenario': 'NewsAPI',
-                'whyItMatters': f"Associação do assessor ao interesse: {vinculo['interesse']} · " + '; '.join(vinculo['fontes']),
+                'whyItMatters': f"Sugestão automática pelo interesse identificado: {vinculo['interesse']} · " + '; '.join(vinculo['fontes']),
                 'relevance': 'Sugestão de assunto para o assessor revisar.', 'topic': CATALOGO[assunto]['nome'],
                 'collectedAt': sucesso['fim_em'],
                 'updatedMinutesAgo': max(0, int((clock.agora() - parse_instante(sucesso['fim_em'])).total_seconds() // 60))})
@@ -206,9 +220,9 @@ def _atualizar_assuntos(assuntos, max_idade=None):
 
 
 def atualizar(cid, max_idade=None):
-    assuntos = {v['assunto'] for v in _vinculos(cid, _interesses(cid))}
+    assuntos = {v['assunto'] for v in _assuntos_automaticos(cid)}
     if not assuntos:
-        raise ErroNoticias('Associe um interesse revisado e elegível a um assunto antes de coletar.', 'vinculos')
+        raise ErroNoticias('Nenhum interesse identificado corresponde aos assuntos de notícias disponíveis.', 'interesses')
     return _atualizar_assuntos(assuntos, max_idade)
 
 
@@ -240,7 +254,7 @@ def descartar(cid, corpo):
 def coletar_diario():
     assuntos = set()
     for r in get_db().execute('SELECT id FROM cliente').fetchall():
-        assuntos.update(v['assunto'] for v in _vinculos(r['id'], _interesses(r['id'])))
+        assuntos.update(v['assunto'] for v in _assuntos_automaticos(r['id']))
     return _atualizar_assuntos(assuntos)
 
 

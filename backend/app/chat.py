@@ -52,6 +52,7 @@ def _entrada(cliente):
                   '; '.join(r['fontes']))
     entrada['fatos'] = list(fontes.values())
     entrada['relacionamento_humano'] = cliente['relationshipLabel']
+    entrada['humor_inferido'] = cliente.get('mood')
     entrada['noticias_estado'] = cliente['newsState']['assuntos']
     return entrada, fontes
 

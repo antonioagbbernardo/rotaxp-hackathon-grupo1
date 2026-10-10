@@ -15,24 +15,9 @@ const statusLabel = { nunca: 'Ainda sem coleta', atualizado: 'Coleta do dia', de
 export function NewsSection({ client, onUpdated }: NewsSectionProps) {
   const firstName = client.name.split(' ')[0]
   const state = client.newsState
-  const [interestId, setInterestId] = useState('')
-  const [topic, setTopic] = useState('formula-1')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
-  const selectedInterest = state?.interesses.find((i) => String(i.id) === interestId) ?? state?.interesses[0]
-
-  async function associate() {
-    if (busy || !selectedInterest) return
-    setBusy(true); setError(''); setNotice('')
-    try {
-      await api(`/api/clientes/${client.id}/noticias/vinculos`, { method: 'POST', body: { item_id: selectedInterest.id, assunto: topic } })
-      await onUpdated()
-      setNotice('Interesse associado. A coleta é compartilhada entre clientes.')
-    } catch (e) { setError(e instanceof Error ? e.message : 'Associação não concluída.') }
-    finally { setBusy(false) }
-  }
-
   async function collect() {
     if (busy) return
     setBusy(true); setError(''); setNotice('')
@@ -61,7 +46,7 @@ export function NewsSection({ client, onUpdated }: NewsSectionProps) {
             Notícias que importam para {firstName}
           </h2>
           <p className="mt-1 text-[11px] text-ink-muted">
-            Assuntos associados pelo assessor a interesses revisados, com fontes.
+            Selecionadas automaticamente pelos interesses identificados. Remova as que não forem pertinentes.
           </p>
         </div>
         <Button onClick={() => void collect()} disabled={busy || !state?.configurado || !state.vinculos.length}>
@@ -69,33 +54,10 @@ export function NewsSection({ client, onUpdated }: NewsSectionProps) {
         </Button>
       </div>
 
-      <p className="mt-3 text-[10px] leading-relaxed text-ink-muted">NewsAPI pode disponibilizar artigos com atraso conforme o plano. Coleta recente não garante notícia em tempo real. Sem avaliação automática do humor ou recomendação de investimento.</p>
+      <p className="mt-3 text-[10px] leading-relaxed text-ink-muted">NewsAPI pode disponibilizar artigos com atraso conforme o plano. Coleta recente não garante notícia em tempo real. O humor é inferido das interações, separado das notícias ou recomendação de investimento.</p>
       {state && <div className="mt-3 space-y-3">
         {!state.configurado && <p className="text-xs text-ink-muted">A busca de notícias precisa de configuração no backend.</p>}
-        <details className="rounded-xl border border-line p-3 text-xs" open={!state.vinculos.length}>
-          <summary className="cursor-pointer font-medium">Associar interesse a um assunto de busca</summary>
-          {state.interesses.length ? <form className="mt-3 space-y-3" onSubmit={(e) => { e.preventDefault(); void associate() }}>
-            <label className="block">Interesse revisado
-              <select value={String(selectedInterest?.id ?? '')} onChange={(e) => setInterestId(e.target.value)} disabled={busy}
-                className="mt-1 block w-full min-w-0 rounded-lg border border-line bg-surface p-2">
-                {state.interesses.map((i) => <option key={i.id} value={i.id}>{i.valor}</option>)}
-              </select>
-            </label>
-            <label className="block">Assunto do catálogo
-              <select value={topic} onChange={(e) => setTopic(e.target.value)} disabled={busy}
-                className="mt-1 block w-full rounded-lg border border-line bg-surface p-2">
-                {state.catalogo.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
-              </select>
-            </label>
-            <p className="break-words text-[10px] leading-relaxed text-ink-muted">Confira se o assunto corresponde ao interesse. {selectedInterest?.fontes.join(' · ')}</p>
-            <Button type="submit" disabled={busy}>Associar assunto</Button>
-          </form> : <div className="mt-3 space-y-2 leading-relaxed text-ink-muted">
-            <p>{client.context?.itens.some((i) => i.categoria === 'interesse' && i.estado === 'pendente')
-              ? 'Há interesses aguardando sua confirmação. Revise a evidência no contexto; depois associe o interesse a um assunto aqui.'
-              : 'Nenhum interesse confirmado elegível. Confira fontes, bloqueios, permissão para assuntos pessoais e intervalo entre contatos.'}</p>
-            <Button onClick={() => document.getElementById(`registros-${client.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Revisar contexto e preferências</Button>
-          </div>}
-        </details>
+        {!state.vinculos.length && <p className="text-xs text-ink-muted">Nenhum interesse identificado corresponde ao catálogo atual: Fórmula 1, Palmeiras e Corinthians.</p>}
         <ul className="space-y-2 text-[11px] leading-relaxed text-ink-muted">
           {state.assuntos.map((t) => <li key={t.id}>
             <span className="font-medium">{t.nome}</span> · {statusLabel[t.estado]}{t.ultima_coleta && ` · Última coleta ${formatDate(t.ultima_coleta)}`}
