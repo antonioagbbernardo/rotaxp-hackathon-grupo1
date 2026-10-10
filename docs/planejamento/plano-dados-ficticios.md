@@ -1,6 +1,8 @@
 # Plano de dados fictícios e testes
 
-Status: proposta documental. Os arquivos de dados e os testes ainda não foram criados.
+Status: proposta documental para a fonte simulada e testes de inferência/feedback,
+ainda não criados. A base já possui seed fictício (`app/seed.py`) e testes de
+regras/API; esse seed não simula formulário versionado nem extração das conversas.
 
 ## Objetivo
 

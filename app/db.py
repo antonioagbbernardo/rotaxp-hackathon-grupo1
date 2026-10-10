@@ -1,0 +1,100 @@
+import sqlite3
+
+import click
+from flask import Flask, current_app, g
+
+# Dinheiro: TEXT com Decimal (nunca float). Datas: YYYY-MM-DD. Instantes: UTC ISO 8601.
+# O alerta NÃO é persistido (calculado sob demanda); só o tratamento (tratamento_alerta).
+TABELAS = ("tratamento_alerta", "avaliacao_relacionamento", "interacao", "data_importante",
+           "posicao", "cliente", "assessor")
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS assessor (
+    id INTEGER PRIMARY KEY,
+    nome TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS cliente (
+    id INTEGER PRIMARY KEY,
+    nome TEXT NOT NULL,
+    perfil TEXT NOT NULL DEFAULT '',
+    canal_preferido TEXT CHECK (canal_preferido IN ('whatsapp','email','telefone','presencial')),
+    intervalo_minimo_dias INTEGER NOT NULL DEFAULT 7 CHECK (intervalo_minimo_dias IN (7,14,30)),
+    permite_assuntos_pessoais INTEGER NOT NULL DEFAULT 0 CHECK (permite_assuntos_pessoais IN (0,1))
+);
+CREATE TABLE IF NOT EXISTS avaliacao_relacionamento (
+    id INTEGER PRIMARY KEY,
+    cliente_id INTEGER NOT NULL REFERENCES cliente(id),
+    estado TEXT NOT NULL CHECK (estado IN ('positivo','atencao','negativo')),
+    justificativa TEXT NOT NULL CHECK (length(trim(justificativa)) > 0),
+    assessor_id INTEGER NOT NULL REFERENCES assessor(id),
+    avaliada_em TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS posicao (
+    id INTEGER PRIMARY KEY,
+    cliente_id INTEGER NOT NULL REFERENCES cliente(id),
+    ativo TEXT NOT NULL,
+    valor TEXT NOT NULL,
+    vencimento TEXT NOT NULL,
+    fonte TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS interacao (
+    id INTEGER PRIMARY KEY,
+    cliente_id INTEGER NOT NULL REFERENCES cliente(id),
+    canal TEXT NOT NULL CHECK (canal IN ('whatsapp','email','telefone','presencial')),
+    texto TEXT NOT NULL CHECK (length(trim(texto)) > 0),
+    ocorrida_em TEXT NOT NULL,
+    registrada_em TEXT NOT NULL,
+    proximos_passos TEXT,
+    assessor_id INTEGER NOT NULL REFERENCES assessor(id)
+);
+CREATE TABLE IF NOT EXISTS data_importante (
+    id INTEGER PRIMARY KEY,
+    cliente_id INTEGER NOT NULL REFERENCES cliente(id),
+    tipo TEXT NOT NULL CHECK (tipo IN ('aniversario')),
+    vinculo TEXT NOT NULL CHECK (vinculo IN ('cliente','familiar')),
+    descricao TEXT NOT NULL DEFAULT '',
+    dia INTEGER NOT NULL CHECK (dia BETWEEN 1 AND 31),
+    mes INTEGER NOT NULL CHECK (mes BETWEEN 1 AND 12),
+    fonte TEXT NOT NULL DEFAULT 'Registro manual do assessor'
+);
+CREATE TABLE IF NOT EXISTS tratamento_alerta (
+    chave_ocorrencia TEXT PRIMARY KEY,
+    cliente_id INTEGER NOT NULL REFERENCES cliente(id),
+    tratado_em TEXT NOT NULL,
+    assessor_id INTEGER NOT NULL REFERENCES assessor(id)
+);
+"""
+
+
+def get_db() -> sqlite3.Connection:
+    if "db" not in g:
+        g.db = sqlite3.connect(current_app.config["DATABASE"])
+        g.db.row_factory = sqlite3.Row
+        g.db.execute("PRAGMA foreign_keys = ON")
+    return g.db
+
+
+def close_db(_exc=None) -> None:
+    conn = g.pop("db", None)
+    if conn is not None:
+        conn.close()
+
+
+def init_db() -> None:
+    get_db().executescript(SCHEMA)
+
+
+def drop_all() -> None:
+    db = get_db()
+    for tabela in TABELAS:
+        db.execute(f"DROP TABLE IF EXISTS {tabela}")
+    db.commit()
+
+
+def init_app(app: Flask) -> None:
+    app.teardown_appcontext(close_db)
+
+    @app.cli.command("init-db")
+    def init_db_command():
+        init_db()
+        click.echo("Banco inicializado.")

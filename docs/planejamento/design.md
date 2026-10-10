@@ -1,94 +1,129 @@
-# Arquitetura proposta — plataforma de assessores
+# Arquitetura — plataforma de assessores
 
-Status: planejamento somente. NewsAPI.org definido como fonte de notícias;
-stack, demais integrações e escopo aguardam definição.
+Status: arquitetura da base Flask/Tailwind integrada em 10/10/2026.
+NewsAPI, fonte existente, inferência de contexto e feedback são a direção
+planejada do produto; esses módulos ainda não estão implementados.
+
+## Stack
+
+| Camada | Escolha |
+| --- | --- |
+| Backend | Python 3.13 + Flask + Jinja2, gerenciado com `uv` |
+| Dados | SQLite |
+| Interface | Página única responsiva (Jinja serve o HTML base) com JS que consome a API JSON; Tailwind CSS compilado com Node (CLI) |
+| Node.js | Somente ferramenta da interface (build de CSS/JS). Não é runtime do backend |
+| Testes | pytest (regras e API); verificação manual no navegador |
+
+Regras de uso:
+
+- O CSS compilado é versionado, para que o clone da organização rode só com
+  Python (sem `npm install`).
+- Versões de Python/Node/Flask são conferidas na ferramenta instalada e fixadas
+  em `pyproject.toml`/`uv.lock`, `.python-version` e `.nvmrc`; não presumir
+  patches não verificados.
+- Sem Django e sem Docker.
 
 ## Organização
 
-A entrada do produto é a fonte existente de conversas e formulário inicial.
-Um adaptador lê os dados, um processador extrai contexto com evidências e a
-revisão humana alimenta memória e regras de pertinência.
-
-Uma interface web adaptada ao celular e uma API central podem atender ao
-primeiro fluxo. A API concentra regras, acesso aos dados e processamento de
-eventos. Um banco relacional é uma opção inicial para os vínculos entre clientes,
-interações, posições e alertas. A necessidade de NoSQL ainda não foi demonstrada.
-
-Aplicativo separado permanece parte da visão do produto, sujeito à priorização
-no prazo de 6h30. Web responsiva não deve ser apresentada como app nativo.
+Uma aplicação Flask simples, com núcleo de regras puro (prioridade, vencimento,
+aniversário), acesso a dados em módulo separado e rotas JSON finas. Sem serviços
+distribuídos. Web responsiva não é app nativo e não deve ser apresentada como tal.
 
 ## Responsabilidades
 
 | Parte | Responsabilidade |
 | --- | --- |
-| Interface | Contexto, evidências, revisão de sugestões, feedback, lembranças e pautas |
-| Adaptador de entrada | Ler fonte existente e formulário, validar identidade e evitar duplicação |
-| Extração e inferência | Propor fatos, hipóteses e datas com evidência, sujeito e estado de revisão |
-| Feedback | Preservar correções e preferências de relevância com alcance por cliente/assunto |
-| API | Validar entradas, aplicar regras e devolver dados por cliente |
-| Persistência | Guardar clientes, preferências, registros, fontes e decisões |
-| Processamento de eventos | Consultar fontes escolhidas, deduplicar e associar interesses |
-| Resumo | Organizar fatos registrados e indicar evidências e atualidade |
-| Preparação de reunião | Combinar contexto e fontes em pauta versionada; preservar notas manuais |
+| Interface | Lista, filtros, detalhe, linha do tempo, registro de interação, tratar alerta (via API JSON) |
+| API JSON | Validar entradas, chamar regras, devolver JSON e erros padronizados |
+| Regras | Prioridade (RN11), vencimentos (RN03/04), aniversários (RN12), preferências (RN13), `Clock` injetável |
+| Persistência | Assessor, clientes, posições, interações, datas importantes, avaliações de relacionamento e tratamentos de alerta |
+| Preparação de reunião (planejada) | Combina contexto interno e notícias em pauta versionada; preserva notas manuais |
+| Resumo | Template determinístico; cada fato com `{tipo_fonte, id_fonte, data_referencia}` (RN08); sem LLM |
 
-Sugestão: uma aplicação simples, com responsabilidades separadas internamente,
-sem serviços distribuídos no primeiro recorte.
+## Entidades
 
-## Entidades e relações propostas
+Campos mínimos da base em `contracts.md`. Interesse/evento, reunião e versão
+da pauta abaixo são entidades planejadas, ainda ausentes do schema.
 
-| Entidade | Informações principais | Relações |
-| --- | --- | --- |
-| Assessor | Identificação e acesso | Acompanha clientes; regra de atribuição a definir |
-| Cliente | Nome, perfil, objetivo e preferências | Tem posições e interações |
-| Documento de origem | Canal, identificador externo, cliente, conteúdo, data e versão | Sustenta extrações; inclui formulário |
-| Item de contexto | Categoria, valor, sujeito, evidência, explícito/inferido, validade e revisão | Pertence a cliente e aponta para origem |
-| Lembrança/sugestão | Motivo, data, recorrência, estado e pertinência | Usa contexto e recebe feedback |
-| Feedback | Autor, ação, correção, motivo, alcance e data | Afeta item/assunto/cliente sem reescrever origem |
-| Interação | Canal, data, registro, próximos passos | Pertence a cliente e identifica responsável |
-| Interesse | Assunto e origem da informação | Pode ser compartilhado por vários clientes |
-| Interesse do cliente | Interesse, evidência e revisão | Liga cliente a interesse |
-| Posição | Ativo, valor, vencimento e fonte | Pertence a cliente |
-| Evento | Assunto, ocorrência, fonte e identificador externo | Pode gerar alertas para vários clientes |
-| Alerta | Motivo, prioridade, evidência e estado | Pertence a cliente; pode apontar para evento ou posição |
-| Avaliação do relacionamento | Estado, justificativa, autor e data | Histórico de avaliações por cliente |
-| Reunião | Objetivo, início/fuso, responsável e estado | Pertence a cliente; pode ter interação de conclusão |
-| Versão da pauta | Conteúdo, fontes, versão dos dados e data de geração/revisão | Pertence a reunião; notas manuais armazenadas separadamente |
+| Entidade | Relações |
+| --- | --- |
+| Assessor | Único e fictício (seed); identifica interações, avaliações e tratamentos |
+| Cliente | Tem posições, interações, datas importantes, preferências e avaliações |
+| Posição | Pertence a cliente; origem dos alertas de vencimento |
+| Interação | Pertence a cliente; `ocorrida_em` (informada) e `registrada_em` (automática) |
+| DataImportante | Pertence a cliente; origem dos alertas de aniversário |
+| Avaliação do relacionamento | Histórico: estado, justificativa, assessor, data |
+| Tratamento de alerta | Única entidade persistida do alerta: chave de ocorrência, `tratado_em`, `assessor_id` |
+| Interesse / Evento | Assunto compartilhado e notícia/evento com fonte; só após o fluxo principal |
+| Reunião | Objetivo, início/fuso, responsável e estado; pertence a cliente; pode ter interação de conclusão |
+| Versão da pauta | Conteúdo, fontes, versão dos dados e data; pertence a reunião; notas manuais em campo separado |
 
-Restrições propostas: vínculos válidos, identificação única de evento por fonte,
-deduplicação de alerta por cliente/regra/origem e valores monetários sem ponto
-flutuante binário. Exclusão e retenção dependem de decisão explícita.
+Restrições: vínculos válidos, `chave_ocorrencia` única em tratamento, dinheiro
+em `Decimal` (TEXT/NUMERIC, nunca float), instantes em UTC. Exclusão e retenção
+não fazem parte do MVP.
 
-## Contratos a combinar antes de dividir o código
+## Relógio
 
-- Campos e identificadores de cliente, interação, alerta e evento.
-- Formato de datas e fuso das regras de vencimento.
-- Estados de relacionamento separados dos níveis de prioridade.
-- Erros esperados para dados inválidos, acesso negado e registros inexistentes.
-- Responsável por cada área e momento da primeira integração.
+Serviço `Clock` único, com fuso `America/Sao_Paulo`. Toda regra de vencimento,
+aniversário e intervalo recebe a data/hora dele; nenhuma regra chama
+`date.today()`. Testes injetam data fixa (ex.: `2026-10-10`).
 
-## Eventos pertinentes com custo controlado
+Seed: só popula base vazia, com vencimentos relativos à execução em −2, 0, 5, 7,
+8, 30 e 31 dias. Reexecutar não sobrescreve nem desloca dados. Um comando de
+reset explícito reconstrói a demonstração.
 
-Consultar um assunto uma vez e reutilizar o resultado entre clientes interessados.
-Filtrar por interesse, preferência de contato, atualidade e duplicidade antes
-de qualquer uso de IA. Processar mudanças, evitando reanalisar todo o histórico.
+## Alertas: cálculo sob demanda
 
-Fonte escolhida: **NewsAPI.org**. Planejar coleta diária por assuntos compartilhados
-e atualização antecipada quando houver reunião próxima, reutilizando cache.
-Plano, horários, orçamento e parâmetros ainda precisam de definição.
+Alerta é uma **representação calculada** a partir de posições e datas
+importantes a cada consulta de lista ou detalhe; não há cópia persistida, cron,
+worker nem botão de processamento. Somente o tratamento é gravado.
 
-O agendador e o coletor são rotinas de backend. Um especialista de IA é opcional
-para analisar resultados filtrados, com entradas e orçamento limitados.
-Detalhamento e fontes oficiais: [busca de notícias](../integracoes/busca-noticias.md).
+- Identidade: `(cliente_id, regra, entidade_origem_id, ocorrencia)`.
+- Vencimento: `ocorrencia` = data de vencimento; a prioridade é recalculada
+  sem mudar a identidade. Vencimento corrigido = nova ocorrência.
+- Aniversário: `ocorrencia` = data no ano; ano seguinte = nova ocorrência.
+- Estado `tratado` vem da existência do tratamento para a chave.
+- Alertas pessoais passam pelo filtro de RN13 (permissão e intervalo mínimo).
 
-## Questões ainda abertas
+## Acesso
 
-O agendador prepara reuniões na janela definida. Alterações internas podem renovar
-a pauta sem outra busca externa; mudanças de data ou estado reconciliam disparos.
-Reunião concluída preserva a pauta usada e a interação resultante.
+Sem autenticação. Um assessor fictício único; executar somente em
+`127.0.0.1`; sem dados reais. Não há `403` no contrato. Não publicar nem tratar
+dados financeiros pessoais reais com esta versão.
 
-- Fonte das posições financeiras e critérios das análises de risco e tributárias.
-- Formato/localização e contrato de leitura da fonte já existente; identidade por cliente.
-- Acesso de gestores e investidores, autenticação e autorização por cliente.
-- Modelo de extração/inferência, dados enviados ao provedor e custo máximo.
-- Armazenamento, correção, exclusão e retenção de informações pessoais.
-- Forma de execução da demonstração e necessidade de publicação.
+## Notícias e reuniões — planejadas
+
+Fonte escolhida: **NewsAPI.org**. Coleta diária por assuntos compartilhados e
+atualização antecipada quando houver reunião próxima, reutilizando cache. Filtrar
+por interesse, preferência (RN13), atualidade e duplicidade antes de qualquer IA
+(opcional, com entradas e orçamento limitados). Plano, horários, orçamento e
+parâmetros: [busca de notícias](../integracoes/busca-noticias.md).
+
+O agendador e o coletor são rotinas de backend **apenas para notícias e
+reuniões**; o cálculo de alertas continua sob demanda. O agendador prepara
+reuniões na janela definida. Alterações internas podem renovar a pauta sem nova
+busca externa; mudanças de data ou estado reconciliam disparos. Reunião concluída
+preserva a pauta usada e a interação resultante.
+
+## Evolução planejada: contexto e supervisão
+
+A fonte de formulário/transcrições/e-mails/WhatsApp Business já existe por premissa.
+Um adaptador futuro deve preservar identidade, origem e versão. O processador
+propõe fatos e hipóteses com evidências; o assessor aprova, corrige ou descarta
+e fornece feedback com alcance explícito por item, assunto ou cliente.
+
+Entidades propostas: documento de origem, formulário versionado, item de contexto,
+lembrança/sugestão e feedback. Persistência desses itens não significa persistir
+cópias dos alertas de vencimento/aniversário da base. Correções humanas são
+preservadas; nova evidência conflitante gera revisão.
+
+O template atual permanece como resumo da base; extração/inferência planejada
+acrescenta contexto revisável sem transformar hipóteses em fatos confirmados.
+Detalhes: [contexto e feedback](../integracoes/contexto-investidor.md).
+
+## Questões abertas para a evolução
+
+- Fonte real das posições (Open Finance etc.) e análises de risco/tributárias.
+- Autenticação, autorização e acesso multiassessor, gestor/investidor.
+- Contrato e acesso à fonte existente, modelo/provedor de extração e custo.
+- Armazenamento, correção, exclusão e retenção de dados pessoais.

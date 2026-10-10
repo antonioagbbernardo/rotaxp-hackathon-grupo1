@@ -1,6 +1,6 @@
 # Requisitos e etapas de implementação do MVP
 
-**Status:** planejamento para revisão da equipe; somente documentação nesta etapa.
+**Status:** base Flask/Tailwind integrada; requisitos de consumo de fontes, inferência, feedback, notícias e reuniões ainda planejados.
 **Referências:** [especificação](spec.md), [arquitetura](design.md) e [tarefas](tasks.md).
 **Usuário principal proposto:** assessor de investimentos.
 **Revisado em:** 10/10/2026. Fontes existentes, inferência de contexto, supervisão humana e feedback são o núcleo do produto.
@@ -136,15 +136,22 @@ internas quando notícias ou IA estiverem indisponíveis.
 
 RF25–RF30 complementam RF03/RF05/RF10 e constituem o núcleo do recorte revisado.
 
-## 3. Regras a validar com a equipe
+## 3. Regras da base e propostas de evolução
 
-As seguintes regras são **propostas de implementação**, não regras dos organizadores.
-Os identificadores RN01–RN10 seguem `spec.md`.
+As regras da base foram definidas pela equipe e estão em `spec.md`; não são regras dos organizadores. As regras de inferência, notícias e reuniões abaixo continuam propostas de implementação.
+
+> **Decisões de 10/10/2026 que prevalecem** (detalhes em `spec.md` e
+> `contracts.md`; RN11–RN15 e CA34–CA39 detalham a base): vencimento Δ 0–7 alta,
+> 8–30 média, vencido alta (RN03/RN04); prioridade do cliente só pelos alertas
+> pendentes, e relacionamento manual **não** altera prioridade (RN11);
+> alertas calculados sob demanda com tratamento persistido (RN14/RN15);
+> preferências canal/intervalo/permissão pessoal (RN13); `ocorrida_em` e
+> `registrada_em` (RN02); assessor único sem autenticação, só local, sem `403`.
 
 - **RN01/RN02:** interação exige cliente existente, canal válido e conteúdo;
   ordenação deve ter desempate estável. Importações futuras podem chegar fora de ordem.
 - **RN03/RN04:** alerta até 30 dias; alta prioridade até 7 dias; limites inclusivos;
-  vencidos aparecem separadamente. Os dois períodos precisam de confirmação.
+  vencidos permanecem de prioridade alta. Períodos definidos na base.
 - **RN05:** evento deve ter origem, identificador, assunto e data. Janela de
   relevância, limite de alertas e validade do assunto precisam ser definidos.
 - **RN06:** evento pessoal pode sugerir contato; mudanças no relacionamento
@@ -154,11 +161,13 @@ Os identificadores RN01–RN10 seguem `spec.md`.
   aparecem como tais. Novas interações tornam necessária sua atualização.
 - **RN09:** alerta tratado sai das pendências, mas permanece consultável.
 - **RN10:** informações persistem após recarregar e reiniciar a aplicação.
-- **Prioridade proposta:** alta para vencidos, vencimento em até 7 dias ou
-  relacionamento negativo; média para vencimento de 8 a 30 dias ou atenção;
-  baixa para oportunidade pessoal. Cada cliente assume a maior prioridade ativa.
-- **Preferência pessoal:** desativar sugestões pessoais deve impedir novas
-  sugestões e retirar as já existentes das pendências de contato pessoal.
+- **Prioridade da base (RN11/RN12):** alta para vencidos e vencimento em 0–7 dias;
+  média para vencimento em 8–30 dias ou aniversário em 0–7 dias; sem pendências,
+  baixa. A maior prioridade pendente prevalece; relacionamento manual não interfere.
+- **Preferência pessoal (RN13):** exige permissão explícita e intervalo mínimo
+  desde a última interação em qualquer canal (7, 14 ou 30 dias). Desativar a
+  permissão oculta pendências pessoais, mantendo alertas financeiros. Sem histórico,
+  o intervalo não bloqueia. Regras adicionais de feedback pertencem à evolução.
 - **Deduplicação:** mesmo evento e mesma regra não devem gerar duas pendências
   para o mesmo cliente, inclusive se o processamento for repetido.
 - **Pauta:** uma versão por reunião/conjunto de dados; repetir disparo sem
@@ -200,22 +209,27 @@ de validação específica; esta documentação não a declara atendida.
 ### Etapa 0 — Fechar decisões e contratos
 
 **Fazer:** definir o contrato da fonte existente e a identificação de clientes;
-escolher stack, recorte, períodos dos alertas, dados de demonstração e responsabilidades. Definir campos compartilhados pela API e
-interface, formato dos erros e fuso de referência (`America/Sao_Paulo`, proposto).
+definir recorte de evolução, dados de demonstração e responsabilidades. Stack,
+períodos de alertas, fuso `America/Sao_Paulo` e contratos da base já estão definidos
+em `spec.md`, `design.md` e `contracts.md`. Contratos de importação e revisão ainda precisam ser fechados.
 
 **Saída:** especificação revisada e contratos curtos para cliente, interação e alerta.
 **Condição para avançar:** todos sabem qual fluxo será demonstrado e como verificar.
 
 ### Etapa 1 — Preparar ambiente e persistência
 
-**Fazer:** criar base executável, configuração local, schema/migrations e carga
-de dados fictícios. Usar um único backend. React, Python e Node.js são candidatos;
-uma combinação ainda não foi aprovada. Banco SQL é a proposta inicial.
+**Base integrada:** Python 3.13 + Flask + SQLite, gerenciados com `uv`;
+interface em JavaScript puro e Tailwind compilado via Node.js. Ambiente, schema
+e seed fictício já existem. Node é ferramenta de CSS, não segundo backend.
 
-**Dados mínimos:** documento de origem, formulário versionado, extração, feedback,
-lembrança, cliente, posição quando disponível, interação, interesse/vínculo com cliente,
-preferência, evento, alerta, reunião, pauta versionada e histórico de avaliação. Persistir dinheiro em
-centavos ou tipo decimal apropriado, com unidade definida no contrato.
+**Dados da base:** assessor, cliente/preferências, posição, interação, data
+importante, avaliação e tratamento de alerta. Alertas são calculados sob demanda;
+não há tabela de alertas. Dinheiro usa Decimal/texto.
+
+**Dados adicionais planejados:** documento de origem, formulário versionado,
+extração, feedback, lembrança, interesse/vínculo, evento, reunião e pauta versionada.
+Detalhar schema e migração antes de implementar; não misturar sugestão inferida
+com o tratamento dos alertas da base.
 
 **Validar:** iniciar em outra máquina, carregar dados sem duplicação e testar
 vínculos inválidos. Configuração e credenciais ficam fora do Git.
@@ -225,7 +239,7 @@ vínculos inválidos. Configuração e credenciais ficam fora do Git.
 
 **Fazer:** implementar RF01/RF02 e a primeira tela adaptada ao celular. Mostrar
 estados de carregamento, ausência de resultados e erro. Combinar prioridade
-provisória até o motor de alertas estar integrado.
+calculada pelo motor de alertas da base (RN11).
 
 **Validar:** busca, abertura do cliente correto e isolamento dos registros exibidos.
 **Entrega:** primeiro fluxo completo de consulta, integrado cedo.
@@ -306,19 +320,28 @@ registrar interação, recarregar, tratar alerta, repetir processamento de event
 e preparar/concluir uma reunião.
 **Entrega:** demonstração reproduzível e código enviado antes da clonagem às 17h30.
 
-## 6. Contrato de API sugerido
+## 6. API implementada e extensões propostas
 
-Este contrato descreve responsabilidades; os caminhos podem ser ajustados em equipe.
+A base tem as seis rotas abaixo. Histórico, resumo e alertas vêm no detalhe do
+cliente; não existem rotas separadas para essas consultas. Extensões posteriores
+precisam de contrato aprovado e não são endpoints disponíveis hoje.
 
-| Operação | Proposta | Resultado |
+> Os caminhos e formatos efetivos do MVP estão em [contracts.md](contracts.md)
+> (`/api/...`, JSON, tratamento por `chave_ocorrencia`, sem `403`).
+
+| Operação | Rota implementada | Resultado |
 | --- | --- | --- |
-| Listar clientes | GET /clients, com busca e filtro | Identidade, perfil, prioridade e contagem de pendências |
-| Consultar cliente | GET /clients/{id} | Perfil, preferências, resumo e fontes |
-| Consultar/gravar interações | GET/POST /clients/{id}/interactions | Histórico ou confirmação com identificador do registro |
-| Alterar preferências | PATCH /clients/{id}/preferences | Preferências atualizadas |
-| Avaliar relacionamento | POST /clients/{id}/relationship-evaluations | Avaliação com justificativa e autoria |
-| Consultar alertas | GET /clients/{id}/alerts | Motivos, prioridades, fontes e estados |
-| Tratar alerta | PATCH /clients/{id}/alerts/{alertId} | Estado atualizado; repetir mantém o resultado |
+| Listar clientes | GET /api/clientes, com busca e filtro | Identidade, perfil, prioridade e contagem de pendências |
+| Consultar cliente | GET /api/clientes/{id} | Perfil, preferências, resumo e fontes |
+| Gravar interação | POST /api/clientes/{id}/interacoes | Confirmação com identificador; histórico no detalhe |
+| Alterar preferências | PATCH /api/clientes/{id}/preferencias | Preferências atualizadas |
+| Avaliar relacionamento | POST /api/clientes/{id}/relacionamento | Avaliação com justificativa e autoria |
+| Tratar alerta | POST /api/alertas/tratar | Recebe cliente_id e chave_ocorrencia; repetir mantém o resultado |
+
+**Extensões propostas, não implementadas:**
+
+| Operação | Caminho ilustrativo a definir | Resultado |
+| --- | --- | --- |
 | Receber evento | POST /events | Evento persistido; duplicata reconhecida |
 | Listar/agendar reuniões | GET/POST /meetings | Cliente, início, objetivo e estado |
 | Reagendar/cancelar | PATCH /meetings/{id} | Estado/data atualizados e disparos reconciliados |
@@ -332,11 +355,18 @@ Este contrato descreve responsabilidades; os caminhos podem ser ajustados em equ
 | Revisar sugestão | POST /clients/{id}/suggestions/{suggestionId}/feedback | Ação, correção/motivo e alcance persistidos |
 
 Definir antes de implementar: representação de valores, datas, identificadores,
-paginação se necessária e respostas para entrada inválida, ausência e acesso negado.
+paginação se necessária e respostas para entrada inválida e ausência. Acesso
+negado só se aplica quando autenticação/autorização forem implementadas; a base
+local não tem `403`. Os caminhos ilustrativos de extensões devem ser alinhados
+aos nomes em português dos contratos atuais antes da implementação.
 
 ## 7. Aceite e plano de testes
 
-CA01–CA10 estão em `spec.md`. Complementos propostos:
+CA01–CA10 e CA34–CA39 estão em `spec.md`. CA06 e os cenários de importação,
+inferência, feedback, notícias e reuniões ainda dependem da evolução; os testes
+da base não comprovam essas capacidades. CA26–CA33 publicados na main foram
+preservados; critérios da branch com IDs coincidentes passaram para CA34–CA39.
+Complementos:
 
 - **CA11:** ao ingerir nova conversa, o resumo atualizado mostra o novo registro como fonte;
   não inclui informações de outro cliente e sinaliza dados ausentes.

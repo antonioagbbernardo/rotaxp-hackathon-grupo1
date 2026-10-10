@@ -3,8 +3,14 @@
 **Em uma frase:** transformar informações que já existem sobre o investidor em
 contexto, lembranças e preparação de reuniões, com decisão final do assessor.
 
-**Estado atual:** planejamento, sem aplicação implementada nesta pasta.
-**Atualizado em:** 10/10/2026. Stack e formato de acesso à fonte continuam pendentes.
+**Estado atual:** base de consulta e acompanhamento implementada em Flask, SQLite,
+JavaScript e Tailwind. O fluxo de inferência e revisão descrito abaixo é o alvo
+do produto e ainda não está implementado.
+**Atualizado em:** 10/10/2026. Formato de acesso à fonte e modelo de IA pendentes.
+
+A base já permite listar clientes, consultar resumo por template, registrar
+interações manualmente, avaliar relacionamento, ajustar preferências e tratar
+alertas de vencimento/aniversário. [Execução local](../README.md).
 
 ## Nosso ponto de partida
 
@@ -145,8 +151,9 @@ e limites do provedor estão em [busca de notícias](integracoes/busca-noticias.
 | Inferir contexto dessas fontes | Núcleo confirmado |
 | Lembranças, revisão final humana e feedback | Incluídos no planejamento |
 | NewsAPI, atualização diária e keynotes | Direção definida; parâmetros pendentes |
-| Stack, modelo de IA, contrato da fonte e acesso | Pendentes |
-| Funcionalidades implementadas nesta pasta | Nenhuma |
+| Stack | Flask + SQLite + JavaScript + Tailwind definidos |
+| Modelo de IA, contrato da fonte e acesso | Pendentes |
+| Funcionalidades implementadas | Consulta, interações manuais, preferências, relacionamento e alertas |
 
 **Ordem de construção proposta:** consumir fonte → extrair contexto → revisar e
 aplicar feedback → sugerir lembranças/notícias → preparar reunião → validar o ciclo.

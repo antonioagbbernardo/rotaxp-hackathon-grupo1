@@ -1,0 +1,30 @@
+# Ambiente e segredos
+.venv/
+.env
+.env.*
+!.env.example
+
+# Python e testes
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Banco local e arquivos de execução
+instance/
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.log
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Node e ferramentas locais
+node_modules/
+.serena/

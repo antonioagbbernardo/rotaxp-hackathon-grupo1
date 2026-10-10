@@ -2,7 +2,8 @@
 
 **Direção definida em 10/10/2026:** partir do formulário inicial e das conversas
 já disponíveis. Extrair contexto, sugerir o que vale lembrar e permitir que o
-assessor decida o que é pertinente. Implementação ainda não iniciada nesta pasta.
+assessor decida o que é pertinente. Esse fluxo de extração e feedback ainda não está implementado; a base de consulta
+e acompanhamento já existe.
 
 ## 1. O que já existe por premissa
 

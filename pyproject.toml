@@ -1,0 +1,17 @@
+[project]
+name = "assessor-do-futuro"
+version = "0.1.0"
+description = "MVP Rota XP: acompanhamento de investidores para assessores"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "flask>=3.1.3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
