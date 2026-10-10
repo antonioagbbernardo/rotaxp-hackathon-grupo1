@@ -24,7 +24,7 @@ export function AskAssistantForm({ placeholder, onAsk, disabled }: AskAssistantF
       className="flex h-12 items-center rounded-lg border border-line pr-2 pl-4 focus-within:border-brand/60"
     >
       <label htmlFor="assistant-question" className="sr-only">
-        Pergunte ao Assistente pulse
+        Pergunte ao Pulse IA
       </label>
       <input
         id="assistant-question"

@@ -57,7 +57,7 @@ Backend, contratos e regras não mudam.
 
 ## Ajuste de interface — nome fixo Pulse (10/10/2026)
 
-O assistente se chama `Assistente pulse` no cabeçalho do painel e no rótulo acessível do
+O assistente se chama `Pulse IA` no cabeçalho do painel e no rótulo acessível do
 campo de conversa. O nome é fixo e não depende do cliente ou assessor.
 Preservar a marca XP Pulse, os demais textos, fontes e comportamento do chat.
 Validar CA64 com troca de cliente e celular; build, lint e testes frontend.

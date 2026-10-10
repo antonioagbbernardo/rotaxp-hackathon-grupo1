@@ -469,13 +469,14 @@ o processo aberto e usar um vínculo de interesse já revisado pelo assessor.
 
 ## Ajuste — nome fixo Pulse (10/10/2026)
 
-- Pedido: substituir Assistente do assessor por Assistente pulse como nome fixo. Branch
+- Pedido: substituir Assistente do assessor por Pulse IA como nome fixo. Branch
   `fix/nome-fixo-pulse`, a partir de `6e299bd`; escopo no incremento 03.
-- Frontend: cabeçalho Assistente pulse e rótulo acessível Pergunte ao Assistente pulse. Nome
+- Frontend: cabeçalho Pulse IA e rótulo acessível Pergunte ao Pulse IA. Nome
   independente de cliente/assessor; marca, aparência e chat preservados.
   Backend e contratos sem alteração.
 - Validação: build, lint e 22 testes frontend aprovados. Edge: nome correto
   antes/depois de trocar cliente, rótulo acessível e celular de 390 px sem
   rolagem horizontal; captura desktop inspecionada. Build na porta 5004.
 - Limites: sem aparelho físico; suíte backend não repetida para esta troca
-  de texto. Sem chamadas a provedores ou gravações de clientes. Sem commit/push.
+  de texto. Sem chamadas a provedores ou gravações de clientes. Commit local
+  solicitado pelo usuário; sem push.
