@@ -16,7 +16,7 @@ export function App() {
 
   return (
     <div className="flex min-h-dvh flex-col xl:h-dvh">
-      <AppHeader advisor={advisor} isDemo />
+      <AppHeader advisor={advisor} />
 
       <main className="grid flex-1 gap-6 p-6 lg:grid-cols-[300px_1fr] xl:min-h-0 xl:grid-cols-[300px_minmax(0,1fr)_450px]">
         <ClientSidebar

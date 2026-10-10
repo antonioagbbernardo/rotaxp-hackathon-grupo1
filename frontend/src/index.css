@@ -31,6 +31,15 @@
     @apply bg-canvas font-sans text-ink antialiased;
   }
 
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
   ::selection {
     @apply bg-brand text-black;
   }

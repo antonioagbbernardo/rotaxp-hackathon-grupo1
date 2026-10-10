@@ -1,5 +1,4 @@
 import { Avatar } from '@/components/ui/Avatar'
-import { DotLabel } from '@/components/ui/DotLabel'
 import { SentimentFace } from '@/components/ui/SentimentFace'
 import { cn } from '@/lib/cn'
 import { formatElapsed } from '@/lib/format'
@@ -40,13 +39,18 @@ export function ClientCard({ client, isSelected, onSelect }: ClientCardProps) {
             {client.interests.join(' · ')}
           </p>
         </div>
-        <SentimentFace sentiment={client.sentiment} label={impact} />
       </div>
 
-      <p className={cn('mt-3 text-[11px] font-medium', sentimentTextColor[client.sentiment])}>
-        <DotLabel>{impact}</DotLabel>
+      <p
+        className={cn(
+          'mt-3 flex items-center gap-2 text-[11px] font-medium',
+          sentimentTextColor[client.sentiment],
+        )}
+      >
+        <SentimentFace sentiment={client.sentiment} className="size-4.5" />
+        {impact}
       </p>
-      <p className="mt-1.5 text-[10px] text-ink-muted">
+      <p className="mt-1.5 pl-6.5 text-[10px] text-ink-muted">
         {client.headline} • {formatElapsed(client.updatedMinutesAgo)}
       </p>
     </button>
