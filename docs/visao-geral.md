@@ -4,13 +4,22 @@
 contexto, lembranças e preparação de reuniões, com decisão final do assessor.
 
 **Estado atual:** base de consulta e acompanhamento implementada em Flask, SQLite,
-JavaScript e Tailwind. O fluxo de inferência e revisão descrito abaixo é o alvo
-do produto e ainda não está implementado.
-**Atualizado em:** 10/10/2026. Formato de acesso à fonte e modelo de IA pendentes.
+JavaScript e Tailwind. Extração Gemini com evidências e revisão humana implementadas;
+125 testes; chamada real com quatro fontes fictícias gerou sete propostas.
+Lembranças derivadas, notícias e reuniões são evolução.
+**Atualizado em:** 10/10/2026. Acesso à fonte real pendente; modelo configurável.
+
+**Propósito:** poupar tempo do assessor e melhorar sua relação com o investidor.
+Ele mantém a decisão profissional e a condução do relacionamento.
+**Diferencial proposto:** contexto de conversas e formulário com evidências,
+revisão preservada e preferências por cliente. Exclusividade no mercado não
+foi verificada; benefícios ainda precisam ser medidos.
 
 A base já permite listar clientes, consultar resumo por template, registrar
 interações manualmente, avaliar relacionamento, ajustar preferências e tratar
 alertas de vencimento/aniversário. [Execução local](../README.md).
+Também importa formulário/conversas de JSON fictício, preserva versões e
+separa identidades pendentes. Essa entrada simulada não é uma conexão aos canais reais.
 
 ## Nosso ponto de partida
 
@@ -83,7 +92,7 @@ lembranças não enviam mensagens automaticamente ao investidor.
 | Parte | Função |
 | --- | --- |
 | Adaptador da fonte | Lê registros existentes e identifica cliente, origem, data e versão |
-| Extração e inferência | Propõe informações estruturadas com evidências; modelo de IA a escolher |
+| Extração e inferência | Gemini configurável via REST; propostas pendentes e evidências literais validadas |
 | Banco de contexto | Guarda fontes, fatos, hipóteses, revisões, lembranças e feedback |
 | Regras de pertinência | Consideram preferências, atualidade, pendências e feedback |
 | Agendador e NewsAPI | Atualizam assuntos diariamente e antes de reuniões quando necessário |
@@ -152,8 +161,11 @@ e limites do provedor estão em [busca de notícias](integracoes/busca-noticias.
 | Lembranças, revisão final humana e feedback | Incluídos no planejamento |
 | NewsAPI, atualização diária e keynotes | Direção definida; parâmetros pendentes |
 | Stack | Flask + SQLite + JavaScript + Tailwind definidos |
-| Modelo de IA, contrato da fonte e acesso | Pendentes |
+| Modelo de IA | Gemini configurável; extração real validada em uma amostra fictícia |
+| Contrato da fonte e acesso | JSON fictício definido; fonte real pendente |
 | Funcionalidades implementadas | Consulta, interações manuais, preferências, relacionamento e alertas |
+| Entrada simulada de fontes | JSON fictício, versões, histórico e pendências implementados |
+| Contexto e revisão | Extração, quatro ações, possíveis conflitos e bloqueio individual implementados; 125 testes; visual parcial |
 
 **Ordem de construção proposta:** consumir fonte → extrair contexto → revisar e
 aplicar feedback → sugerir lembranças/notícias → preparar reunião → validar o ciclo.

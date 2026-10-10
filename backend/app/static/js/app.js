@@ -35,7 +35,8 @@ async function api(caminho, opcoes = {}) {
   }
   const resp = await fetch(caminho, init);
   const dados = await resp.json().catch(() => ({}));
-  if (!resp.ok) throw new Error(dados.erro?.mensagem || `Erro ${resp.status}`);
+  if (!resp.ok) throw new Error(dados.erro?.mensagem
+    ? `${dados.erro.campo ? dados.erro.campo + ": " : ""}${dados.erro.mensagem}` : `Erro ${resp.status}`);
   return dados;
 }
 
@@ -64,11 +65,18 @@ function formulario(onEnviar, ...filhos) {
   const form = h("form", {}, ...filhos, erro);
   form.addEventListener("submit", async (ev) => {
     ev.preventDefault();
+    if (form.dataset.enviando) return;
+    form.dataset.enviando = "true";
+    const botoes = [...form.querySelectorAll("button")];
+    botoes.forEach((b) => { b.disabled = true; });
     erro.textContent = "";
     try {
       await onEnviar(new FormData(form));
     } catch (e) {
       erro.textContent = e.message;
+    } finally {
+      delete form.dataset.enviando;
+      botoes.forEach((b) => { b.disabled = false; });
     }
   });
   return form;
@@ -78,6 +86,41 @@ function formulario(onEnviar, ...filhos) {
 async function viewLista() {
   const estado = { q: "", prioridade: "" };
   const lista = h("div");
+  const pendencias = h("div");
+  const resultadoImportacao = h("p", { className: "text-sm mt-2", role: "status" });
+  async function carregarPendencias() {
+    try {
+      const { pendencias: docs } = await api("/api/fontes/pendencias");
+      pendencias.replaceChildren(docs.length
+        ? h("ul", { className: "text-sm" }, ...docs.map((f) =>
+            h("li", { className: "border-t border-slate-100 py-2 first:border-0" },
+              `${f.origem} · ${f.registro_id} · versão ${f.versao}${f.atual ? " atual" : " anterior"}`,
+              h("p", {}, `ID recebido: ${f.cliente_referencia ?? "não informado"}. Sem associação a cliente.`))))
+        : aviso("Nenhuma fonte com identidade pendente."));
+    } catch (e) {
+      pendencias.replaceChildren(h("p", { className: "text-red-700 text-sm", role: "alert" }, e.message));
+    }
+  }
+  const enviarArquivo = botao("Importar fonte fictícia");
+  const formFonte = formulario(async (fd) => {
+    resultadoImportacao.textContent = "Importando…";
+    try {
+      const arquivo = fd.get("arquivo");
+      if (!arquivo || !arquivo.size) throw new Error("Selecione um arquivo JSON fictício.");
+      let corpo;
+      try { corpo = JSON.parse(await arquivo.text()); }
+      catch { throw new Error("O arquivo deve conter JSON válido."); }
+      const r = await api("/api/fontes/importar", { method: "POST", corpo });
+      resultadoImportacao.textContent = `${r.importados} documento(s) importado(s), ${r.reutilizados} reutilizado(s), ${r.pendentes} com identidade pendente neste lote.`;
+      await Promise.all([carregar(), carregarPendencias()]);
+    } catch (e) {
+      resultadoImportacao.textContent = "Importação não concluída. Corrija o arquivo e tente novamente.";
+      throw e;
+    } finally {
+      enviarArquivo.disabled = false;
+    }
+  }, campo("Arquivo JSON fictício", h("input", { type: "file", name: "arquivo", accept: ".json,application/json", required: true, className: estiloControle })),
+    enviarArquivo, resultadoImportacao);
   async function carregar() {
     const params = new URLSearchParams();
     if (estado.q) params.set("q", estado.q);
@@ -107,8 +150,87 @@ async function viewLista() {
     h("option", { value: "" }, "Todas as prioridades"),
     ...Object.entries(ROTULO_PRIORIDADE).map(([v, t]) => h("option", { value: v }, t)));
   filtro.addEventListener("change", () => { estado.prioridade = filtro.value; carregar(); });
-  app.replaceChildren(h("div", { className: "grid gap-2 mb-3 sm:grid-cols-2" }, busca, filtro), lista);
-  await carregar();
+  app.replaceChildren(h("div", { className: "grid gap-2 mb-3 sm:grid-cols-2" }, busca, filtro), lista,
+    secao("Fontes existentes — demonstração",
+      aviso("Importe o JSON fictício fornecido para a demo. No cliente, processe o contexto com IA e revise as propostas com suas evidências."), formFonte),
+    secao("Identidades pendentes", aviso("Estes documentos não entram no histórico de nenhum cliente. Resolução manual será uma próxima etapa."), pendencias));
+  await Promise.all([carregar(), carregarPendencias()]);
+}
+
+// O contexto prepara o atendimento; decisões e uso continuam com o assessor.
+async function painelContexto(id, recarregar) {
+  let dados;
+  try { dados = await api(`/api/clientes/${id}/contexto`); }
+  catch (e) {
+    return secao("Contexto para preparar o atendimento",
+      h("p", { className: "text-red-700 text-sm", role: "alert" }, e.message),
+      botao("Tentar carregar novamente", { type: "button", onClick: recarregar }));
+  }
+  const status = h("p", { className: "text-sm my-2", role: "status" });
+  const processar = formulario(async () => {
+    status.textContent = "Analisando fontes; aguarde até 30 segundos…";
+    try {
+      const r = await api(`/api/clientes/${id}/contexto/processar`, { method: "POST" });
+      status.textContent = r.reutilizado ? "Sem fontes novas: contexto reutilizado." : `${r.novos} proposta(s) aguardando revisão.`;
+      await atualizar();
+    } catch (e) { status.textContent = "Análise não concluída. O contexto anterior foi preservado."; throw e; }
+  }, botao("Processar fontes novas com IA"), status);
+  const listas = h("div");
+  const rotulos = { pendente: "Aguardando revisão", confirmado: "Aprovado", corrigido: "Corrigido pelo assessor", descartado: "Descartado", adiado: "Adiado" };
+  function item(i) {
+    const acao = h("select", { name: "acao", className: estiloControle },
+      ...Object.entries({ aprovar: "Aprovar", corrigir: "Corrigir", descartar: "Descartar", adiar: "Adiar" }).map(([v, t]) => h("option", { value: v }, t)));
+    const valor = h("textarea", { name: "valor", className: estiloControle, rows: 2, maxLength: 500, value: i.valor_revisado || i.valor_original });
+    const dia = h("input", { type: "date", name: "adiado_ate", className: estiloControle });
+    const campoValor = campo("Valor corrigido", valor), campoDia = campo("Retomar revisão em", dia);
+    function ajustar() {
+      campoValor.hidden = acao.value !== "corrigir"; valor.required = !campoValor.hidden;
+      campoDia.hidden = acao.value !== "adiar"; dia.required = !campoDia.hidden;
+    }
+    acao.addEventListener("change", ajustar); ajustar();
+    const revisao = formulario(async (fd) => {
+      const corpo = { acao: fd.get("acao"), motivo: fd.get("motivo"), revisao: i.revisao };
+      if (corpo.acao === "corrigir") corpo.valor = fd.get("valor");
+      if (corpo.acao === "adiar") corpo.adiado_ate = fd.get("adiado_ate");
+      await api(`/api/clientes/${id}/contexto/${i.id}/revisar`, { method: "POST", corpo });
+      await atualizar();
+    }, campo("Decisão do assessor", acao), campoValor, campoDia,
+      campo("Motivo da decisão", h("input", { name: "motivo", required: true, maxLength: 1000, className: estiloControle })), botao("Registrar decisão"));
+    const assunto = formulario(async (fd) => {
+      await api(`/api/clientes/${id}/assuntos/${encodeURIComponent(i.assunto)}`, { method: "POST",
+        corpo: { bloqueado: !i.bloqueado, motivo: fd.get("motivo_assunto") } });
+      await atualizar();
+    }, aviso(i.bloqueado ? "Assunto bloqueado para contato com este cliente. O contexto permanece." : "Este assunto não está bloqueado para este cliente."),
+      campo("Motivo para mudar a permissão do assunto", h("input", { name: "motivo_assunto", required: true, maxLength: 1000, className: estiloControle })),
+      botao(i.bloqueado ? "Permitir assunto novamente" : "Bloquear assunto para contato"));
+    return h("article", { className: "border border-slate-200 rounded p-3 my-2 min-w-0" },
+      h("p", { className: "text-xs text-slate-600" }, `${rotulos[i.estado]} · ${i.tipo === "hipotese" ? "Hipótese" : "Fato extraído"} · sujeito: ${i.sujeito} · ${i.categoria}`),
+      h("p", { className: "font-medium my-2 whitespace-pre-wrap" }, i.valor_revisado || i.valor_original),
+      i.valor_revisado ? aviso(`Valor original da IA: ${i.valor_original}`) : null,
+      i.estado === "adiado" ? aviso(`Adiado até ${fmtDia(i.adiado_ate)}`) : null,
+      !i.evidencia_atual ? aviso("Evidência de versão anterior; confira a fonte atual.") : null,
+      i.conflitos.length ? h("p", { className: "text-sm text-amber-800 my-2" }, `Possível divergência com item(ns) ${i.conflitos.join(", ")}. Diferença textual exige sua avaliação.`) : null,
+      h("details", {}, h("summary", { className: "text-sm underline" }, "Conferir evidências e revisões"),
+        ...i.evidencias.map((e) => h("div", { className: "text-sm my-2" },
+          aviso(`${e.origem} · ${e.registro_id} · versão ${e.versao}${e.campo ? " · campo " + e.campo : ""}`),
+          h("blockquote", { className: "whitespace-pre-wrap border-l-2 pl-2" }, e.trecho))),
+        ...i.historico_revisoes.map((r) => aviso(`${fmtData(r.revisada_em)} · ${r.acao}: ${r.motivo}`))),
+      h("details", { open: i.estado === "pendente", className: "my-2" }, h("summary", { className: "text-sm underline" }, "Revisar proposta"), revisao),
+      h("details", {}, h("summary", { className: "text-sm underline" }, "Preferência deste assunto"), assunto));
+  }
+  function renderizar() {
+    const pendentes = dados.itens.filter((i) => i.estado === "pendente");
+    const outros = dados.itens.filter((i) => i.estado !== "pendente");
+    listas.replaceChildren(aviso(`${dados.fontes_novas} fonte(s) nova(s) · ${dados.modelo}`),
+      h("h3", { className: "font-semibold mt-3" }, `Fila de revisão (${pendentes.length})`),
+      ...(pendentes.length ? pendentes.map(item) : [aviso("Nenhuma proposta aguardando revisão.")]),
+      h("h3", { className: "font-semibold mt-3" }, `Contexto e decisões registradas (${outros.length})`), ...outros.map(item));
+  }
+  async function atualizar() { dados = await api(`/api/clientes/${id}/contexto`); renderizar(); }
+  renderizar();
+  return secao("Contexto para preparar o atendimento",
+    aviso("A IA organiza propostas com fontes para poupar sua busca. Você confere, corrige e decide o que usar na relação com o investidor. Nenhuma mensagem será enviada."),
+    !dados.configurado ? aviso("IA ainda sem chave configurada no backend. Seu contexto permanece disponível.") : null, processar, listas);
 }
 
 // ---------- Detalhe ----------
@@ -122,6 +244,19 @@ async function viewDetalhe(id) {
     return;
   }
   const recarregar = () => viewDetalhe(id);
+  const contexto = await painelContexto(id, recarregar);
+  let fontes = [], erroFontes = null;
+  try { ({ fontes } = await api(`/api/clientes/${id}/fontes`)); }
+  catch (e) { erroFontes = e.message; }
+  const fontesAtuais = new Map(fontes.filter((f) => f.atual && f.interacao_id).map((f) => [f.interacao_id, f]));
+  const identificarFonte = (f) => `${f.origem} · ${f.registro_id} · versão ${f.versao}`;
+  const itemFonte = (f) => h("li", { className: "border-t border-slate-100 py-2 first:border-0 text-sm" },
+    h("details", {}, h("summary", { className: "font-medium" },
+      `${f.tipo === "formulario" ? "Formulário" : CANAIS[f.canal]} · ${identificarFonte(f)} · ${f.atual ? "versão atual" : "versão anterior"}`),
+      h("p", { className: "text-xs text-slate-500 my-2" }, `Ocorrência: ${fmtData(f.ocorrida_em)} · importação: ${fmtData(f.importada_em)}`),
+      f.tipo === "formulario"
+        ? h("dl", {}, ...Object.entries(f.conteudo).flatMap(([k, v]) => [h("dt", { className: "font-medium" }, k), h("dd", { className: "mb-2 whitespace-pre-wrap" }, v)]))
+        : h("p", { className: "whitespace-pre-wrap" }, f.conteudo)));
   const pref = d.cliente.preferencias;
   const pendentes = d.alertas.filter((a) => a.estado === "pendente");
   const tratados = d.alertas.filter((a) => a.estado === "tratado");
@@ -187,6 +322,11 @@ async function viewDetalhe(id) {
     h("div", { className: "flex flex-wrap gap-2 items-center my-2" },
       tagPrioridade(d.prioridade),
       h("span", { className: "text-sm" }, rotuloRelacionamento(d.relacionamento))),
+    secao("Fontes do cliente",
+      aviso("Evidências originais do formulário e das conversas. Confirmação e correção acontecem na revisão de contexto."),
+      erroFontes ? h("p", { className: "text-red-700 text-sm", role: "alert" }, erroFontes)
+        : fontes.length ? h("ul", {}, ...fontes.map(itemFonte)) : aviso("Nenhuma fonte importada para este cliente.")),
+    contexto,
     secao("Resumo",
       h("ul", { className: "text-sm" }, ...d.resumo.fatos.map((f) =>
         h("li", { className: "mb-1" }, f.texto, h("span", { className: "block text-xs text-slate-500" }, fmtFonte(f.fonte))))),
@@ -201,6 +341,7 @@ async function viewDetalhe(id) {
             h("li", { className: "border-t border-slate-100 py-2 first:border-0 text-sm" },
               h("strong", {}, `${CANAIS[i.canal]} · ${fmtData(i.ocorrida_em)}`),
               h("p", {}, i.texto),
+              fontesAtuais.has(i.id) ? h("p", { className: "text-xs text-slate-500" }, `Fonte importada: ${identificarFonte(fontesAtuais.get(i.id))}`) : null,
               i.proximos_passos ? h("p", { className: "text-slate-600" }, `Próximos passos: ${i.proximos_passos}`) : null,
               h("p", { className: "text-xs text-slate-500" }, `Registrada em ${fmtData(i.registrada_em)}`))))
         : aviso("Nenhuma interação registrada.")),

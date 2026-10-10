@@ -61,6 +61,9 @@ Nunca use `pip` ou `python` direto no host: use `uv run`.
 - Menor mudança completa que resolve a causa; sem refatoração não pedida.
 - Regra nova: critério de aceite no `spec.md`, teste que falha, depois código.
 - Código novo: núcleo puro (regras) separado de I/O (rotas, banco).
+- SDD incremental: atualizar especificação e contrato antes dos testes/código.
+  A cada entrega, registrar mudanças de frontend/backend, evidências e limites
+  em `docs/registro-desenvolvimento.md`, usado para montar a apresentação.
 - Uma tarefa = uma branch `tipo/descricao-em-kebab-case` (`feat/`, `fix/`,
   `docs/`, `test/`). Cada pessoa valida a própria entrega.
 - Mudou classes Tailwind em JS/HTML? Rode `npm run css:build` e commite o CSS.
@@ -81,8 +84,10 @@ Nunca use `pip` ou `python` direto no host: use `uv run`.
 Login/permissões, envio de mensagens ou atas, integrações de canais, app nativo,
 análise tributária, dispensar/silenciar alertas. NewsAPI, reuniões e keynotes são
 a tarefa T08, depois do fluxo principal validado. Consumo de fontes existentes,
-extração, supervisão e feedback são a evolução T09 já planejada pelo usuário;
-ainda não implementada. IA para extração não altera o resumo por template da base.
+extração, supervisão e feedback são a evolução T09 autorizada pelo usuário.
+T09.1 importa JSON fictício e preserva evidências; T09.2/T09.3 acrescentam Gemini,
+revisão, correções e bloqueio por cliente. Chamada real validada em amostra fictícia;
+IA para extração não altera o resumo por template da base.
 
 ## Materiais locais
 `material-local/` (PDF do evento, comandos, guias) é pessoal, fica fora do Git e

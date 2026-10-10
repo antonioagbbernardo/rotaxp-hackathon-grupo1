@@ -1,8 +1,9 @@
 # Arquitetura — plataforma de assessores
 
 Status: arquitetura da base Flask/Tailwind integrada em 10/10/2026.
-NewsAPI, fonte existente, inferência de contexto e feedback são a direção
-planejada do produto; esses módulos ainda não estão implementados.
+Importação de fonte JSON fictícia é o primeiro incremento SDD implementado.
+Extração Gemini e revisão persistida são o incremento 02; chamada real validada
+com amostra fictícia. Conexão aos canais reais, NewsAPI e reuniões planejados.
 
 ## Stack
 
@@ -41,6 +42,9 @@ distribuídos. Web responsiva não é app nativo e não deve ser apresentada com
 | API JSON | Validar entradas, chamar regras, devolver JSON e erros padronizados |
 | Regras | Prioridade (RN11), vencimentos (RN03/04), aniversários (RN12), preferências (RN13), `Clock` injetável |
 | Persistência | Assessor, clientes, posições, interações, datas importantes, avaliações de relacionamento e tratamentos de alerta |
+| Ingestão de fontes | `fontes_rules.py` valida sem I/O; `fontes.py` importa JSON em transação; API/CLI usam o mesmo serviço |
+| Contexto | `contexto_rules.py` valida saída/evidência e revisão; `contexto.py` persiste processamento incremental, correções e bloqueios |
+| Provedor de IA | `ia_gemini.py`, REST HTTPS, chave no backend, timeout 30 s, sem ferramentas ou fallback simulado |
 | Preparação de reunião (planejada) | Combina contexto interno e notícias em pauta versionada; preserva notas manuais |
 | Resumo | Template determinístico; cada fato com `{tipo_fonte, id_fonte, data_referencia}` (RN08); sem LLM |
 
@@ -58,6 +62,9 @@ da pauta abaixo são entidades planejadas, ainda ausentes do schema.
 | DataImportante | Pertence a cliente; origem dos alertas de aniversário |
 | Avaliação do relacionamento | Histórico: estado, justificativa, assessor, data |
 | Tratamento de alerta | Única entidade persistida do alerta: chave de ocorrência, `tratado_em`, `assessor_id` |
+| DocumentoFonte | Evidência imutável por origem/registro/versão; vínculo resolvido ou pendência, conteúdo original e referência à interação |
+| ProcessamentoContexto / ItemContexto | Cache por fontes/modelo/prompt; proposta pendente com sujeito e evidência, sem alterar cadastro da base |
+| RevisãoContexto / PreferênciaAssunto / HistóricoAssunto | Decisão, motivo, assessor e data; bloqueio individual sem apagar contexto |
 | Interesse / Evento | Assunto compartilhado e notícia/evento com fonte; só após o fluxo principal |
 | Reunião | Objetivo, início/fuso, responsável e estado; pertence a cliente; pode ter interação de conclusão |
 | Versão da pauta | Conteúdo, fontes, versão dos dados e data; pertence a reunião; notas manuais em campo separado |
@@ -109,19 +116,21 @@ reuniões na janela definida. Alterações internas podem renovar a pauta sem no
 busca externa; mudanças de data ou estado reconciliam disparos. Reunião concluída
 preserva a pauta usada e a interação resultante.
 
-## Evolução planejada: contexto e supervisão
+## Contexto e supervisão — incremento 02
 
 A fonte de formulário/transcrições/e-mails/WhatsApp Business já existe por premissa.
-Um adaptador futuro deve preservar identidade, origem e versão. O processador
+O primeiro adaptador JSON já preserva identidade, origem e versão; não conecta
+provedores reais. O processador implementado
 propõe fatos e hipóteses com evidências; o assessor aprova, corrige ou descarta
 e fornece feedback com alcance explícito por item, assunto ou cliente.
 
-Entidades propostas: documento de origem, formulário versionado, item de contexto,
-lembrança/sugestão e feedback. Persistência desses itens não significa persistir
+Documento de origem e formulário versionado já usam `documento_fonte`.
+Itens, revisões e bloqueios já persistem; lembretes derivados continuam propostos.
+Persistência desses itens não significa persistir
 cópias dos alertas de vencimento/aniversário da base. Correções humanas são
 preservadas; nova evidência conflitante gera revisão.
 
-O template atual permanece como resumo da base; extração/inferência planejada
+O template atual permanece como resumo da base; extração/inferência
 acrescenta contexto revisável sem transformar hipóteses em fatos confirmados.
 Detalhes: [contexto e feedback](../integracoes/contexto-investidor.md).
 
@@ -129,5 +138,5 @@ Detalhes: [contexto e feedback](../integracoes/contexto-investidor.md).
 
 - Fonte real das posições (Open Finance etc.) e análises de risco/tributárias.
 - Autenticação, autorização e acesso multiassessor, gestor/investidor.
-- Contrato e acesso à fonte existente, modelo/provedor de extração e custo.
+- Contrato/acesso à fonte existente e custo/qualidade real do Gemini configurado.
 - Armazenamento, correção, exclusão e retenção de dados pessoais.

@@ -3,8 +3,12 @@ import unicodedata
 from flask import Blueprint, current_app, jsonify, request
 
 from . import alertas as alertas_mod
+from . import contexto as contexto_ia
+from .contexto_rules import ErroContexto
 from .clock import TZ, formatar_utc, parse_instante
 from .db import get_db
+from .fontes import consultar_fontes, importar_lote
+from .fontes_rules import ErroFonte
 from .resumo import ROTULO_ESTADO, montar_resumo
 from .rules import INTERVALOS_VALIDOS
 from .seed import ASSESSOR_ID
@@ -24,6 +28,54 @@ class ErroApi(Exception):
 @bp.errorhandler(ErroApi)
 def _erro(e: ErroApi):
     return jsonify({"erro": {"codigo": e.codigo, "campo": e.campo, "mensagem": e.mensagem}}), e.status
+
+
+@bp.errorhandler(ErroFonte)
+@bp.errorhandler(ErroContexto)
+def _erro_fonte(e: ErroFonte):
+    return _erro(e)
+
+
+@bp.post("/fontes/importar")
+def importar_fontes():
+    return jsonify(importar_lote(request.get_json(silent=True)))
+
+
+@bp.get("/fontes/pendencias")
+def pendencias_fontes():
+    return jsonify({"pendencias": consultar_fontes(pendentes=True)})
+
+
+@bp.get("/clientes/<int:cliente_id>/fontes")
+def fontes_cliente(cliente_id: int):
+    _cliente_ou_404(get_db(), cliente_id)
+    return jsonify({"fontes": consultar_fontes(cliente_id)})
+
+
+@bp.get("/clientes/<int:cliente_id>/contexto")
+def consultar_contexto(cliente_id):
+    _cliente_ou_404(get_db(), cliente_id)
+    return jsonify(contexto_ia.consultar(cliente_id))
+
+
+@bp.post("/clientes/<int:cliente_id>/contexto/processar")
+def processar_contexto(cliente_id):
+    _cliente_ou_404(get_db(), cliente_id)
+    if request.get_data():
+        raise ErroApi("entrada_invalida", "Esta rota não recebe corpo; fontes e modelo vêm do backend.", campo="corpo")
+    return jsonify(contexto_ia.processar(cliente_id))
+
+
+@bp.post("/clientes/<int:cliente_id>/contexto/<int:item_id>/revisar")
+def revisar_contexto(cliente_id, item_id):
+    _cliente_ou_404(get_db(), cliente_id)
+    return jsonify(contexto_ia.revisar(cliente_id, item_id, request.get_json(silent=True)))
+
+
+@bp.post("/clientes/<int:cliente_id>/assuntos/<assunto>")
+def alterar_assunto(cliente_id, assunto):
+    _cliente_ou_404(get_db(), cliente_id)
+    return jsonify(contexto_ia.alterar_assunto(cliente_id, assunto, request.get_json(silent=True)))
 
 
 def _clock():
