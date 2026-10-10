@@ -58,10 +58,12 @@ def test_nota_confirmada_no_contexto_e_pauta_sem_contato_falso(ambiente):
     cliente = next(r for r in antes if r['id'] == '1')
     fake.saida['nota_sugerida'] = 'O cliente prefere reuniões à tarde.'
     turno = perguntar(c, 'Anote: o cliente prefere reuniões à tarde.').get_json()
-    assert c.get('/api/pulse/clientes/1/chat').get_json()['notas'] == []
+    assert turno['nota_id'] is not None
+    assert len(c.get('/api/pulse/clientes/1/chat').get_json()['notas']) == 1
     caminho = f"/api/pulse/clientes/1/chat/{turno['id']}/nota"
     assert c.post(caminho).status_code == 200 and c.post(caminho).status_code == 200
     assert c.post(f"/api/pulse/clientes/2/chat/{turno['id']}/nota").status_code == 404
+    fake.saida['nota_sugerida'] = None
     perguntar(c, 'Qual horário ele prefere?')
     assert any('reuniões à tarde' in f['texto'] for f in fake.chamadas[-1][0]['fatos'])
     atual = next(r for r in c.get('/api/pulse').get_json()['clients'] if r['id'] == '1')
@@ -109,8 +111,8 @@ def test_interesse_chat_confirmado_alimenta_contexto_noticias_sem_contato(ambien
         {'categoria': 'interesse', 'assunto': 'formula-1', 'sujeito': 'cliente', 'valor': 'Gosta de Fórmula 1.', 'trecho': 'gosta de Fórmula 1'},
         {'categoria': 'preferencia', 'assunto': 'horario-reuniao', 'sujeito': 'cliente', 'valor': 'Prefere reuniões à tarde.', 'trecho': 'prefere reuniões à tarde'}]
     turno = perguntar(c, pergunta).get_json()
-    assert len(turno['contexto_sugerido']) == 2 and turno['nota_id'] is None
-    assert not c.get('/api/clientes/1/contexto').get_json()['itens']
+    assert len(turno['contexto_sugerido']) == 2 and turno['nota_id'] is not None
+    assert len(c.get('/api/clientes/1/contexto').get_json()['itens']) == 2
     caminho = f"/api/pulse/clientes/1/chat/{turno['id']}/nota"
     assert c.post(caminho).status_code == 200 and c.post(caminho).status_code == 200
     atual = next(r for r in c.get('/api/pulse').get_json()['clients'] if r['id'] == '1')
@@ -167,3 +169,26 @@ def test_migracao_preserva_fontes_antigas_e_amplia_tipo_nota(tmp_path):
         assert 'contexto_sugerido' in {r['name'] for r in db.execute('PRAGMA table_info(chat_turno)')}
         db.execute("INSERT INTO documento_fonte(origem,registro_id,versao,cliente_id,tipo,conteudo,ocorrida_em,importada_em) VALUES('chat-assessor','chat-1',1,1,'nota_assessor','\"informação declarada\"','2026-10-10T12:00:00+00:00','2026-10-10T12:00:00+00:00')")
         assert not db.execute('PRAGMA foreign_key_check').fetchall()
+
+
+def test_gravacao_automatica_atomica_e_retry_sem_duplicar(ambiente, monkeypatch):
+    from app import contexto_chat
+    from app.agenda_rules import ErroAgenda
+    app, c, fake = ambiente
+    fake.saida['nota_sugerida'] = 'Cliente gosta de Palmeiras.'
+    fake.saida['contexto_sugerido'] = [{'categoria': 'interesse', 'assunto': 'palmeiras', 'sujeito': 'cliente',
+        'valor': 'Gosta de Palmeiras.', 'trecho': 'gosta de Palmeiras'}]
+    original = contexto_chat.registrar
+    def falhar(*args):
+        raise ErroAgenda('Falha de gravação simulada.', 'contexto', 503)
+    monkeypatch.setattr(contexto_chat, 'registrar', falhar)
+    rid = str(uuid4())
+    assert perguntar(c, 'Cliente gosta de Palmeiras.', request_id=rid).status_code == 503
+    assert c.get('/api/pulse/clientes/1/chat').get_json()['notas'] == []
+    assert c.get('/api/pulse/clientes/1/chat').get_json()['mensagens'] == []
+    monkeypatch.setattr(contexto_chat, 'registrar', original)
+    turno = perguntar(c, 'Cliente gosta de Palmeiras.', request_id=rid).get_json()
+    assert turno['nota_id'] is not None
+    assert perguntar(c, 'Cliente gosta de Palmeiras.', request_id=rid).get_json()['nota_id'] == turno['nota_id']
+    assert len(c.get('/api/pulse/clientes/1/chat').get_json()['notas']) == 1
+    assert len(c.get('/api/clientes/1/contexto').get_json()['itens']) == 1

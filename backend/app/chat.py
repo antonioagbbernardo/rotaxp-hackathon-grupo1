@@ -1,4 +1,4 @@
-"""Conversa OpenAI por cliente; notas dependem de confirmação do assessor."""
+"""Conversa OpenAI por cliente; dados declarados são registrados automaticamente."""
 import json
 from datetime import timedelta
 from uuid import UUID, uuid4
@@ -88,7 +88,7 @@ def responder(cliente, entrada):
     try:
         fatos, fontes = _entrada(cliente)
         fontes['mensagem-atual'] = {'id': 'mensagem-atual', 'texto': pergunta,
-            'fonte': f'mensagem do assessor no chat #{rid} · informação fornecida na conversa, sujeita à confirmação'}
+            'fonte': f'mensagem do assessor no chat #{rid} · informação fornecida pelo assessor'}
         fatos['fatos'] = list(fontes.values())
         historico = db.execute("SELECT pergunta,resposta FROM chat_turno WHERE cliente_id=? AND estado='concluido' ORDER BY id DESC LIMIT 10", (cid,)).fetchall()
         mensagens = []
@@ -106,10 +106,12 @@ def responder(cliente, entrada):
         from .contexto_chat import validar
         propostas = validar(saida.get('contexto_sugerido', []), pergunta)
         if propostas and not saida['nota_sugerida']:
-            raise ErroAgenda('Contexto novo exige uma nota para confirmação.', 'contexto_sugerido', 502)
+            raise ErroAgenda('Contexto novo exige uma nota com a informação declarada.', 'contexto_sugerido', 502)
         referencias = list(dict.fromkeys(fontes[f]['fonte'] for f in saida['fontes']))
         db.execute("UPDATE chat_turno SET estado='concluido',resposta=?,fontes=?,nota_sugerida=?,contexto_sugerido=? WHERE id=?",
             (saida['resposta'].strip(), json.dumps(referencias, ensure_ascii=False), saida['nota_sugerida'], json.dumps(propostas, ensure_ascii=False), rid))
+        if saida['nota_sugerida']:
+            _salvar_nota(db, db.execute('SELECT * FROM chat_turno WHERE id=?', (rid,)).fetchone(), formatar_utc(clock.agora()))
         db.commit()
     except Exception:
         db.rollback()
@@ -117,6 +119,14 @@ def responder(cliente, entrada):
         db.commit()
         raise
     return _expor(db.execute('SELECT * FROM chat_turno WHERE id=?', (rid,)).fetchone())
+
+
+def _salvar_nota(db, turno, agora):
+    from .contexto_chat import registrar
+    db.execute('INSERT OR IGNORE INTO nota_assessor(cliente_id,turno_id,texto,evidencia,registrada_em) VALUES (?,?,?,?,?)',
+        (turno['cliente_id'], turno['id'], turno['nota_sugerida'], turno['pergunta'], agora))
+    nota = db.execute('SELECT * FROM nota_assessor WHERE turno_id=?', (turno['id'],)).fetchone()
+    registrar(db, turno, nota, agora)
 
 
 def confirmar_nota(cid, rid):
@@ -128,14 +138,10 @@ def confirmar_nota(cid, rid):
         raise ErroAgenda('Mensagem inexistente para este cliente.', 'turno_id', 404)
     if not r['nota_sugerida']:
         raise ErroAgenda('Essa mensagem não contém uma nota para confirmar.', 'turno_id')
-    from .contexto_chat import registrar
     db.execute('BEGIN IMMEDIATE')
     try:
         agora = formatar_utc(current_app.config['CLOCK'].agora())
-        db.execute('INSERT OR IGNORE INTO nota_assessor(cliente_id,turno_id,texto,evidencia,registrada_em) VALUES (?,?,?,?,?)',
-            (cid, rid, r['nota_sugerida'], r['pergunta'], agora))
-        nota = db.execute('SELECT * FROM nota_assessor WHERE turno_id=?', (rid,)).fetchone()
-        registrar(db, r, nota, agora)
+        _salvar_nota(db, r, agora)
         db.commit()
     except Exception:
         db.rollback()

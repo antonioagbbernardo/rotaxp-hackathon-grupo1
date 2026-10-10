@@ -24,7 +24,7 @@ export function ClientWorkspace({ client, onUpdated }: { client: Client; onUpdat
     </Panel>
     <Panel className="p-5"><details><summary className="cursor-pointer text-sm font-medium">Formulário e conversas originais ({client.sourceDocuments?.length ?? 0})</summary>
       {client.sourceDocuments?.map((f) => <details key={f.id} className="mt-3 rounded-lg border border-line p-3">
-        <summary className="cursor-pointer text-xs">{f.tipo === 'formulario' ? 'Formulário' : f.tipo === 'nota_assessor' ? 'Informação confirmada pelo chat' : f.canal} · {f.registro_id} v{f.versao} · {f.atual ? 'atual' : 'anterior'}</summary>
+        <summary className="cursor-pointer text-xs">{f.tipo === 'formulario' ? 'Formulário' : f.tipo === 'nota_assessor' ? 'Informação registrada pelo chat' : f.canal} · {f.registro_id} v{f.versao} · {f.atual ? 'atual' : 'anterior'}</summary>
         <p className="mt-2 text-[10px] text-ink-muted">{f.origem} · {formatDate(f.ocorrida_em)}</p>
         {typeof f.conteudo === 'string' ? <p className="mt-2 whitespace-pre-wrap text-xs">{f.conteudo}</p> : <dl className="mt-2 text-xs">{Object.entries(f.conteudo).map(([k, v]) => <div key={k} className="mt-2"><dt className="text-ink-muted">{k}</dt><dd className="whitespace-pre-wrap">{v}</dd></div>)}</dl>}
       </details>)}

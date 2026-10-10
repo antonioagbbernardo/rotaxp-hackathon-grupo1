@@ -31,17 +31,8 @@ export function NewsSection({ client, onUpdated }: NewsSectionProps) {
     try {
       const result = await api<InterestProposal>(`/api/pulse/clientes/${client.id}/chat`, { method: 'POST', body: { pergunta: `Informação fornecida pelo assessor sobre os interesses e contexto deste cliente: ${interest.trim()}`, request_id: crypto.randomUUID() } })
       setProposal(result)
+      if (result.nota_id) { setInterest(''); setNotice('Contexto salvo automaticamente. Os interesses alimentam a seleção de notícias.'); await onUpdated() }
     } catch (e) { setError(e instanceof Error ? e.message : 'Não foi possível preparar o interesse.') }
-    finally { setBusy(false) }
-  }
-  async function confirmInterest() {
-    if (busy || !proposal) return
-    setBusy(true); setError('')
-    try {
-      await api(`/api/pulse/clientes/${client.id}/chat/${proposal.id}/nota`, { method: 'POST' })
-      setProposal(null); setInterest(''); setNotice('Contexto salvo. Os interesses identificados serão usados na seleção de notícias.')
-      await onUpdated()
-    } catch (e) { setError(e instanceof Error ? e.message : 'Não foi possível salvar o interesse.') }
     finally { setBusy(false) }
   }
   async function collect() {
@@ -91,12 +82,7 @@ export function NewsSection({ client, onUpdated }: NewsSectionProps) {
         </form>
         {proposal && <div className="mt-3 space-y-2">
           <p className="whitespace-pre-wrap leading-5">{proposal.resposta}</p>
-          {proposal.nota_sugerida && !proposal.nota_id && <>
-            <p className="leading-5">{proposal.nota_sugerida}</p>
-            {proposal.contexto_sugerido?.map((c, i) => <p key={i} className="text-[11px] text-ink-muted">{c.categoria} · {c.sujeito}: {c.valor}<span className="block">Sua mensagem: “{c.trecho}”</span></p>)}
-            <p className="text-[10px] text-ink-muted">A confirmação atualiza o contexto, substitui informações anteriores do mesmo assunto e alimenta as notícias, preservando o histórico.</p>
-            <Button disabled={busy} onClick={() => { void confirmInterest() }}>Confirmar e salvar contexto</Button>
-          </>}
+          {proposal.nota_id && <p className="text-[11px] text-ink-muted">Informação registrada automaticamente no contexto do cliente.</p>}
         </div>}
       </details>
 

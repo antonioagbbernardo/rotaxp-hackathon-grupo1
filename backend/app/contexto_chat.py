@@ -1,4 +1,4 @@
-"""Contexto declarado no chat, validado e salvo junto à confirmação humana da nota."""
+"""Contexto declarado pelo assessor no chat, validado e salvo automaticamente."""
 import json
 
 from flask import current_app
@@ -47,11 +47,11 @@ def registrar(db, turno, nota, agora):
             rev = anterior['revisao'] + 1
             db.execute("UPDATE item_contexto SET estado='descartado',revisao=? WHERE id=?", (rev, anterior['id']))
             db.execute('INSERT INTO revisao_contexto(item_id,acao,motivo,assessor_id,revisao,revisada_em) VALUES(?,?,?,?,?,?)',
-                (anterior['id'], 'descartar', f'Atualizado pela nota confirmada #{nota["id"]} no chat.', ASSESSOR_ID, rev, agora))
+                (anterior['id'], 'descartar', f'Atualizado pela informação declarada no chat; nota #{nota["id"]}.', ASSESSOR_ID, rev, agora))
         provas = [{'documento_id': did, 'campo': None, 'trecho': p['trecho']}]
         iid = db.execute('INSERT INTO item_contexto(cliente_id,processamento_id,categoria,assunto,sujeito,tipo,'
             'valor_original,evidencias,gerado_em,estado,revisao) VALUES(?,?,?,?,?,?,?,?,?,?,1)',
             (cid, pid, p['categoria'], p['assunto'], p['sujeito'], 'fato', p['valor'],
              json.dumps(provas, ensure_ascii=False), agora, 'confirmado')).lastrowid
         db.execute('INSERT INTO revisao_contexto(item_id,acao,motivo,assessor_id,revisao,revisada_em) VALUES(?,?,?,?,1,?)',
-            (iid, 'aprovar', f'Informação declarada e confirmada pelo assessor no chat; nota #{nota["id"]}.', ASSESSOR_ID, agora))
+            (iid, 'aprovar', f'Informação declarada diretamente pelo assessor no chat e registrada automaticamente; nota #{nota["id"]}.', ASSESSOR_ID, agora))
