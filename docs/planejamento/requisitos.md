@@ -1,6 +1,8 @@
 # Requisitos e etapas de implementação do MVP
 
-**Status:** base Flask/Tailwind integrada; requisitos de consumo de fontes, inferência, feedback, notícias e reuniões ainda planejados.
+**Status:** base Flask/Tailwind, ingestão JSON fictícia e contexto/revisão implementados;
+Gemini testado com simulação e uma amostra fictícia real. Fonte real,
+lembranças derivadas, notícias e reuniões ainda planejadas.
 **Referências:** [especificação](spec.md), [arquitetura](design.md) e [tarefas](tasks.md).
 **Usuário principal proposto:** assessor de investimentos.
 **Revisado em:** 10/10/2026. Fontes existentes, inferência de contexto, supervisão humana e feedback são o núcleo do produto.
@@ -246,6 +248,10 @@ calculada pelo motor de alertas da base (RN11).
 
 ### Etapa 3 — Consumir as fontes existentes
 
+Primeiro incremento implementado: importação JSON fictícia, versões,
+identidade/pendências e histórico. Contrato interno e testes em
+[incremento SDD 01](incrementos/01-fontes.md). O acesso à fonte real permanece pendente.
+
 **Fazer:** implementar RF03/RF04/RF16/RF25. Ler a fonte por adaptador, validar
 identificação do cliente e manter origem, data e versão. Importação incremental
 e idempotente deve evitar duplicação. Separar registros de identidade ambígua
@@ -261,8 +267,9 @@ sem contaminar o contexto confirmado.
 **Fazer:** implementar RF05/RF09/RF10/RF26–RF30. Extrair informações estruturadas
 com referência ao trecho de origem; classificar fatos, hipóteses e conflitos.
 Sugerir interesses, datas, compromissos e preferências para revisão. Processar
-novas versões dos dados e preservar correções humanas. IA é proposta para essa
-extração; modelo e provedor estão pendentes. Na indisponibilidade, manter contexto
+novas versões dos dados e preservar correções humanas. Gemini e revisão
+implementados no [incremento 02](incrementos/02-contexto-revisao.md); testes com
+simulação não comprovam qualidade do modelo. Na indisponibilidade, manter contexto
 anterior e sinalizar que os novos registros aguardam processamento.
 
 **Validar:** fonte correta, negação, terceiros, aniversário ambíguo, conflitos,
@@ -363,8 +370,9 @@ aos nomes em português dos contratos atuais antes da implementação.
 ## 7. Aceite e plano de testes
 
 CA01–CA10 e CA34–CA39 estão em `spec.md`. CA06 e os cenários de importação,
-inferência, feedback, notícias e reuniões ainda dependem da evolução; os testes
-da base não comprovam essas capacidades. CA26–CA33 publicados na main foram
+notícias, reuniões e lembretes derivados ainda dependem da evolução. Fontes e
+contexto/revisão têm CA40–CA56 nos incrementos; testes simulados não comprovam
+qualidade do modelo real. CA26–CA33 publicados na main foram
 preservados; critérios da branch com IDs coincidentes passaram para CA34–CA39.
 Complementos:
 

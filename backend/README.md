@@ -33,10 +33,44 @@ O app roda só em `127.0.0.1`, sem login, e **não deve receber dados reais**.
    a prioridade).
 6. **Preferências:** canal, intervalo mínimo entre contatos e permissão para
    assuntos pessoais (sem permissão, não há alerta de aniversário).
+7. **Importar fonte fictícia:** na lista, selecione `dados/fonte-demo.json`.
+   Consulte fontes e versões no detalhe; identidades não resolvidas ficam na
+   lista de pendências. Importação não confirma informações do formulário.
+8. **Contexto:** processe fontes novas com IA, confira os trechos e registre
+   aprovação, correção, descarte ou adiamento com motivo. Bloquear assunto vale
+   só para este cliente e mantém o contexto. Nenhuma decisão envia mensagem.
+
+### Configurar IA (incremento SDD 02)
+
+Em `backend/.env` local, ignorado pelo Git:
+
+```dotenv
+GEMINI_API_KEY=sua-chave-local
+GEMINI_MODEL=gemini-3.5-flash-lite
+```
+
+Reinicie o Flask após configurar. Variáveis de ambiente prevalecem sobre `.env`.
+Processamento usa apenas fontes fictícias novas do cliente. Sem novidades,
+reutiliza contexto; falhas preservam revisões e mostram erro. Sem chave não há
+resposta simulada automática. [Contrato/aceites](../docs/planejamento/incrementos/02-contexto-revisao.md).
+
+### Fonte simulada (incremento SDD 01)
+
+Dentro de `backend/`, depois do seed:
+
+```bash
+uv run flask --app app importar-fontes dados/fonte-demo.json
+```
+
+O arquivo contém 14 documentos fictícios: três formulários, nove conversas
+(telefone/e-mail/WhatsApp) e duas identidades pendentes. Repetir a importação
+reutiliza as mesmas versões, sem duplicar o histórico. Novas versões preservam
+evidências anteriores. Há também importação pelo seletor de arquivo na interface.
+Contrato e testes: [incremento 01](../docs/planejamento/incrementos/01-fontes.md).
 
 ### Dados e testes
 ```bash
-uv run --locked pytest                          # testes (47)
+uv run --locked pytest                          # regras, API e fontes
 uv run flask --app app seed                     # não sobrescreve base já populada
 uv run flask --app app reset-demo               # apaga tudo e recria a demonstração
 ```
@@ -79,9 +113,13 @@ O CSS compilado (`app/static/css/app.css`) é versionado, então o clone roda se
 | `app/resumo.py` | Resumo por template com fontes (RN08) |
 | `app/api.py` | Rotas JSON `/api/...` (lista, detalhe, interações, relacionamento, preferências, tratar) |
 | `app/db.py`, `app/seed.py` | Schema SQLite e dados fictícios com datas relativas |
+| `app/fontes_rules.py`, `app/fontes.py`, `dados/` | Validação, ingestão transacional e fonte JSON fictícia |
+| `app/contexto_rules.py`, `app/contexto.py`, `app/ia_gemini.py` | Evidências, cache incremental, Gemini REST e supervisão persistida |
 | `app/templates`, `app/static/js` | Página base e JS que consome a API |
 | `tests/` | pytest (regras, alertas, API, persistência, relógio, seed) |
 
-Ainda planejados: consumo de fontes existentes, inferência e feedback (T09);
-NewsAPI, reuniões e keynotes (T08). A base registra interações manualmente e não
-importa conversas nem executa extração por IA. Ver [visão do produto](../docs/visao-geral.md).
+Importação fictícia e contexto/revisão implementados, com 125 testes aprovados
+(chamadas ao provedor/transporte simuladas).
+Chamada Gemini real validada em amostra fictícia; conexão à fonte real, NewsAPI, reuniões e
+keynotes seguem planejados. Ver [visão do produto](../docs/visao-geral.md)
+e [registro para apresentação](../docs/registro-desenvolvimento.md).

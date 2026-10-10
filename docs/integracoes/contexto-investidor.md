@@ -2,8 +2,11 @@
 
 **Direção definida em 10/10/2026:** partir do formulário inicial e das conversas
 já disponíveis. Extrair contexto, sugerir o que vale lembrar e permitir que o
-assessor decida o que é pertinente. Esse fluxo de extração e feedback ainda não está implementado; a base de consulta
-e acompanhamento já existe.
+assessor decida o que é pertinente. Extração e revisão persistida implementadas
+no [incremento 02](../planejamento/incrementos/02-contexto-revisao.md), com testes
+de provedor simulado e uma chamada real com dados fictícios. Lembranças derivadas e
+seleção de notícias ainda são propostas. A entrada de fontes JSON fictícias e consulta de
+evidências versionadas estão implementadas no [incremento 01](../planejamento/incrementos/01-fontes.md).
 
 ## 1. O que já existe por premissa
 
@@ -59,7 +62,7 @@ Identificar pelo vínculo fornecido pela fonte; nome parecido não basta para
 juntar históricos. Registros ambíguos ficam pendentes. Guardar identificador e
 versão de origem para evitar importação e análise duplicadas.
 
-IA pode realizar a extração em formato estruturado. Validar campos e referências
+Gemini configurável realiza a extração em formato estruturado. Validar campos e referências
 no backend antes de exibir. Conteúdo de conversas é dado de análise, não instrução
 para a ferramenta executar ações. Processar apenas novidades e contexto necessário.
 
