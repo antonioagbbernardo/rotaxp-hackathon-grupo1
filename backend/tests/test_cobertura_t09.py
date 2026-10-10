@@ -49,12 +49,13 @@ def test_ca40_conteudo_com_espacos_nas_pontas_volta_identico(client):
 
 
 def test_ca41_reimportar_formulario_com_respostas_em_outra_ordem_nao_conflita(client):
-    primeiro = documento(registro_id="f", tipo="formulario", conteudo={"a": "1", "b": "2"})
-    primeiro.pop("canal")
-    segundo = documento(registro_id="f", tipo="formulario", conteudo={"b": "2", "a": "1"})
-    segundo.pop("canal")
-    assert importar(client, lote(primeiro)).status_code == 200
-    r = importar(client, lote(segundo))
+    def enviar(corpo_json):  # corpo bruto: json= do cliente de teste reordena as chaves
+        return client.post("/api/fontes/importar", data=corpo_json, content_type="application/json")
+    base = ('{"origem": "teste-ficticio", "ficticio": true, "documentos": [{"registro_id": "f", "versao": 1,'
+            ' "cliente_id": 1, "tipo": "formulario", "ocorrida_em": "2026-10-09T10:00:00-03:00",'
+            ' "conteudo": %s}]}')
+    assert enviar(base % '{"a": "1", "b": "2"}').status_code == 200
+    r = enviar(base % '{"b": "2", "a": "1"}')
     assert r.status_code == 200
     assert r.get_json() == {"importados": 0, "reutilizados": 1, "pendentes": 0}
 

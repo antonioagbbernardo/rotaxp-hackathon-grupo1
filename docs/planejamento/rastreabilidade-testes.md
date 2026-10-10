@@ -4,7 +4,7 @@ Status: levantamento de 10/10/2026 na branch `test/cobertura-ca-base`, com a
 `main` de 75d7898 (inclui T09). Os testes não citam IDs `CA` no código; a ligação abaixo vem
 da leitura do corpo de cada teste. Novos testes: `backend/tests/test_cobertura_ca.py`.
 
-Verificação (execução real): `uv run --locked pytest` → **172 passaram** (125 da `main` + 47 de `test_cobertura_ca.py`).
+Verificação (execução real): `uv run --locked pytest` → **244 passaram** (125 da `main` + 47 de `test_cobertura_ca.py` + 72 de `test_cobertura_t09.py`).
 
 ## Como foi avaliado
 
@@ -47,34 +47,46 @@ Legenda: **Coberto**, **Parcial**, **Sem teste automatizado**,
 | CA39 | `test_cobertura_ca::test_ca39_*`, `test_alertas::test_ca39_calculo_e_idempotente_sem_duplicar` | Coberto: contagens e chaves únicas |
 | RN11 | `test_cobertura_ca::test_rn11_*` | Coberto, incluindo desempate por nome |
 
-## T09 (CA40–CA56): incrementos 01 e 02 (testes em `main`)
+## T09 (CA40–CA56): incrementos 01 e 02
 
-Os testes passam a trazer o ID no nome (`test_caNN_...` ou `test_rnNN_...`).
-Estes testes ainda **não passaram por revisão independente nem mutação**; o
-mapeamento abaixo vem do nome e da descrição do CA, não de leitura do corpo.
-Os CA26–CA33 da proposta antiga (`test/aceite-congelados`) foram substituídos
-por estes e a branch está obsoleta.
+Os testes trazem o ID no nome (`test_caNN_...` ou `test_rnNN_...`). Os da
+equipe estão em `test_fontes.py`, `test_contexto.py` e `test_ia_gemini.py`; os
+acrescentados após a revisão estão em `test_cobertura_t09.py`.
+
+Avaliação: dois revisores de fidelidade (Opus e Fable) e dois de mutação (Opus:
+88 mutantes, 54 mortos; Fable: 84 contabilizados, 56 mortos). Os sobreviventes
+e os "mortos pelo motivo errado" viraram testes novos. Reaplicados os 39
+mutantes sobreviventes, **39/39 morreram**. Isso mostra sensibilidade, não
+ausência de defeitos. O provedor Gemini é simulado: a forma real da resposta
+da API não é verificada por pytest.
 
 | CA | Testes | Situação |
 | --- | --- | --- |
-| CA40 | `test_fontes::test_ca40_*` (3) | A revisar |
-| CA41 | `test_fontes::test_ca41_reimportacao_idempotente_apos_reinicio` | A revisar |
-| CA42 | `test_fontes::test_ca42_identidade_nao_resolvida_*` | A revisar |
-| CA43 | `test_fontes::test_ca43_*` (2) | A revisar |
-| CA44 | `test_fontes::test_ca44_conflito_nao_grava_parte_do_lote` | A revisar |
-| CA45 | `test_fontes::test_ca45_*` (4) | A revisar |
-| CA46 | `test_fontes::test_ca40_importa_formulario_e_conversa_sem_alterar_decisoes_humanas` | A revisar |
-| CA47 | — | **Sem teste automatizado** (interface; o texto do incremento admite verificação visual parcial) |
-| CA48 | `test_contexto::test_ca48_*` (2) | A revisar |
-| CA49 | `test_contexto::test_ca49_cache_novidades_e_correcao_persistem_apos_reinicio` | A revisar |
-| CA50 | `test_contexto::test_ca50_*` (2), `test_ia_gemini::test_ca50_*` | A revisar |
-| CA51 | `test_contexto::test_ca51_acoes_humanas_e_adiamento` | A revisar |
-| CA52 | `test_contexto::test_ca52_*` (2) | A revisar |
-| CA53 | `test_contexto::test_ca53_*` (2) | A revisar |
-| CA54 | `test_contexto::test_ca54_*` (2), `test_ia_gemini::test_ca54_*` (3) | A revisar |
-| CA55 | `test_contexto::test_ca55_*` (2) | A revisar |
+| CA40 | `test_fontes::test_ca40_*`, `test_cobertura_t09::test_ca40_*` | Coberto: tipos, isolamento, ordenação decrescente, conteúdo preservado |
+| CA41 | `test_fontes::test_ca41_*`, `test_cobertura_t09::test_ca41_*` | Coberto: reimportação, reinício e chaves do formulário em outra ordem |
+| CA42 | `test_fontes::test_ca42_*`, `test_cobertura_t09::test_ca42_*` | Coberto: pendência, reuso e referência preservada |
+| CA43 | `test_fontes::test_ca43_*`, `test_cobertura_t09::test_ca43_*` | Coberto: v1, v3, v2 e registro preservado |
+| CA44 | `test_fontes::test_ca44_*`, `test_cobertura_t09::test_ca44_*` | Coberto: 409 com campo exato e sem gravação parcial |
+| CA45 | `test_fontes::test_ca45_*`, `test_cobertura_t09::test_ca45_*` | Coberto, inclusive limites e marca fictícia |
+| CA46 | `test_fontes::test_ca40_importa_formulario_*`, `test_cobertura_t09::test_ca46_*` | Coberto: interações manuais comparadas campo a campo |
+| CA47 | — | **Sem teste automatizado** (interface) |
+| CA48 | `test_contexto::test_ca48_*` | Coberto |
+| CA49 | `test_contexto::test_ca49_*`, `test_cobertura_t09::test_ca49_*` | Coberto: cache por estado e modelo, só documento novo enviado |
+| CA50 | `test_contexto::test_ca50_*`, `test_ia_gemini::test_ca50_*`, `test_cobertura_t09::test_ca50_*` | Coberto: limites 30/5/80/500, literalidade e campo certo do erro |
+| CA51 | `test_contexto::test_ca51_*`, `test_cobertura_t09::test_ca51_*` | Coberto: histórico completo e correção preservada |
+| CA52 | `test_contexto::test_ca52_*`, `test_cobertura_t09::test_ca52_*` | Coberto: sujeito, conflito e evidência atual isolados como causa |
+| CA53 | `test_contexto::test_ca53_*`, `test_cobertura_t09::test_ca53_*` | Coberto: isolamento entre clientes e descarte só do item |
+| CA54 | `test_contexto::test_ca54_*`, `test_ia_gemini::test_ca54_*`, `test_cobertura_t09::test_ca54_*` | Coberto, com ressalva: contrato real do Gemini não verificado |
+| CA55 | `test_contexto::test_ca55_*`, `test_cobertura_t09::test_ca55_*` | Coberto: campo do erro, 404 com corpo válido e tentativa substituída |
 | CA56 | — | **Sem teste automatizado** (interface) |
-| RN27, RN31 | `test_contexto::test_rn27_*`, `::test_rn31_*` | A revisar |
+| RN27 | `test_contexto::test_rn27_*`, `test_cobertura_t09::test_rn27_*` | Coberto: fronteira de 2 minutos e concorrência sem recursão |
+| RN31 | `test_contexto::test_rn31_*` | Coberto |
+| RN32 | `test_cobertura_t09::test_rn32_*` | Coberto: resumo, alertas e datas inalterados após aprovar |
+
+Divergência a decidir pela equipe: `contracts.md` diz que `elegivel_contato`
+exige permissão e intervalo pessoal, mas `contexto.py` só aplica isso às
+categorias `interesse`, `data_importante` e `preferencia`; `objetivo`,
+`compromisso` e `ponto_atencao` ficam livres. Nenhum documento descreve a exceção.
 
 ## Sem teste e sem implementação
 
