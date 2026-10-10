@@ -416,6 +416,11 @@ def test_ca37_fato_de_posicao_referencia_o_vencimento_do_registro(app, client):
 
 
 def test_ca37_ausencia_nao_vira_fato_nem_conclusao(client):
+    # A carga demonstrativa pode ganhar conversas; este cenário exige ausência.
+    with client.application.app_context():
+        db = get_db()
+        db.execute('DELETE FROM interacao WHERE cliente_id=4')
+        db.commit()
     eva = client.get("/api/clientes/5").get_json()["resumo"]
     assert eva["fatos"] == []
     assert {"Nenhuma posição cadastrada", "Nenhuma interação registrada", "Não avaliado"} <= set(eva["ausencias"])
@@ -428,6 +433,10 @@ def test_ca37_ausencia_nao_vira_fato_nem_conclusao(client):
 
 
 def test_ca37_ultimo_contato_proximos_passos_e_relacionamento_aparecem_com_fonte(client):
+    with client.application.app_context():
+        db = get_db()
+        db.execute("UPDATE interacao SET proximos_passos='Enviar opções de reinvestimento.' WHERE id=(SELECT id FROM interacao WHERE cliente_id=1 ORDER BY ocorrida_em DESC,id DESC LIMIT 1)")
+        db.commit()
     ana = client.get("/api/clientes/1").get_json()["resumo"]
     assert any(f["texto"] == "Próximos passos: Enviar opções de reinvestimento." for f in ana["fatos"])
     assert any(f["texto"].startswith("Último contato há 10 dia(s)") for f in ana["fatos"])

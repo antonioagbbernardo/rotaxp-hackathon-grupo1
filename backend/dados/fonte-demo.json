@@ -18,7 +18,7 @@
     },
     {
       "registro_id": "1-telefone",
-      "versao": 1,
+      "versao": 2,
       "cliente_id": 1,
       "tipo": "interacao",
       "canal": "telefone",
@@ -27,7 +27,7 @@
     },
     {
       "registro_id": "1-email",
-      "versao": 1,
+      "versao": 2,
       "cliente_id": 1,
       "tipo": "interacao",
       "canal": "email",
@@ -36,7 +36,7 @@
     },
     {
       "registro_id": "1-whatsapp",
-      "versao": 1,
+      "versao": 2,
       "cliente_id": 1,
       "tipo": "interacao",
       "canal": "whatsapp",
@@ -59,7 +59,7 @@
     },
     {
       "registro_id": "2-telefone",
-      "versao": 1,
+      "versao": 2,
       "cliente_id": 2,
       "tipo": "interacao",
       "canal": "telefone",
@@ -68,7 +68,7 @@
     },
     {
       "registro_id": "2-email",
-      "versao": 1,
+      "versao": 2,
       "cliente_id": 2,
       "tipo": "interacao",
       "canal": "email",
@@ -77,7 +77,7 @@
     },
     {
       "registro_id": "2-whatsapp",
-      "versao": 1,
+      "versao": 2,
       "cliente_id": 2,
       "tipo": "interacao",
       "canal": "whatsapp",
@@ -100,7 +100,7 @@
     },
     {
       "registro_id": "3-telefone",
-      "versao": 1,
+      "versao": 2,
       "cliente_id": 3,
       "tipo": "interacao",
       "canal": "telefone",
@@ -109,7 +109,7 @@
     },
     {
       "registro_id": "3-email",
-      "versao": 1,
+      "versao": 2,
       "cliente_id": 3,
       "tipo": "interacao",
       "canal": "email",
@@ -118,7 +118,7 @@
     },
     {
       "registro_id": "3-whatsapp",
-      "versao": 1,
+      "versao": 2,
       "cliente_id": 3,
       "tipo": "interacao",
       "canal": "whatsapp",

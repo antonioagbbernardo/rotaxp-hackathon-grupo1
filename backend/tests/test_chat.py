@@ -159,7 +159,7 @@ def test_migracao_preserva_fontes_antigas_e_amplia_tipo_nota(tmp_path):
     antigo = SCHEMA.replace("'interacao', 'formulario', 'nota_assessor'", "'interacao', 'formulario'").replace("    contexto_sugerido TEXT NOT NULL DEFAULT '[]',\n", '')
     with sqlite3.connect(caminho) as db:
         db.executescript(antigo)
-        db.execute("INSERT INTO assessor VALUES(1,'Assessor fictício')")
+        db.execute("INSERT INTO assessor(id,nome) VALUES(1,'Assessor fictício')")
         db.execute("INSERT INTO cliente(id,nome) VALUES(1,'Cliente fictício')")
         db.execute("INSERT INTO documento_fonte(id,origem,registro_id,versao,cliente_id,tipo,conteudo,ocorrida_em,importada_em) VALUES(7,'demo','original',1,1,'formulario','{}','2026-10-10T12:00:00+00:00','2026-10-10T12:00:00+00:00')")
     app = create_app({'TESTING': True, 'DATABASE': str(caminho)})
