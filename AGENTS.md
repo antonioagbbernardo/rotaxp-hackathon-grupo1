@@ -89,6 +89,25 @@ Nunca use `pip` ou `python` direto no host: use `uv run`.
 - Não atribua autoria ou co-autoria de agente nos commits (decisão da equipe).
 - **Congelamento do código: 10/10/2026, 17h.** O repositório é clonado às 17h30.
 
+## CI (GitHub Actions)
+Workflow único: `.github/workflows/testes.yml` (pytest do `backend/`). Use com
+economia; minutos de Actions são limitados.
+- **Local primeiro:** rode `uv run --locked pytest` antes do push. O CI confirma,
+  não substitui nem serve de tentativa e erro.
+- **Menos pushes:** agrupe commits e faça um push por entrega. Cada push em PR
+  dispara uma execução (a anterior é cancelada, mas já consumiu minutos).
+- **Só o que precisa rodar:** o job filtra por `backend/**`. Mudança só de docs ou
+  frontend não dispara testes; não remova o filtro nem peça re-execução à toa.
+- **Sem jobs novos sem decisão da equipe:** nada de matriz de versões, cron,
+  deploy, build de frontend ou chamadas à API real (Gemini) no CI. Testes de IA
+  usam fonte simulada; nunca coloque segredo no workflow.
+- **Mantenha o job barato:** `timeout-minutes`, cache do `uv`, `permissions:
+  contents: read` e `concurrency` com cancelamento ficam como estão.
+- **Falhou?** Leia o log, reproduza localmente e corrija antes de novo push; não
+  use re-run em loop. Nunca desative ou contorne o check para mergear.
+- Alterar `.github/workflows/` é mudança de infraestrutura: PR próprio
+  (`chore/`), com aviso à equipe.
+
 ## Fora do escopo (não implementar sem decisão da equipe)
 Login/permissões, envio de mensagens ou atas, integrações de canais, app nativo,
 análise tributária, dispensar/silenciar alertas. NewsAPI, reuniões e keynotes são
