@@ -14,6 +14,9 @@ NewsAPI: associação humana, cache diário, cota e feedback individual implemen
 uma chamada real compartilhada por dois clientes fictícios.
 Agenda/keynotes, notas/conclusão, atualização automática por processo local e
 lembranças com data confirmada/fontes/feedback estão implementadas.
+Incremento 10 acrescenta conexão OAuth com Google Agenda e sincronização
+unidirecional dos eventos; o teste foi feito com API simulada. A autorização
+real depende de credenciais/URI de retorno configuradas localmente.
 **Atualizado em:** 10/10/2026. Acesso à fonte real pendente; modelo configurável.
 
 **Propósito:** poupar tempo do assessor e melhorar sua relação com o investidor.

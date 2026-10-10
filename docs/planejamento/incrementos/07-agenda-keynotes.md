@@ -6,7 +6,9 @@ mínimas. RF18–RF24; complementa CA17/CA19–CA25. Decisões antes do código:
 - RN59. Reunião pertence a cliente existente e ao assessor da demonstração.
   Objetivo obrigatório (até 500 caracteres), início ISO com fuso (sem fuso =
   São Paulo), estados agendada/cancelada/concluída. Reagendar/cancelar apenas
-  agendada. Registro pode representar encontro já ocorrido. Não sincronizar calendário.
+  agendada. Registro pode representar encontro já ocorrido. Na entrega do
+  incremento 07, calendário externo ainda não era sincronizado; a integração
+  posterior está especificada no incremento 10.
 - RN60. Pauta determinística com fatos/fontes, contexto factual revisado do cliente,
   combinados, pendências, avaliação humana e até três notícias elegíveis. Perguntas
   são sugestões. Não chamar IA para gerar pauta; ausência/falha externa sinalizada.

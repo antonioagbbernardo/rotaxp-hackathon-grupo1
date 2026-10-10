@@ -5,7 +5,7 @@ from hashlib import sha256
 
 from flask import current_app
 
-from . import noticias, pulse
+from . import google_agenda, noticias, pulse
 from .agenda_rules import ErroAgenda, corpo, inicio, proxima, texto
 from .clock import formatar_utc
 from .db import get_db
@@ -83,7 +83,14 @@ def _expor(r):
     if atual:
         pauta = {'id': atual['id'], 'gerada_em': atual['gerada_em'], **json.loads(atual['dados'])}
     resultado = get_db().execute('SELECT texto,proximos_passos,ocorrida_em FROM interacao WHERE id=?', (r['interacao_id'],)).fetchone() if r['interacao_id'] else None
-    return {**r, 'proxima': r['estado'] == 'agendada' and proxima(r['inicio_em'], current_app.config['CLOCK'].agora()),
+    google_evento = {
+            'estado': r['google_sync_status'], 'erro': r['google_sync_error'],
+            'evento_url': r['google_event_url'] or None,
+        }
+    for campo in ('google_event_id', 'google_sync_status', 'google_sync_error', 'google_event_url'):
+        r.pop(campo)
+    return {**r, 'google_agenda': google_evento,
+        'proxima': r['estado'] == 'agendada' and proxima(r['inicio_em'], current_app.config['CLOCK'].agora()),
         'pauta': pauta, 'pauta_desatualizada': bool(ultima and not atual),
         'revisada': bool(atual and r['pauta_revisada_id'] == atual['id']), 'resultado': dict(resultado) if resultado else None}
 
@@ -104,6 +111,7 @@ def criar(cid, entrada):
     cur = db.execute('INSERT INTO reuniao(cliente_id,assessor_id,objetivo,inicio_em,criada_em) VALUES (?,?,?,?,?)',
         (cid, ASSESSOR_ID, objetivo, horario, formatar_utc(current_app.config['CLOCK'].agora())))
     db.commit()
+    google_agenda.sincronizar(_obter(cur.lastrowid))
     return consultar(cur.lastrowid)
 
 
@@ -125,6 +133,8 @@ def editar(rid, entrada):
         db.commit()
     except Exception:
         db.rollback(); raise
+    if any(k != 'notas' for k in campos):
+        google_agenda.sincronizar(_obter(rid))
     return consultar(rid)
 
 
@@ -139,6 +149,15 @@ def cancelar(rid):
         db.commit()
     except Exception:
         db.rollback(); raise
+    google_agenda.sincronizar(_obter(rid))
+    return consultar(rid)
+
+
+def sincronizar_google(rid):
+    r = _obter(rid)
+    if r['estado'] == 'concluida':
+        raise ErroAgenda('Não é possível sincronizar um encontro concluído.', 'estado', 409)
+    google_agenda.sincronizar(r)
     return consultar(rid)
 
 

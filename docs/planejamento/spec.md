@@ -256,6 +256,10 @@ fontes, revisão exata, notas separadas e resultado vinculado ao histórico.
 Incremento 08: [lembranças](incrementos/08-lembrancas.md), RF27–RF29,
 RN67–RN70 e CA91–CA94. Datas explícitas e feedback por ocorrência sob decisão humana.
 
+Incremento 10: [Google Agenda](incrementos/10-google-agenda.md), RF32,
+RN76–RN79 e CA99–CA102. OAuth por assessor, sincronização unidirecional de
+reuniões no calendário principal e nova tentativa explícita quando houver falha.
+
 CA11–CA25 (notícias, reuniões e keynotes) estão em [requisitos](requisitos.md);
 CA26–CA33 de inferência/feedback continuam em requisitos; CA34–CA39 acima
 validam a base implementada (IDs reconciliados durante o merge).

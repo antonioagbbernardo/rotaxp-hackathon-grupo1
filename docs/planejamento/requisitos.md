@@ -480,3 +480,13 @@ centralizado no design XP Pulse e credenciais `admin` / `admin`. Sessão validad
 no backend protege painel e APIs; logout e expiração retiram acesso. Escritas
 exigem CSRF. Sem recuperação de senha ou perfis multiassessor. RN53–RN58 e
 CA79–CA84 definidos antes do código em [incremento 06](incrementos/06-login.md).
+
+## RF32 — sincronizar reuniões com Google Agenda (incremento 10)
+
+Permitir que o assessor conecte sua conta Google por OAuth e que reuniões criadas,
+reagendadas ou canceladas no painel sejam refletidas no calendário principal dessa
+conta. O painel continua sendo a fonte da verdade; o fluxo é unidirecional, não
+adiciona convidados e não importa alterações feitas diretamente no Google.
+Cada evento dura uma hora. Reuniões locais são preservadas se a sincronização
+falhar; o painel mostra o estado e oferece nova tentativa. RN76–RN79 e CA99–CA102
+estão em [incremento 10](incrementos/10-google-agenda.md).

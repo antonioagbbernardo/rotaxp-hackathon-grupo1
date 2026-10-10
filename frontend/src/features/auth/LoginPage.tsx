@@ -13,7 +13,6 @@ export function AuthShell({ children }: { children: ReactNode }) {
         <section className="rounded-2xl border border-line bg-surface p-6 shadow-2xl shadow-black/20 sm:p-8">
           {children}
         </section>
-        <p className="mt-6 text-center text-[11px] text-ink-subtle">Mais contexto. Mais tempo para se relacionar.</p>
       </div>
     </main>
   )
@@ -55,7 +54,6 @@ export function LoginPage({ onLogin, notice }: LoginPageProps) {
       <div className="mb-7 text-center">
         <p className="mb-2 text-[10px] font-semibold tracking-[0.18em] text-brand uppercase">Área do assessor</p>
         <h1 className="text-2xl font-semibold tracking-tight">Bem-vindo ao XP Pulse</h1>
-        <p className="mt-2 text-xs leading-5 text-ink-muted">Entre para acompanhar seus clientes.</p>
       </div>
       <form onSubmit={(event) => { void submit(event) }} className="space-y-5" aria-busy={loading}>
         <div>
