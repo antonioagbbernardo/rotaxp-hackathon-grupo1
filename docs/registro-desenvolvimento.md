@@ -524,3 +524,6 @@ o processo aberto e usar um vínculo de interesse já revisado pelo assessor.
 - Edge: salvar/recarregar perfil, cabeçalho, cancelar, erro/retry, validação e
   retorno ao cliente aprovados; celular 390/320 px sem rolagem horizontal.
   Perfil fictício original restaurado. Backend atualizado na porta 5004.
+- Atualização remota concorrente `9dad5e4` integrada antes do envio, preservando
+  a remoção de próximos passos no modal de mensagens recentes. Build, lint e
+  os 24 testes frontend repetidos após esse ajuste; backend sem mudança adicional.
