@@ -21,10 +21,10 @@ prioridade atualizados após recarregar.
 Obrigatório:
 
 - Lista de clientes com busca, filtro e ordenação por prioridade.
-- Detalhe com perfil, interesses, preferências de contato, posições, datas
-  importantes e histórico.
-- Resumo factual derivado das informações registradas, sem inferir humor.
-- Alertas de vencimento e de aniversário (`DataImportante`).
+- Detalhe com perfil, preferências de contato, posições, datas importantes e
+  histórico.
+- Resumo factual por template, sem IA, derivado dos registros (RN08).
+- Alertas de vencimento e de aniversário (`DataImportante`), calculados sob demanda.
 - Registro manual de interações de WhatsApp, e-mail, telefone e presencial.
 - Estado de relacionamento informado pelo assessor, com justificativa.
 - Marcar alertas como tratados, com persistência.
@@ -33,42 +33,99 @@ Opcional (somente depois do fluxo completo validado): eventos pessoais externos
 ou simulados ligados a interesses (esportes, Fórmula 1).
 
 Fora do MVP: integrações reais de canais, envio de mensagens/atas, aplicativo
-mobile separado, análise tributária automatizada, autenticação. Demonstração com
-um único assessor e dados fictícios identificados.
+mobile separado, análise tributária automatizada, autenticação, dispensar/
+silenciar/adiar/desfazer alertas.
+
+Demonstração com um assessor fictício único, dados fictícios identificados,
+somente em ambiente local (`127.0.0.1`). **Proibido usar dados reais de
+investidores.** O MVP não tem segurança adequada para publicação ou para dados
+financeiros pessoais reais; autenticação, autorização e acesso multiassessor são
+requisitos posteriores.
 
 ## Regras
 
-Os períodos abaixo são decisões da equipe, não regras dos organizadores.
-"Hoje" é a data no fuso `America/Sao_Paulo`. Limites inclusivos.
+Os valores abaixo são decisões da equipe, não regras dos organizadores. "Hoje" é
+a data local no fuso `America/Sao_Paulo`, fornecida por um único `Clock`
+injetável.
 
-RN01. Cada interação pertence a um único cliente existente e exige canal e texto.
-RN02. O histórico é ordenado pela `data_hora` da interação, da mais recente para a
-      mais antiga (empate: registro mais recente primeiro).
-RN03. Posição com vencimento de 0 a 30 dias a partir de hoje gera alerta de
-      vencimento: prioridade **alta** de 0 a 7 dias, **média** de 8 a 30. 31 dias
-      ou mais não gera alerta.
-RN04. Posição vencida (vencimento anterior a hoje) gera alerta próprio de
-      prioridade **alta**.
+### Vencimentos (RN03, RN04)
+
+Δ = data de vencimento − hoje, em dias corridos.
+
+| Δ (dias) | Classificação | Prioridade | Rótulo |
+| --- | --- | --- | --- |
+| negativo | Vencido | Alta | `Vencido há N dias` |
+| 0 | Vence hoje | Alta | `Vence hoje` |
+| 1 a 7 | Vencimento próximo | Alta | `Vence em N dias` |
+| 8 a 30 | Vencimento futuro | Média | `Vence em N dias` |
+| 31 ou mais | Fora da janela | Sem alerta | — |
+
+Dia 0 e dia 7 são inclusivos. Todo vencimento passado gera alerta de prioridade
+alta, qualquer que seja N.
+
+### Demais regras
+
+RN01. Cada interação pertence a um único cliente existente e exige canal e texto
+      não vazio.
+RN02. Cada interação tem `ocorrida_em` (informada; padrão: agora) e
+      `registrada_em` (automática, imutável). Ocorrência futura é recusada.
+      Histórico ordenado por `ocorrida_em DESC`, `registrada_em DESC`, `id DESC`.
+      Instantes persistidos em UTC; entrada sem fuso é interpretada como
+      `America/Sao_Paulo`.
 RN05. Eventos externos/simulados (opcional) só se relacionam a interesses
-      registrados e à permissão `permite_assuntos_pessoais`; o mesmo evento não
-      gera alertas duplicados (chave de ocorrência única por cliente/regra/origem).
+      registrados e às preferências do cliente (RN13); o mesmo evento não gera
+      alertas duplicados.
 RN06. Um evento pessoal não modifica o perfil financeiro nem presume o humor.
-RN07. Alterar o estado de relacionamento exige justificativa do assessor.
-RN08. Resumos e alertas exibem suas fontes; ausência de dado não vira conclusão
-      (exibe "não informado").
-RN09. Um alerta tratado não permanece na contagem de pendências.
-RN10. Dados persistem entre recargas e reinicializações do servidor.
-RN11. A prioridade do cliente é a maior prioridade entre seus alertas não
-      tratados; sem alertas, é **baixa**. Alertas tratados não influenciam.
-      Empate de faixa: pendência mais próxima, depois nome. O estado de
-      relacionamento (manual) não altera a prioridade.
-RN12. Datas importantes (`DataImportante`, aniversário) registradas pelo assessor
-      geram alerta recorrente de prioridade **média** com até 7 dias de
-      antecedência, somente se `permite_assuntos_pessoais = true`. Cada
-      ocorrência anual tem chave própria (sem duplicar; tratado não reaparece
-      naquela ocorrência).
+RN07. Alterar o estado de relacionamento exige justificativa, responsável e
+      data. Nenhum evento, posição ou interação altera esse estado.
+RN08. O resumo é montado por template a partir de registros persistidos (perfil,
+      posições, próximos vencimentos, última interação e próximos passos). Cada
+      fato carrega referência `{tipo_fonte, id_fonte, data_referencia}`. Ausência
+      de registro é apresentada como ausência de informação, sem inferência:
+      `Nenhuma posição cadastrada`, `Nenhuma interação registrada`,
+      `Não avaliado`.
+RN09. Um alerta tratado não entra na contagem de pendências.
+RN10. Dados persistem entre recargas e reinicializações. O seed só inicializa
+      base vazia; reexecutá-lo não sobrescreve nem desloca dados. Um comando
+      explícito de reset reconstrói os dados fictícios.
+RN11. A prioridade do cliente é a maior prioridade entre seus alertas pendentes;
+      sem alertas, é **baixa**. Alertas tratados não influenciam. Empate de
+      faixa: pendência mais próxima, depois nome. O estado de relacionamento não
+      altera a prioridade.
+RN12. Datas importantes (`DataImportante`, aniversário) geram alerta recorrente
+      de prioridade **média** com 0 a 7 dias de antecedência, sujeito às
+      preferências (RN13). A ocorrência anual é identificada pela data naquele
+      ano.
+RN13. Preferências estruturadas do cliente: `canal_preferido`,
+      `intervalo_minimo_dias` (7, 14 ou 30) e `permite_assuntos_pessoais`
+      (padrão `false`).
+      - O canal preferido é o padrão ao registrar interação; não há envio
+        automático.
+      - O intervalo é contado desde a última interação realizada, em qualquer
+        canal. Sem histórico, não bloqueia.
+      - Alertas e sugestões pessoais só aparecem com permissão e intervalo
+        respeitado.
+      - Alertas financeiros não são ocultados por canal ou frequência.
+RN14. Alertas são calculados sob demanda a cada consulta de lista ou detalhe,
+      sem cron, worker ou botão de processamento. Identidade do alerta:
+      `(cliente_id, regra, entidade_origem_id, ocorrencia)`; para vencimento,
+      `ocorrencia` = data de vencimento; para aniversário, a data da ocorrência
+      no ano. Somente o tratamento é persistido (chave, `tratado_em`,
+      `assessor_id`, unicidade).
+RN15. Estados do alerta: `pendente` e `tratado`. O tratamento é definitivo para
+      aquela ocorrência. Alerta tratado fica em filtro/histórico, fora da
+      contagem. Uma nova ocorrência (vencimento corrigido, aniversário do ano
+      seguinte) é um novo alerta.
 
-### Prioridade (resumo)
+| Situação | Comportamento |
+| --- | --- |
+| Vencimento passa de 30 para 7 dias | Mesmo alerta; prioridade recalculada |
+| Alerta tratado | Permanece tratado em novas consultas e reinícios |
+| Página atualizada dez vezes | Nenhuma duplicação |
+| Data de vencimento corrigida | Nova ocorrência; a antiga deixa de ser elegível |
+| Posição deixa de ser elegível | Alerta some das pendências atuais |
+
+### Prioridade do cliente (resumo)
 
 | Prioridade | Origem |
 | --- | --- |
@@ -76,37 +133,62 @@ RN12. Datas importantes (`DataImportante`, aniversário) registradas pelo assess
 | Média | Vencimento em 8–30 dias ou aniversário em 0–7 dias |
 | Baixa | Nenhum alerta pendente |
 
+Na interface, sempre rótulos completos: `Relacionamento: Atenção` (avaliação
+humana) e `Prioridade de atendimento: Alta` (cálculo determinístico).
+
+### Estados de relacionamento (RN07)
+
+| Estado | Significado |
+| --- | --- |
+| `positivo` | Assessor registra contexto favorável |
+| `atencao` | Assessor identifica pendência ou questão a acompanhar |
+| `negativo` | Assessor registra dificuldade relevante |
+
+Estado inicial: sem avaliação (`NULL`), exibido como "Não avaliado".
+
 ## Critérios de aceite
 
 - CA01: busca por nome e filtros retornam somente os clientes correspondentes.
 - CA02: abrir um cliente mostra somente suas posições, interações e preferências.
 - CA03: salvar interação válida atualiza o histórico e permanece após recarregar.
-- CA04: canal inválido, texto vazio ou cliente inexistente não criam registros.
-- CA05: vencimentos em 0, 7, 8 e 30 dias seguem RN03; 31 dias fica fora; vencido
-  gera alerta alta (RN04).
+- CA04: canal inválido, texto vazio, ocorrência futura ou cliente inexistente não
+  criam registros.
+- CA05: com Δ = −1, 0, 7, 8, 30 e 31, verificar existência, rótulo e
+  prioridade do alerta (RN03/RN04). Vencido exibe `Vencido há N dias`.
 - CA06 (opcional): evento associado a interesse aparece com fonte e não se repete
-  no reprocessamento.
-- CA07: cliente sem `permite_assuntos_pessoais` não recebe sugestões pessoais
-  (aniversário ou evento).
-- CA08: tratar um alerta atualiza a lista/contagem e persiste após recarregar.
-- CA09: alterar relacionamento sem justificativa é recusado.
-- CA10: o fluxo principal pode ser realizado em tela de celular sem rolagem
-  horizontal da página.
+  no recálculo.
+- CA07: sem permissão pessoal, não há alerta pessoal. Com permissão mas contato
+  mais recente que o intervalo mínimo, não há sugestão pessoal. Sem histórico,
+  o intervalo não bloqueia. Alertas financeiros permanecem.
+- CA08: tratar um alerta reduz a contagem de pendências, persiste entre recargas
+  e reinicializações e não é revertido pelo recálculo.
+- CA09: alterar relacionamento sem justificativa é recusado; alertas financeiros
+  não alteram o relacionamento.
+- CA10: o fluxo principal funciona em viewport de celular sem rolagem horizontal
+  da página.
 - CA11: cliente com múltiplos alertas assume a maior prioridade, recalculada
   após tratar um alerta.
-- CA12: um aniversário próximo gera apenas um alerta, respeita a preferência e
-  não reaparece como pendência depois de tratado naquela ocorrência anual.
-- CA13: histórico ordenado conforme RN02 (cobre RN02).
-- CA14: dados ausentes aparecem como "não informado" e todo alerta exibe fonte
-  (cobre RN06 e RN08).
+- CA12: um aniversário próximo gera apenas um alerta, respeita RN13 e não
+  reaparece como pendência depois de tratado naquela ocorrência anual; no ano
+  seguinte é nova ocorrência.
+- CA13: reunião realizada ontem e cadastrada hoje não fica acima de conversa
+  realizada hoje (RN02).
+- CA14: resumo com registros ausentes usa as mensagens de RN08 e cada fato
+  apresentado tem referência de fonte.
+- CA15: os testes têm resultado idêntico em qualquer dia de execução (relógio
+  injetado) e reexecutar o seed não altera uma base já populada.
+- CA16: atualizar a lista várias vezes não duplica alertas.
 
 ## Validação
 
-Testes de regras e persistência/API, seguidos de verificação do fluxo no
-navegador em desktop e celular, a partir de um clone limpo do repositório.
-Informar separadamente verificações executadas e limitações. Relógio injetável
-nos testes e seed com datas relativas a "hoje".
+Primeiro lote de testes (antes das rotas): limites de vencimento, `Clock`,
+identidade do alerta, persistência do tratamento e permissões pessoais. Depois,
+testes de API/persistência e verificação do fluxo no navegador (desktop e
+viewport de celular), a partir de um clone limpo. Informar separadamente
+verificações executadas e limitações.
 
 ## Decisões pendentes
 
-- Controle de acesso antes de uso real ou publicação com dados pessoais.
+- Horário do pitch e possibilidade de alterar o código após o clone (a
+  organização).
+- Valor padrão de `intervalo_minimo_dias` quando não informado (proposta: 7).
