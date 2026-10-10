@@ -1,71 +1,81 @@
-# Arquitetura proposta — plataforma de assessores
+# Arquitetura — plataforma de assessores
 
-Status: planejamento somente. Stack, integrações e escopo aguardam definição.
+Status: decisões de 10/10/2026. Integrações externas e IA fora do MVP.
+
+## Stack
+
+| Camada | Escolha |
+| --- | --- |
+| Backend | Python 3.13 + Flask + Jinja2, gerenciado com `uv` |
+| Dados | SQLite |
+| Interface | Páginas Jinja responsivas; CSS compilado com Node (Tailwind CLI) |
+| Node.js | Somente ferramenta da interface (build de CSS/JS). Não é runtime do backend |
+| Testes | pytest (regras e API); verificação manual no navegador |
+
+Regras de uso:
+
+- O CSS compilado é versionado, para que o clone da organização rode só com
+  Python (sem `npm install`).
+- Versões de Python/Node/Flask são conferidas na ferramenta instalada e fixadas
+  em `pyproject.toml`/`uv.lock`, `.python-version` e `.nvmrc`; não presumir
+  patches não verificados.
+- Sem Django e sem Docker.
 
 ## Organização
 
-Uma interface web adaptada ao celular e uma API central podem atender ao
-primeiro fluxo. A API concentra regras, acesso aos dados e processamento de
-eventos. Um banco relacional é uma opção inicial para os vínculos entre clientes,
-interações, posições e alertas. A necessidade de NoSQL ainda não foi demonstrada.
-
-Aplicativo separado permanece parte da visão do produto, sujeito à priorização
-no prazo de 6h30. Web responsiva não deve ser apresentada como app nativo.
+Uma aplicação Flask simples, com núcleo de regras puro (prioridade, vencimento,
+aniversário), acesso a dados em módulo separado e rotas finas. Sem serviços
+distribuídos. Web responsiva não é app nativo e não deve ser apresentada como tal.
 
 ## Responsabilidades
 
 | Parte | Responsabilidade |
 | --- | --- |
-| Interface | Lista, filtros, detalhes, linha do tempo e registro de interação |
-| API | Validar entradas, aplicar regras e devolver dados por cliente |
-| Persistência | Guardar clientes, preferências, registros, fontes e decisões |
-| Processamento de eventos | Consultar fontes escolhidas, deduplicar e associar interesses |
-| Resumo | Organizar fatos registrados e indicar evidências e atualidade |
+| Interface | Lista, filtros, detalhe, linha do tempo, registro de interação, tratar alerta |
+| Rotas | Validar entradas, chamar regras, devolver erros padronizados |
+| Regras | Prioridade (RN11), vencimentos (RN03/04), aniversários (RN12), relógio injetável |
+| Persistência | Clientes, posições, interações, datas importantes, alertas, decisões |
+| Resumo | Organiza fatos registrados com fonte e atualidade (template, sem IA) |
 
-Sugestão: uma aplicação simples, com responsabilidades separadas internamente,
-sem serviços distribuídos no primeiro recorte.
+## Entidades
 
-## Entidades e relações propostas
+Campos mínimos em `contracts.md`.
 
-| Entidade | Informações principais | Relações |
-| --- | --- | --- |
-| Assessor | Identificação e acesso | Acompanha clientes; regra de atribuição a definir |
-| Cliente | Nome, perfil, objetivo e preferências | Tem posições e interações |
-| Interação | Canal, data, registro, próximos passos | Pertence a cliente e identifica responsável |
-| Interesse | Assunto e origem da informação | Pode ser compartilhado por vários clientes |
-| Interesse do cliente | Interesse, evidência e revisão | Liga cliente a interesse |
-| Posição | Ativo, valor, vencimento e fonte | Pertence a cliente |
-| Evento | Assunto, ocorrência, fonte e identificador externo | Pode gerar alertas para vários clientes |
-| Alerta | Motivo, prioridade, evidência e estado | Pertence a cliente; pode apontar para evento ou posição |
-| Avaliação do relacionamento | Estado, justificativa, autor e data | Histórico de avaliações por cliente |
+| Entidade | Relações |
+| --- | --- |
+| Assessor | Único no MVP; sem autenticação |
+| Cliente | Tem posições, interações, datas importantes, interesses e alertas |
+| Posição | Pertence a cliente; origem dos alertas de vencimento |
+| Interação | Pertence a cliente |
+| DataImportante | Pertence a cliente; origem dos alertas de aniversário; separada de Interesse e Evento |
+| Interesse / Interesse do cliente | Assunto e evidência; usado só pelo opcional de eventos |
+| Evento (opcional) | Fonte e identificador externo; pode gerar alertas |
+| Alerta | Pertence a cliente; aponta para posição, data importante ou evento; `chave_ocorrencia` única |
+| Avaliação do relacionamento | Estado, justificativa, autor, data |
 
-Restrições propostas: vínculos válidos, identificação única de evento por fonte,
-deduplicação de alerta por cliente/regra/origem e valores monetários sem ponto
-flutuante binário. Exclusão e retenção dependem de decisão explícita.
+Restrições: vínculos válidos, `chave_ocorrencia` única por alerta, dinheiro em
+`Decimal` (inteiro de centavos ou NUMERIC como texto no SQLite, nunca float).
+Exclusão e retenção não fazem parte do MVP.
 
-## Contratos a combinar antes de dividir o código
+## Alertas: geração
 
-- Campos e identificadores de cliente, interação, alerta e evento.
-- Formato de datas e fuso das regras de vencimento.
-- Estados de relacionamento separados dos níveis de prioridade.
-- Erros esperados para dados inválidos, acesso negado e registros inexistentes.
-- Responsável por cada área e momento da primeira integração.
+Geração idempotente, executada na carga/abertura da lista e após mudanças
+relevantes (não é job agendado). Reprocessar não recria alerta existente,
+inclusive tratado, pela `chave_ocorrencia`:
 
-## Eventos pertinentes com custo controlado
+- Vencimento: `venc:{posicao_id}`; a prioridade é recalculada pela distância a
+  "hoje", mantendo o mesmo alerta.
+- Aniversário: `aniv:{data_importante_id}:{ano}`.
 
-Consultar um assunto uma vez e reutilizar o resultado entre clientes interessados.
-Filtrar por interesse, preferência de contato, atualidade e duplicidade antes
-de qualquer uso de IA. Processar mudanças, evitando reanalisar todo o histórico.
+## Eventos externos (opcional)
 
-Para demonstrar, eventos simulados e identificados são uma alternativa. Para
-integração real, a equipe precisa escolher fonte, frequência, limites de uso e
-orçamento. Não há fonte ou estimativa de custo aprovada.
+Se o fluxo principal estiver validado: eventos simulados e identificados,
+consultados uma vez por assunto e reutilizados entre clientes. Fonte real,
+frequência, limites e orçamento não aprovados.
 
-## Questões ainda abertas
+## Questões abertas
 
-- Fonte das posições financeiras e critérios das análises de risco e tributárias.
-- Captura real ou registro manual por canal; revisão e envio de atas.
-- Acesso de gestores e investidores, autenticação e autorização por cliente.
-- Uso de IA no produto, dados enviados ao provedor e custo máximo.
-- Armazenamento, correção, exclusão e retenção de informações pessoais.
-- Forma de execução da demonstração e necessidade de publicação.
+- Fonte real das posições (Open Finance etc.) e análises de risco/tributárias.
+- Autenticação e autorização por cliente, gestor/investidor.
+- Uso de IA, dados enviados e custo.
+- Armazenamento, correção, exclusão e retenção de dados pessoais.
