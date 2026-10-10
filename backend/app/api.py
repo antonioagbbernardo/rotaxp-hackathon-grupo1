@@ -9,6 +9,9 @@ from .contexto_rules import ErroContexto
 from .resumo_ia_rules import ErroResumoIA
 from . import resumo_ia
 from . import noticias
+from . import reunioes
+from . import lembrancas
+from .agenda_rules import ErroAgenda
 from .noticias_rules import ErroNoticias
 from .clock import TZ, formatar_utc, parse_instante
 from .db import get_db
@@ -39,6 +42,7 @@ def _erro(e: ErroApi):
 @bp.errorhandler(ErroContexto)
 @bp.errorhandler(ErroResumoIA)
 @bp.errorhandler(ErroNoticias)
+@bp.errorhandler(ErroAgenda)
 def _erro_fonte(e: ErroFonte):
     return _erro(e)
 
@@ -363,3 +367,76 @@ def tratar_alerta():
         " VALUES (?,?,?,?)", (chave, cliente_id, formatar_utc(_clock().agora()), ASSESSOR_ID))
     db.commit()
     return jsonify({"alerta": alerta | {"estado": "tratado"}}), 201
+
+# Agenda e pautas: sessão/CSRF são aplicados pela guarda global.
+@bp.get('/reunioes')
+def lista_reunioes():
+    return jsonify(reunioes.listar())
+
+
+@bp.get('/clientes/<int:cliente_id>/reunioes')
+def reunioes_cliente(cliente_id):
+    _cliente_ou_404(get_db(), cliente_id)
+    return jsonify(reunioes.listar(cliente_id))
+
+
+@bp.post('/clientes/<int:cliente_id>/reunioes')
+def criar_reuniao(cliente_id):
+    _cliente_ou_404(get_db(), cliente_id)
+    return jsonify(reunioes.criar(cliente_id, request.get_json(silent=True))), 201
+
+
+@bp.get('/reunioes/<int:reuniao_id>')
+def consultar_reuniao(reuniao_id):
+    return jsonify(reunioes.consultar(reuniao_id))
+
+
+@bp.patch('/reunioes/<int:reuniao_id>')
+def editar_reuniao(reuniao_id):
+    return jsonify(reunioes.editar(reuniao_id, request.get_json(silent=True)))
+
+
+def _sem_corpo():
+    if request.get_data():
+        raise ErroAgenda('Esta rota não recebe corpo.', 'corpo')
+
+
+@bp.post('/reunioes/<int:reuniao_id>/cancelar')
+def cancelar_reuniao(reuniao_id):
+    _sem_corpo()
+    return jsonify(reunioes.cancelar(reuniao_id))
+
+
+@bp.post('/reunioes/<int:reuniao_id>/preparar')
+def preparar_reuniao(reuniao_id):
+    _sem_corpo()
+    return jsonify(reunioes.preparar(reuniao_id))
+
+
+@bp.post('/reunioes/<int:reuniao_id>/revisar')
+def revisar_reuniao(reuniao_id):
+    return jsonify(reunioes.revisar(reuniao_id, request.get_json(silent=True)))
+
+
+@bp.post('/reunioes/<int:reuniao_id>/concluir')
+def concluir_reuniao(reuniao_id):
+    dados, status = reunioes.concluir(reuniao_id, request.get_json(silent=True))
+    return jsonify(dados), status
+
+@bp.get('/clientes/<int:cliente_id>/lembrancas')
+def lembrancas_cliente(cliente_id):
+    _cliente_ou_404(get_db(), cliente_id)
+    return jsonify(lembrancas.consultar(cliente_id))
+
+
+@bp.post('/clientes/<int:cliente_id>/lembrancas')
+def confirmar_lembranca(cliente_id):
+    _cliente_ou_404(get_db(), cliente_id)
+    dados, status = lembrancas.salvar(cliente_id, request.get_json(silent=True))
+    return jsonify(dados), status
+
+
+@bp.post('/clientes/<int:cliente_id>/lembrancas/<int:lembranca_id>/feedback')
+def feedback_lembranca(cliente_id, lembranca_id):
+    _cliente_ou_404(get_db(), cliente_id)
+    return jsonify(lembrancas.feedback(cliente_id, lembranca_id, request.get_json(silent=True)))

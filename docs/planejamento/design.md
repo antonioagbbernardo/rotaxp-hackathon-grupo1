@@ -3,7 +3,8 @@
 Status: painel React XP Pulse integrado ao Flask/SQLite em 10/10/2026.
 Importação de fonte JSON fictícia é o primeiro incremento SDD implementado.
 Extração Gemini e revisão persistida são o incremento 02; chamada real validada
-com amostra fictícia. Conexão aos canais reais, NewsAPI e reuniões planejados.
+com amostra fictícia. Síntese OpenAI, NewsAPI, login, agenda/keynotes e lembranças
+confirmadas implementados. Conexão aos canais reais permanece pendente.
 
 ## Stack
 
@@ -47,13 +48,15 @@ distribuídos. Web responsiva não é app nativo e não deve ser apresentada com
 | Ingestão de fontes | `fontes_rules.py` valida sem I/O; `fontes.py` importa JSON em transação; API/CLI usam o mesmo serviço |
 | Contexto | `contexto_rules.py` valida saída/evidência e revisão; `contexto.py` persiste processamento incremental, correções e bloqueios |
 | Provedor de IA | `ia_gemini.py`, REST HTTPS, chave no backend, timeout 30 s, sem ferramentas ou fallback simulado |
-| Preparação de reunião (planejada) | Combina contexto interno e notícias em pauta versionada; preserva notas manuais |
+| Preparação de reunião | `reunioes.py`: fatos/contexto revisado/notícias em pauta versionada, notas separadas e conclusão idempotente |
+| Atualização local | `agendador.py`: processo CLI para coleta diária e preparação na janela de 24h, sem alterar alertas |
+| Lembranças | `lembrancas.py`: data confirmada do item/revisão, sujeito, recorrência e feedback por ocorrência/versão |
 | Resumo | Template determinístico; cada fato com `{tipo_fonte, id_fonte, data_referencia}` (RN08); sem LLM |
 
 ## Entidades
 
-Campos mínimos da base em `contracts.md`. Interesse/evento, reunião e versão
-da pauta abaixo são entidades planejadas, ainda ausentes do schema.
+Campos mínimos em `contracts.md`. Interesse/vínculo, notícias, reunião/pauta,
+lembrança e feedback já estão no schema aditivo; evento semântico é evolução.
 
 | Entidade | Relações |
 | --- | --- |
@@ -104,7 +107,7 @@ Sem autenticação. Um assessor fictício único; executar somente em
 `127.0.0.1`; sem dados reais. Não há `403` no contrato. Não publicar nem tratar
 dados financeiros pessoais reais com esta versão.
 
-## Notícias e reuniões — planejadas
+## Notícias e reuniões — incrementos 05/07
 
 Fonte escolhida: **NewsAPI.org**. Coleta diária por assuntos compartilhados e
 atualização antecipada quando houver reunião próxima, reutilizando cache. Filtrar
@@ -116,7 +119,12 @@ O agendador e o coletor são rotinas de backend **apenas para notícias e
 reuniões**; o cálculo de alertas continua sob demanda. O agendador prepara
 reuniões na janela definida. Alterações internas podem renovar a pauta sem nova
 busca externa; mudanças de data ou estado reconciliam disparos. Reunião concluída
-preserva a pauta usada e a interação resultante.
+preserva versões no banco e a interação resultante. Conteúdo inelegível não é
+reexibido como pauta atual; notas permanecem separadas. As assinaturas incluem
+dados, versões/revisões, objetivo, início e dia do Clock.
+O comando `acompanhar-agenda` precisa ficar aberto (60s); `--uma-vez` roda um ciclo.
+Não há cron na requisição web ou geração de pauta em GET. Notícias com cache
+>=2h podem ser antecipadas em reuniões das próximas 24h, sob cota/cache/lease.
 
 ## Contexto e supervisão — incremento 02
 
@@ -127,7 +135,8 @@ propõe fatos e hipóteses com evidências; o assessor aprova, corrige ou descar
 e fornece feedback com alcance explícito por item, assunto ou cliente.
 
 Documento de origem e formulário versionado já usam `documento_fonte`.
-Itens, revisões e bloqueios já persistem; lembretes derivados continuam propostos.
+Itens, revisões e bloqueios já persistem; lembranças derivadas implementadas no
+incremento 08 exigem data confirmada, fonte/revisão atual e sujeito elegível.
 Persistência desses itens não significa persistir
 cópias dos alertas de vencimento/aniversário da base. Correções humanas são
 preservadas; nova evidência conflitante gera revisão.

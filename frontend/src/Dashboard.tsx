@@ -12,6 +12,8 @@ import { SourceImporter } from '@/features/clients/SourceImporter'
 import { Button } from '@/components/ui/Button'
 import { api } from '@/lib/api'
 import type { PulseView } from '@/types/client'
+import { MeetingsSection, UpcomingMeetings } from '@/features/meetings/MeetingsSection'
+import { RemindersSection } from '@/features/reminders/RemindersSection'
 
 export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () => void; loggingOut: boolean; logoutError: string }) {
   const [data, setData] = useState<PulseView | null>(null)
@@ -57,6 +59,11 @@ export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () 
     window.addEventListener('hashchange', changed)
     return () => window.removeEventListener('hashchange', changed)
   }, [data])
+  useEffect(() => {
+    const controller = new AbortController()
+    const interval = window.setInterval(() => { void refresh(controller.signal).catch(() => {}) }, 60_000)
+    return () => { window.clearInterval(interval); controller.abort() }
+  }, [refresh])
   const selectedClient = data?.clients.find((client) => client.id === selectedClientId)
   const retry = () => { setLoading(true); void refresh().catch(() => {}) }
   // Gravação já concluída: falha de releitura aparece no banner, cujo retry
@@ -81,6 +88,7 @@ export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () 
           onSelectClient={(id) => { setSelectedClientId(id); location.hash = `/clientes/${id}` }}
         />
         <SourceImporter onUpdated={updated} />
+        <UpcomingMeetings revision={data.generatedAt} onSelect={(id) => { setSelectedClientId(id); location.hash = `/clientes/${id}` }} />
         </div>
 
         {selectedClient ? <>
@@ -92,6 +100,8 @@ export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () 
           </div>
           {data && <RadarPerfil client={selectedClient} hoje={data.generatedAt} />}
           <ClientWorkspace key={selectedClient.id} client={selectedClient} onUpdated={updated} />
+          <MeetingsSection key={`agenda-${selectedClient.id}`} clientId={selectedClient.id} revision={data.generatedAt} onUpdated={updated} />
+          <RemindersSection key={`lembrancas-${selectedClient.id}`} clientId={selectedClient.id} revision={data.generatedAt} onUpdated={updated} />
           <NewsSection key={selectedClient.id} client={selectedClient} onUpdated={updated} />
         </div>
 

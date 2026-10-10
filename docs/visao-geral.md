@@ -6,12 +6,14 @@ contexto, lembranças e preparação de reuniões, com decisão final do assesso
 **Estado atual:** painel React/TypeScript/Tailwind integrado ao Flask/SQLite.
 Extração Gemini com evidências e revisão humana implementadas;
 Síntese OpenAI em três seções com fontes e cache implementada;
-352 testes backend e 11 frontend, incluindo notícias compartilhadas e login.
+Última suíte completa: 352 backend e 11 frontend, antes dos incrementos 07/08.
+Novos fluxos: 17 testes direcionados, lint/build; visual adicional adiado pelo usuário.
 Gemini: quatro fontes fictícias geraram sete propostas;
 OpenAI: síntese real de um cliente fictício validada, sem mudar os registros.
 NewsAPI: associação humana, cache diário, cota e feedback individual implementados;
 uma chamada real compartilhada por dois clientes fictícios.
-Lembranças derivadas, agendador automático e reuniões são evolução.
+Agenda/keynotes, notas/conclusão, atualização automática por processo local e
+lembranças com data confirmada/fontes/feedback estão implementadas.
 **Atualizado em:** 10/10/2026. Acesso à fonte real pendente; modelo configurável.
 
 **Propósito:** poupar tempo do assessor e melhorar sua relação com o investidor.
@@ -144,7 +146,7 @@ A pauta curta reúne:
 - Últimos combinados e perguntas ainda abertas.
 - Alertas financeiros com dados e regras disponíveis.
 - Datas, interesses e notícias pertinentes ao contexto revisado.
-- Hipóteses que precisam de confirmação, claramente identificadas.
+- Aviso de fontes novas e perguntas sugeridas; hipóteses ficam na fila de revisão.
 - Fontes, atualização e espaço separado para notas do assessor.
 
 ```mermaid
@@ -169,7 +171,9 @@ continuam disponíveis as informações internas com indicação da limitação.
 - Filtrar preferências, validade e feedback antes de gerar sugestões.
 - Limitar quantidade de sugestões e evitar repetir itens já tratados.
 
-As janelas de 24h para reunião e 2h para cache continuam propostas. Plano, atraso
+Janelas do MVP: próximas 24h para reunião, idade >=2h para renovar cache.
+Execute `uv run --locked flask --app app acompanhar-agenda` no backend;
+o processo verifica a cada 60s e precisa permanecer aberto. Plano, atraso
 e limites do provedor estão em [busca de notícias](integracoes/busca-noticias.md).
 
 ## Decisões e próximos passos
@@ -178,9 +182,9 @@ e limites do provedor estão em [busca de notícias](integracoes/busca-noticias.
 | --- | --- |
 | Formulário e fonte de conversas já existem | Premissa confirmada pelo usuário |
 | Inferir contexto dessas fontes | Núcleo confirmado |
-| Lembranças, revisão final humana e feedback | Incluídos no planejamento |
+| Lembranças, revisão final humana e feedback | Data explícita, fonte/sujeito, recorrência e feedback por ocorrência implementados |
 | NewsAPI | Coleta manual/CLI, cache diário, fontes e feedback implementados; três assuntos e limite local configurável |
-| Agendador e keynotes | Pendentes; janela de reunião ainda proposta |
+| Agendador e keynotes | Processo local diário/24h, cache 2h, pauta versionada, revisão/notas e conclusão implementados |
 | Stack | Flask + SQLite + React/TypeScript + Tailwind/Vite integrados |
 | Modelos de IA | Gemini para extração revisável e OpenAI (`gpt-4.1-mini` configurável) para síntese; chamadas reais em amostras fictícias |
 | Contrato da fonte e acesso | JSON fictício definido; fonte real pendente |

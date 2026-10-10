@@ -136,7 +136,7 @@ def consultar(cid, itens=None):
             'vinculos': vinculos, 'assuntos': assuntos, 'artigos': saida, 'limite_diario': limite, 'chamadas_hoje': _chamadas_hoje()}
 
 
-def _coletar(assunto):
+def _coletar(assunto, max_idade=None):
     if not _configurado():
         raise ErroNoticias('Configure NEWSAPI_API_KEY no backend e reinicie o servidor.', status=503, codigo='noticias_nao_configuradas')
     limite = _limite()
@@ -149,7 +149,7 @@ def _coletar(assunto):
         if any(parse_instante(r['inicio_em']) > agora - timedelta(minutes=2) for r in ativos):
             raise ErroNoticias('Já existe coleta em andamento para este assunto.', status=409, codigo='coleta_em_andamento')
         sucesso = next((r for r in coletas if r['estado'] == 'concluido'), None)
-        if sucesso and parse_instante(sucesso['fim_em']).astimezone(TZ).date() == clock.hoje():
+        if sucesso and parse_instante(sucesso['fim_em']).astimezone(TZ).date() == clock.hoje() and (max_idade is None or parse_instante(sucesso['fim_em']) > agora - max_idade):
             db.commit()
             return {'assunto': assunto, 'estado': 'reutilizado'}
         for r in db.execute("SELECT erro_codigo,fim_em FROM coleta_noticia WHERE estado='falhou' AND erro_codigo IN ('cota_externa','limite_provedor') ORDER BY id DESC"):
@@ -195,21 +195,21 @@ def _coletar(assunto):
     return {'assunto': assunto, 'estado': 'atualizado'}
 
 
-def _atualizar_assuntos(assuntos):
+def _atualizar_assuntos(assuntos, max_idade=None):
     resultados = []
     for assunto in sorted(set(assuntos)):
         try:
-            resultados.append(_coletar(assunto))
+            resultados.append(_coletar(assunto, max_idade))
         except ErroNoticias as e:
             resultados.append({'assunto': assunto, 'estado': 'erro', 'erro': e.resposta()})
     return {'resultados': resultados}
 
 
-def atualizar(cid):
+def atualizar(cid, max_idade=None):
     assuntos = {v['assunto'] for v in _vinculos(cid, _interesses(cid))}
     if not assuntos:
         raise ErroNoticias('Associe um interesse revisado e elegível a um assunto antes de coletar.', 'vinculos')
-    return _atualizar_assuntos(assuntos)
+    return _atualizar_assuntos(assuntos, max_idade)
 
 
 def descartar(cid, corpo):
@@ -237,14 +237,18 @@ def descartar(cid, corpo):
     return {'descartado': True}
 
 
+def coletar_diario():
+    assuntos = set()
+    for r in get_db().execute('SELECT id FROM cliente').fetchall():
+        assuntos.update(v['assunto'] for v in _vinculos(r['id'], _interesses(r['id'])))
+    return _atualizar_assuntos(assuntos)
+
+
 def init_app(app):
     @app.cli.command('coletar-noticias')
     def coletar_noticias_command():
         """Coleta assuntos vinculados/elegíveis; reutiliza sucesso do mesmo dia."""
-        assuntos = set()
-        for r in get_db().execute('SELECT id FROM cliente').fetchall():
-            assuntos.update(v['assunto'] for v in _vinculos(r['id'], _interesses(r['id'])))
-        resultado = _atualizar_assuntos(assuntos)
+        resultado = coletar_diario()
         click.echo(json.dumps(resultado, ensure_ascii=False))
         if any(r['estado'] == 'erro' for r in resultado['resultados']):
             raise click.ClickException('Uma ou mais coletas falharam; cache anterior preservado.')

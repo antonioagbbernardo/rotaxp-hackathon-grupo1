@@ -10,10 +10,13 @@ Incremento 04 acrescenta síntese OpenAI com fontes/cache, separada dos fatos.
 Incremento 05 integra NewsAPI com associação humana, cache diário compartilhado,
 cota e feedback de relevância por cliente. Coleta real compartilhada demonstrada.
 Incremento 06 acrescenta login local, sessão/CSRF, painel protegido e logout.
-352 testes backend (incluindo a cobertura adicional da equipe), 11 frontend,
-build e lint aprovados. Fluxos principais
-conferidos no navegador; detalhes e limites no registro.
-Conexão real aos canais, agendamento automático, reuniões e keynotes ainda planejados.
+Incremento 07 integra agenda, pautas versionadas, notas, conclusão e processo
+local de atualização diária/antecipação. Incremento 08 integra datas confirmadas,
+lembranças com fontes e feedback por ocorrência.
+Última suíte completa: 352 backend e 11 frontend, antes dos incrementos 07/08.
+Entrega atual: 17 casos backend direcionados, 11 frontend, build e lint; detalhes no registro.
+Conferência visual adicional e suíte completa adiadas a pedido do usuário.
+Conexão real aos canais continua pendente; o processo automático deve ficar aberto.
 **Última revisão:** 10/10/2026. Núcleo: consumir fontes existentes, inferir contexto
 e sugerir lembranças sob supervisão humana, incorporando feedback.
 
@@ -29,6 +32,8 @@ e sugerir lembranças sob supervisão humana, incorporando feedback.
 | [Incremento SDD 04](planejamento/incrementos/04-resumo-openai.md) | Síntese OpenAI em três seções, fontes, cache e limites |
 | [Incremento SDD 05](planejamento/incrementos/05-noticias-newsapi.md) | NewsAPI, associação de interesses, custo compartilhado e feedback |
 | [Incremento SDD 06](planejamento/incrementos/06-login.md) | Login no design XP Pulse, proteção de sessão/CSRF e logout |
+| [Incremento SDD 07](planejamento/incrementos/07-agenda-keynotes.md) | Agenda, pautas versionadas, notas, conclusão e atualização automática |
+| [Incremento SDD 08](planejamento/incrementos/08-lembrancas.md) | Confirmação de datas pessoais, fontes e feedback por ocorrência |
 | [Requisitos](planejamento/requisitos.md) | Consultar comportamentos, critérios de aceite e como implementar por etapa |
 | [Especificação curta](planejamento/spec.md) | Alinhar o fluxo principal e regras básicas |
 | [Contratos](planejamento/contracts.md) | Entidades, rotas `/api`, formato JSON e erros do MVP |

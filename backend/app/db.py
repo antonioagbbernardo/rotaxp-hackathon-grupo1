@@ -5,12 +5,39 @@ from flask import Flask, current_app, g
 
 # Dinheiro: TEXT com Decimal (nunca float). Datas: YYYY-MM-DD. Instantes: UTC ISO 8601.
 # O alerta NÃO é persistido (calculado sob demanda); só o tratamento (tratamento_alerta).
-TABELAS = ("sessao_acesso", "descarte_noticia", "coleta_artigo_noticia", "artigo_noticia", "coleta_noticia", "vinculo_noticia",
+TABELAS = ("feedback_lembranca", "lembranca_contexto", "pauta_reuniao", "reuniao", "sessao_acesso", "descarte_noticia", "coleta_artigo_noticia", "artigo_noticia", "coleta_noticia", "vinculo_noticia",
            "resumo_ia", "historico_assunto", "preferencia_assunto", "revisao_contexto", "item_contexto", "processamento_contexto",
            "documento_fonte", "tratamento_alerta", "avaliacao_relacionamento", "interacao", "data_importante",
            "posicao", "cliente", "assessor")
 
 SCHEMA = """
+CREATE TABLE IF NOT EXISTS lembranca_contexto (
+    id INTEGER PRIMARY KEY, cliente_id INTEGER NOT NULL REFERENCES cliente(id),
+    item_id INTEGER NOT NULL REFERENCES item_contexto(id), revisao INTEGER NOT NULL,
+    tipo TEXT NOT NULL CHECK(tipo IN ('aniversario','compromisso')), descricao TEXT NOT NULL,
+    data TEXT, dia INTEGER, mes INTEGER, assessor_id INTEGER NOT NULL REFERENCES assessor(id),
+    confirmada_em TEXT NOT NULL, versao INTEGER NOT NULL DEFAULT 1, UNIQUE(cliente_id,item_id)
+);
+CREATE TABLE IF NOT EXISTS feedback_lembranca (
+    id INTEGER PRIMARY KEY, lembranca_id INTEGER NOT NULL REFERENCES lembranca_contexto(id),
+    revisao INTEGER NOT NULL, versao INTEGER NOT NULL, ocorrencia TEXT NOT NULL,
+    acao TEXT NOT NULL CHECK(acao IN ('concluir','descartar','adiar')), motivo TEXT NOT NULL,
+    adiado_ate TEXT NOT NULL DEFAULT '', assessor_id INTEGER NOT NULL REFERENCES assessor(id), registrada_em TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS reuniao (
+    id INTEGER PRIMARY KEY, cliente_id INTEGER NOT NULL REFERENCES cliente(id),
+    assessor_id INTEGER NOT NULL REFERENCES assessor(id), objetivo TEXT NOT NULL,
+    inicio_em TEXT NOT NULL, criada_em TEXT NOT NULL,
+    estado TEXT NOT NULL DEFAULT 'agendada' CHECK(estado IN ('agendada','cancelada','concluida')),
+    notas TEXT NOT NULL DEFAULT '', pauta_revisada_id INTEGER, avisos_busca TEXT NOT NULL DEFAULT '[]',
+    interacao_id INTEGER UNIQUE REFERENCES interacao(id)
+);
+CREATE INDEX IF NOT EXISTS reuniao_cliente_inicio ON reuniao(cliente_id,inicio_em);
+CREATE TABLE IF NOT EXISTS pauta_reuniao (
+    id INTEGER PRIMARY KEY, reuniao_id INTEGER NOT NULL REFERENCES reuniao(id),
+    assinatura TEXT NOT NULL, dados TEXT NOT NULL, gerada_em TEXT NOT NULL,
+    UNIQUE(reuniao_id,assinatura)
+);
 CREATE TABLE IF NOT EXISTS sessao_acesso (
     token_hash TEXT PRIMARY KEY, expira_em INTEGER NOT NULL
 );

@@ -114,6 +114,16 @@ def responder(cliente, pergunta):
             fontes = [f"{a['source']} · {a['url']} · {a['publishedAt']}" for a in cliente['news']]
         else:
             resposta = 'Não há notícias disponíveis para este cliente. Confira interesses e estado da coleta na seção Notícias.'
+    elif any(k in texto for k in ('reuniao', 'agenda', 'keynote', 'pauta')):
+        from .reunioes import listar
+        reunioes = [r for r in listar(int(cliente['id']))['reunioes'] if r['estado'] == 'agendada']
+        resposta = '\n'.join(f"{r['objetivo']} · {r['inicio_em']} · " + ('pauta revisada' if r['revisada'] else 'conferir/preparar pauta') for r in reunioes) or 'Nenhuma reunião agendada para este cliente.'
+        fontes = [f"reuniao #{r['id']} · objetivo/horário registrados pelo assessor" for r in reunioes]
+    elif any(k in texto for k in ('lembranc', 'aniversario', 'compromisso')):
+        from .lembrancas import consultar
+        lembrancas = [r for r in consultar(int(cliente['id']))['lembrancas'] if r['estado'] in ('pendente', 'adiado')]
+        resposta = '\n'.join(f"{r['descricao']} · {r['sujeito']} · {r['ocorrencia']} · " + ('avaliar pertinência antes de abordar' if r['pode_contatar'] else 'aguardar intervalo de contato pessoal') for r in lembrancas) or 'Nenhuma lembrança confirmada elegível para este cliente.'
+        fontes = [f for r in lembrancas for f in r['fontes']]
     elif any(k in texto for k in ("prefer", "canal", "intervalo")):
         p = cliente["preferences"]
         resposta = f"Canal preferido: {p['canal_preferido'] or 'não informado'}. Intervalo mínimo: {p['intervalo_minimo_dias']} dias. Assuntos pessoais: {'permitidos' if p['permite_assuntos_pessoais'] else 'não permitidos'}."
@@ -139,5 +149,5 @@ def responder(cliente, pergunta):
         resposta = cliente["assistant"]["summary"] + " " + cliente["headline"]
         fontes = cliente["assistant"]["summarySources"]
     else:
-        resposta = "Esta consulta responde sobre perfil, carteira/vencimentos, último contato, preferências, interesses revisados e resumo. Não há informação suficiente para responder a essa pergunta com as fontes disponíveis."
+        resposta = "Esta consulta responde sobre perfil, carteira/vencimentos, último contato, preferências, interesses revisados, notícias, reuniões, lembranças e resumo. Não há informação suficiente para responder a essa pergunta com as fontes disponíveis."
     return {"resposta": resposta, "fontes": list(dict.fromkeys(fontes)), "modo": "consulta_contexto"}

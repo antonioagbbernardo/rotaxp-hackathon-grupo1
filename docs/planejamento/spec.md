@@ -5,8 +5,10 @@ branch da equipe preservadas. A direção atual do produto inclui consumo de
 fontes existentes, inferência e feedback. Importação de JSON fictício está
 implementada; extração Gemini e revisão humana implementadas com testes simulados.
 Extração real validada em uma amostra fictícia; notícias via NewsAPI com coleta
-manual/CLI e cache implementadas no incremento 05. Fonte real, agendador e reuniões
-seguem planejados. Qualidade geral e fluxo visual completo ainda não validados.
+manual/CLI e cache implementadas no incremento 05. Incrementos 06–08 integram
+login, agenda, keynotes, processo local de atualização e lembranças confirmadas.
+Fonte real pendente. Verificação atual mínima a pedido do usuário; fluxo visual
+completo dos novos incrementos e qualidade geral ainda não validados.
 Detalhamento: [requisitos](requisitos.md) (RF01–RF31 e CA11–CA33), [contratos](contracts.md),
 [arquitetura](design.md). Leitura rápida: [visão geral](../visao-geral.md).
 Nas divergências sobre regras de alerta, prioridade, preferências e acesso, vale
@@ -55,10 +57,11 @@ Esclarecido pelo usuário e preservado neste merge:
 
 - Consumo da fonte existente e formulário, extração de fatos/hipóteses,
   revisão humana e feedback (RF03, RF05, RF16, RF25–RF30): JSON fictício e
-  contexto revisável implementados; lembretes derivados ainda pendentes.
+  contexto revisável e lembranças com data confirmada implementados
+  ([incremento 08](incrementos/08-lembrancas.md)).
 - Notícias via NewsAPI.org por assunto compartilhado: coleta manual/CLI, cache
-  e cota implementados; atualização agendada e antecipação por reunião pendentes
-  (RF17–RF20).
+  e cota implementados; processo local para atualização diária e antecipação
+  por reunião no [incremento 07](incrementos/07-agenda-keynotes.md) (RF17–RF20).
 - Reuniões próximas com pauta (keynotes), fontes e observações revisáveis
   (RF21–RF24).
 
@@ -66,14 +69,14 @@ Critérios CA16–CA25 e regras de busca: [requisitos](requisitos.md) e
 [integração NewsAPI](../integracoes/busca-noticias.md). O agendador serve só à
 busca de notícias e às reuniões; alertas continuam calculados sob demanda (RN14).
 
-Fora da entrega atual: conexão à fonte real, lembretes derivados, agendador e
-reuniões. Estes itens continuam planejados em requisitos. Construir captura
-dos canais e formulário, envio de mensagens/atas, app nativo e análises tributárias
+Fora da entrega atual: conexão à fonte real. Construir captura dos canais e
+formulário, envio de mensagens/atas, app nativo e análises tributárias
 não fazem parte desta integração. Login local autorizado no incremento 06.
 
 Alertas calculados da base só têm pendente/tratado (RN15). Ações de adiar ou
 descartar itens inferidos pertencem à revisão de contexto do incremento 02,
-sem alterar a regra de tratamento desses alertas. Lembretes derivados são futuros.
+sem alterar a regra de tratamento desses alertas. Lembranças derivadas têm
+confirmação e feedback próprios (RN67–RN70), sem influenciar prioridade.
 
 Demonstração com um assessor fictício único, dados fictícios identificados,
 somente em ambiente local (`127.0.0.1`). **Proibido usar dados reais de
@@ -237,15 +240,21 @@ Síntese OpenAI autorizada: [incremento 04](incrementos/04-resumo-openai.md),
 RN40–RN45 e CA65–CA71. Melhora a redação com fontes, cache e revisão humana;
 o resumo factual RN08 e as regras determinísticas continuam independentes.
 
-Radar de perfil heurístico (demonstração): [incremento 07](incrementos/07-radar-perfil.md),
-RN59–RN63 e CA85–CA88. Só frontend; estimativa sobre posições, sem ML nem recomendação.
+Radar de perfil heurístico (demonstração): [incremento 09](incrementos/09-radar-perfil.md),
+RN71–RN75 e CA95–CA98. Só frontend; estimativa sobre posições, sem ML nem recomendação.
 
-Próximo recorte de T08: [incremento 05](incrementos/05-noticias-newsapi.md),
+Primeiro recorte de T08: [incremento 05](incrementos/05-noticias-newsapi.md),
 RN46–RN52 e CA72–CA78. Notícias por consultas compartilhadas, vínculo humano,
 cache diário, cota e feedback por cliente. Agenda e keynotes são outro recorte.
 
 Incremento 06: [login](incrementos/06-login.md), RF31, RN53–RN58 e CA79–CA84.
 Login de demonstração substitui o recorte anterior sem autenticação.
+
+Incremento 07: [agenda e keynotes](incrementos/07-agenda-keynotes.md), RF18–RF24,
+RN59–RN66 e CA85–CA90. Processo local para coleta diária/antecipação, pautas com
+fontes, revisão exata, notas separadas e resultado vinculado ao histórico.
+Incremento 08: [lembranças](incrementos/08-lembrancas.md), RF27–RF29,
+RN67–RN70 e CA91–CA94. Datas explícitas e feedback por ocorrência sob decisão humana.
 
 CA11–CA25 (notícias, reuniões e keynotes) estão em [requisitos](requisitos.md);
 CA26–CA33 de inferência/feedback continuam em requisitos; CA34–CA39 acima

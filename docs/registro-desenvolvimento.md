@@ -26,7 +26,7 @@ respeitando como ele quer se relacionar e aprendendo com a revisão do profissio
 | Fatos, hipóteses e origem separados | Assessor consegue conferir e corrigir o que será usado no atendimento | Incremento 02 implementado com testes simulados; qualidade real pendente |
 | Preferências e pertinência pessoal | Lembrar de algo só é útil se fizer sentido para aquele investidor | Permissão/intervalo da base e bloqueio individual implementados |
 | Feedback com alcance explícito | Corrigir ou descartar uma sugestão não apaga um interesse nem afeta outros clientes | Revisão/correção/bloqueio persistidos e testados |
-| Notícias com custo compartilhado | Reaproveita uma consulta entre clientes e evita chamadas em recargas | Incremento 05: dois clientes fictícios compartilharam uma chamada real; keynotes ainda planejados |
+| Notícias com custo compartilhado | Reaproveita uma consulta entre clientes e evita chamadas em recargas | Dois clientes fictícios compartilharam uma chamada real; incremento 07 antecipa coleta e monta keynotes |
 
 Essa combinação é a **hipótese de diferenciação**, não prova de exclusividade.
 Não afirmar “único no mercado” sem comparação documentada com concorrentes.
@@ -55,7 +55,8 @@ persistidas; não é retreinamento automático do modelo.
 | Incremento 01: fontes | Importação JSON, resultado/erro, pendências de identidade, versões e origem no detalhe/histórico | Validação pura, transação SQLite, documentos versionados e API/CLI compartilhados | Implementado: 34 testes novos + 47 anteriores = 81 aprovados; CSS e sintaxe JS verificados; visual parcial |
 | Incremento 02: contexto e feedback | Processamento, fila, evidências, quatro ações e bloqueio por cliente | Gemini REST, validação literal, cache, controle de concorrência, revisão/auditoria | 44 testes novos, total 125; testes simulados + extração real de 4 fontes/7 propostas. Visual completo pendente |
 | Incremento 05: notícias | Associação de interesse, coleta, fontes/datas, estado do cache e feedback individual | NewsAPI REST, cache diário compartilhado, cota, lease e descarte persistente | 41 testes novos; uma consulta real compartilhada por dois clientes fictícios; limites visuais abaixo |
-| Reuniões e keynotes | Agenda e pauta | Agendamento, preparação de pauta e conclusão | Planejado, não implementado |
+| Incremento 07: reuniões e keynotes | Agenda, fontes, revisão, notas e resultado | Pauta versionada, conclusão única e processo local diário/antecipação | Implementado; seis casos novos, verificação visual adiada |
+| Incremento 08: lembranças | Confirmação de data e feedback | Sujeito/fonte/revisão, recorrência e feedback por ocorrência/versão | Implementado; sete casos novos, sem envio automático |
 | Incremento 03: XP Pulse integrado | Layout React recebido da equipe; clientes, resumo, carteira, percepção, fontes, revisão, alertas e registros conectados | Adaptador `/api/pulse`, perguntas por templates, assets no Flask; SQLite e regras anteriores preservados | 143 testes backend + cinco frontend, build/lint aprovados; fluxos no navegador e viewport móvel, com limites abaixo |
 
 ## Registro SDD por incremento
@@ -258,12 +259,12 @@ do assistente). A atualização foi integrada sem conflitos, preservando o resum
 OpenAI. Os cinco testes frontend, lint e build passaram novamente. Backend
 sem alterações neste merge; imagem nova não conferida em navegador.
 
-## Incremento 07 — radar de perfil do investidor (10/10/2026)
+## Incremento 09 — radar de perfil do investidor (10/10/2026)
 
 - **Problema:** mostrar o perfil (conservador, moderado, arrojado) de forma visual,
   sem ML, para a demonstração.
-- **Regras e critérios:** RN59–RN63, CA85–CA88 em
-  [incremento 07](planejamento/incrementos/07-radar-perfil.md).
+- **Regras e critérios:** RN71–RN75, CA95–CA98 em
+  [incremento 09](planejamento/incrementos/09-radar-perfil.md).
 - **Decisão:** a API entrega `allocation: []` e só posições de renda fixa; por isso
   a heurística usa `positions` (tipo, valor, prazo). Pesos fixos em
   `frontend/src/lib/perfil-radar.ts`, ponto de troca por ML.
@@ -359,7 +360,7 @@ mesmo assunto em outro cliente sem custo adicional → feedback individual.
 | 0:40–1:40 | Entrada de fontes e rastreabilidade; indicar dados fictícios e estágio real da entrega |
 | 1:40–2:40 | Cliente, histórico, pendências e prioridade calculada |
 | 2:40–3:40 | Conferir evidência, registrar revisão e mostrar o efeito do feedback |
-| 3:40–4:20 | Arquitetura, testes, custo compartilhado planejado e privacidade na demo |
+| 3:40–4:20 | Keynotes com fontes, custo compartilhado implementado e decisão humana |
 | 4:20–5:00 | Resultado demonstrado, limites e próximos passos |
 
 ## Evidências a guardar antes do pitch
@@ -396,7 +397,56 @@ Atualizar status da tabela e não apagar decisões/limites ainda aplicáveis.
 - A pedido do usuário, conferência visual adicional de logout/celular adiada para
   acelerar as demandas SDD. Logout/expiração/reinício cobertos por testes HTTP.
 - Limites: acesso único local de demonstração, sem recuperação/multiassessor.
-  Reuniões, keynotes e agendamento continuam como próximos incrementos.
+  Reuniões, keynotes e agendamento foram entregues depois no incremento 07.
 
 **Demo:** tela de entrada → entrar → contexto do cliente → Sair. O profissional
 continua decidindo como usar as fontes e abordar o investidor.
+
+## Incrementos 07/08 — concluir agenda e lembranças (10/10/2026)
+
+- Pedido: concluir as demandas SDD, acelerar e testar minimamente; commit/push
+  na main. Especificações/contratos escritos antes do código: RN59–RN70,
+  CA85–CA94; RF18–RF24 e RF27–RF29. TDD inicial: cinco falhas de agenda e seis
+  de lembranças (rotas ausentes), seguidas pela implementação; mais dois casos
+  cobrem cota na preparação e edição da anotação após feedback.
+- Frontend: agenda geral lateral e seção por cliente; criação/reagendamento/
+  cancelamento, pauta com fontes/avisos, revisão da versão exata, notas separadas
+  e conclusão com resultado. Lembranças têm candidato revisado, confirmação
+  explícita de data/tipo/descrição, sujeito/fontes e feedback com motivo/adiamento.
+  GET do painel a cada 60s mantém leitura atualizada, sem chamar provedores.
+- Backend: tabelas aditivas de reunião/pauta e lembrança/feedback. Pauta
+  determinística reúne fatos, contexto factual revisado, combinados, alertas
+  pendentes e até três notícias; perguntas são sugestões. Dados novos invalidam
+  a versão atual; notas e versões históricas persistem. Conclusão transacional
+  cria uma única interação presencial, inclusive quando o envio é repetido.
+- Atualização: processo CLI `acompanhar-agenda`, enquanto aberto, faz coleta
+  diária por assunto e prepara encontros das próximas 24h. Cache >=2h pode ser
+  renovado uma vez e reutilizado por outras reuniões. Cota/cache/lease/intervalo
+  continuam valendo. Falha externa/cota mantém pauta interna com aviso explícito.
+- Lembranças: apenas fato elegível do cliente/familiar com data confirmada;
+  aniversário guarda dia/mês, compromisso data exata. Mudança de fonte/revisão,
+  bloqueio ou permissão retira elegibilidade. Feedback vale por ocorrência e
+  versão; editar anotação não reaplica decisão anterior. Respeita a indicação
+  de intervalo de contato, sem autorizar abordagem ou alterar prioridade.
+- Perguntas básicas sobre reuniões/lembranças leem os mesmos dados elegíveis
+  e devolvem fontes; não há chamada de IA/NewsAPI nessa consulta.
+- Validação mínima: **17 testes backend direcionados aprovados**, incluindo
+  13 casos novos de agenda/lembranças e quatro regressões de acesso, notícias
+  e bloqueio/reset. **11 testes frontend, lint e build aprovados.** Nenhuma chamada externa
+  nesse lote; provedores simulados. Última suíte completa (antes desta entrega):
+  352 backend + 11 frontend. Suíte completa e visual dos novos fluxos adiados
+  pelo pedido de velocidade; não alegar CA90/CA94 visualmente validados.
+- Execução local: servidor 5001 reiniciado, login/sessão e novas leituras HTTP
+  retornaram 200; cinco clientes e quatro caches de síntese anteriores preservados.
+  Processo contínuo iniciado; primeiro ciclo sem reuniões/vínculos retornou vazio,
+  sem buscar notícias ou criar decisões humanas na base de trabalho.
+- Limites: fontes dos canais simuladas por JSON; acesso real ainda precisa de
+  contrato/credenciais. Processo automático precisa permanecer em execução.
+  Reuniões não sincronizam calendários ou enviam atas; não há app nativo,
+  análise tributária/risco completo ou acesso multiassessor. Privacidade da demo
+  não representa conformidade LGPD de produção. Ganho de tempo ainda não medido.
+
+**Demo sugerida:** entrar → fonte/evidência → revisão → reunião agendada →
+keynotes/fontes → revisão humana/notas → concluir → histórico; confirmar uma
+data pertinente e mostrar feedback. Para mostrar notícias automáticas, manter
+o processo aberto e usar um vínculo de interesse já revisado pelo assessor.

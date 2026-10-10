@@ -2,8 +2,9 @@
 
 **Status:** React XP Pulse integrado ao Flask/SQLite, ingestão JSON fictícia e contexto/revisão implementados;
 Gemini testado com simulação e uma amostra fictícia real. Síntese OpenAI e
-NewsAPI com cache/feedback implementados; fonte real, lembranças derivadas,
-agendamento automático e reuniões ainda planejados.
+NewsAPI com cache/feedback, login, agenda/keynotes, processo local de atualização
+e lembranças com confirmação explícita implementados. Fonte real pendente.
+Novos fluxos têm verificação mínima; revisão visual completa adiada pelo usuário.
 **Referências:** [especificação](spec.md), [arquitetura](design.md) e [tarefas](tasks.md).
 Integração do front: [incremento 03, RN33–RN39 e CA57–CA64](incrementos/03-front-pulse.md).
 **Usuário principal proposto:** assessor de investimentos.
@@ -93,15 +94,16 @@ decidir quais cabem no hackathon antes de incluí-las como compromisso de entreg
 - **RF18 — Atualização diária:** executar coleta agendada com deduplicação,
   cota controlada e manutenção do último resultado em caso de falha.
 - **RF19 — Preparação de reunião:** antecipar coleta dos assuntos pertinentes
-  quando uma reunião estiver próxima e o cache estiver antigo. Janelas propostas
-  de 24h para reunião e 2h para cache ainda precisam de validação.
+  quando uma reunião estiver próxima e o cache estiver antigo. Janelas do MVP:
+  início entre agora e 24h (inclusive), cache com idade >=2h.
 - **RF20 — Contexto rastreável:** exibir os artigos usados e distinguir atualização
   de busca de atualidade da notícia; o atraso depende do plano do NewsAPI.
 
 RF17/RF20 implementados no [incremento 05](incrementos/05-noticias-newsapi.md):
 coleta explícita/CLI, assuntos associados pelo assessor, cache diário, orçamento
-e fontes. RF18 permanece parcial (serviço diário, sem agendador instalado);
-RF19 depende de reuniões. Sem especialista de IA para notícias neste recorte.
+e fontes. RF18/RF19 implementados no [incremento 07](incrementos/07-agenda-keynotes.md)
+por processo local `acompanhar-agenda`, que precisa permanecer em execução.
+Sem especialista de IA para notícias neste recorte.
 
 ### Preparação de reuniões — keynotes
 
@@ -127,6 +129,9 @@ Conteúdo proposto da pauta:
 
 Ausência de dados deve ser indicada. A pauta continua útil com informações
 internas quando notícias ou IA estiverem indisponíveis.
+RF21–RF24 implementados no incremento 07: pauta determinística versionada,
+revisão da versão exata, notas separadas e interação única na conclusão.
+Fontes novas invalidam a versão; hipóteses não são promovidas a fatos da pauta.
 
 ### Extração, lembranças e aprendizado com revisão
 
@@ -140,6 +145,11 @@ internas quando notícias ou IA estiverem indisponíveis.
 | RF30 | Renovar contexto sem perder revisão | Processar novos registros, preservar correções e encaminhar contradições para revisão | CA28, CA33 |
 
 RF25–RF30 complementam RF03/RF05/RF10 e constituem o núcleo do recorte revisado.
+RF27–RF29 complementados no [incremento 08](incrementos/08-lembrancas.md):
+o assessor confirma data/tipo/descrição de um fato elegível do cliente ou familiar.
+Aniversário guarda apenas dia/mês; compromisso, a data exata. Feedback por
+ocorrência permite concluir/descartar/adiar, com motivo e fonte. Mudança de
+fonte/revisão/bloqueio/permissão retira elegibilidade. Não autoriza contato.
 
 ## 3. Regras da base e propostas de evolução
 
@@ -148,7 +158,9 @@ Síntese legível com OpenAI autorizada após a integração do painel:
 Organiza fatos em Visão geral, Pontos de atenção e Antes do contato, com
 fontes/cache e decisão final do assessor. Preserva RN08 e avaliações humanas.
 
-As regras da base foram definidas pela equipe e estão em `spec.md`; não são regras dos organizadores. As regras de inferência, notícias e reuniões abaixo continuam propostas de implementação.
+As regras da base foram definidas pela equipe e estão em `spec.md`; não são regras
+dos organizadores. Os incrementos 01–08 e contratos definem o comportamento
+implementado. Propostas abaixo só valem quando não conflitam com esses recortes.
 
 > **Decisões de 10/10/2026 que prevalecem** (detalhes em `spec.md` e
 > `contracts.md`; RN11–RN15 e CA34–CA39 detalham a base): vencimento Δ 0–7 alta,
@@ -237,10 +249,10 @@ não segundo backend; interface JS anterior permanece em `/legacy`.
 importante, avaliação e tratamento de alerta. Alertas são calculados sob demanda;
 não há tabela de alertas. Dinheiro usa Decimal/texto.
 
-**Dados adicionais planejados:** documento de origem, formulário versionado,
-extração, feedback, lembrança, interesse/vínculo, evento, reunião e pauta versionada.
-Detalhar schema e migração antes de implementar; não misturar sugestão inferida
-com o tratamento dos alertas da base.
+**Dados adicionais implementados:** documento/formulário versionado, extração,
+revisão/feedback, lembrança, interesse/vínculo, notícia, reunião e pauta versionada.
+Schema aditivo no SQLite; detalhes em `contracts.md`. Não misturar sugestão inferida
+com o tratamento dos alertas da base. Eventos semânticos e integrações reais são evolução.
 
 **Validar:** iniciar em outra máquina, carregar dados sem duplicação e testar
 vínculos inválidos. Configuração e credenciais ficam fora do Git.
@@ -325,6 +337,9 @@ e próximos passos, preservando a pauta utilizada.
 **Validar:** reunião próxima, distante, cancelada e reagendada; alteração de
 interação; cache recente; falha externa; notas preservadas e cliente correto.
 **Entrega:** o assessor abre a reunião, revisa a pauta e registra o resultado.
+Implementado no incremento 07. Processo local faz coleta diária e preparação
+na janela de 24h; uma consulta pode atender várias reuniões do mesmo assunto.
+Observações e versões históricas ficam no banco; interface oculta pauta inelegível.
 
 ### Etapa 8 — Integrar, revisar e entregar
 
@@ -354,32 +369,30 @@ precisam de contrato aprovado e não são endpoints disponíveis hoje.
 | Avaliar relacionamento | POST /api/clientes/{id}/relacionamento | Avaliação com justificativa e autoria |
 | Tratar alerta | POST /api/alertas/tratar | Recebe cliente_id e chave_ocorrencia; repetir mantém o resultado |
 
-**Extensões propostas, não implementadas:**
+**Extensões implementadas (contratos completos em `contracts.md`):**
 
-| Operação | Caminho ilustrativo a definir | Resultado |
+| Operação | Caminho | Resultado |
 | --- | --- | --- |
-| Receber evento | POST /events | Evento persistido; duplicata reconhecida |
-| Listar/agendar reuniões | GET/POST /meetings | Cliente, início, objetivo e estado |
-| Reagendar/cancelar | PATCH /meetings/{id} | Estado/data atualizados e disparos reconciliados |
-| Consultar pauta | GET /meetings/{id}/brief | Pauta, fontes, versão e atualização |
-| Preparar/atualizar pauta | POST /meetings/{id}/brief/refresh | Resultado reutilizado, atualizado ou estado de processamento |
-| Revisar observações | PATCH /meetings/{id}/brief/notes | Notas do assessor preservadas separadamente |
-| Concluir encontro | POST /meetings/{id}/complete | Interação vinculada e reunião concluída em operação idempotente |
-| Sincronizar fonte existente | POST /source-syncs | Resultado/estado da ingestão incremental, controlada no backend |
-| Consultar contexto | GET /clients/{id}/context | Fatos, hipóteses, fontes, conflitos e revisão |
-| Consultar sugestões | GET /clients/{id}/suggestions | Lembranças e inferências com justificativa e estado |
-| Revisar sugestão | POST /clients/{id}/suggestions/{suggestionId}/feedback | Ação, correção/motivo e alcance persistidos |
+| Listar/agendar reuniões | GET/POST /api/clientes/{id}/reunioes | Cliente, início, objetivo e estado |
+| Reagendar/notas | PATCH /api/reunioes/{id} | Data/objetivo/notas; revisão anterior invalidada se necessário |
+| Cancelar | POST /api/reunioes/{id}/cancelar | Estado cancelada |
+| Consultar pauta | GET /api/reunioes/{id} | Pauta atual, fontes, versão e resultado |
+| Preparar/revisar pauta | POST /api/reunioes/{id}/preparar ou revisar | Preparação versionada; revisão indica `pauta_id` |
+| Concluir encontro | POST /api/reunioes/{id}/concluir | Interação vinculada em operação idempotente |
+| Ingerir fonte simulada | POST /api/fontes/importar | Versões, identidades e histórico |
+| Consultar contexto | GET /api/clientes/{id}/contexto | Fatos, hipóteses, fontes, conflitos e revisão |
+| Consultar/confirmar lembranças | GET/POST /api/clientes/{id}/lembrancas | Candidatos, data confirmada e ocorrência |
+| Feedback da lembrança | POST /api/clientes/{id}/lembrancas/{lembranca_id}/feedback | Ação, motivo e adiamento por ocorrência/versão |
 
-Definir antes de implementar: representação de valores, datas, identificadores,
-paginação se necessária e respostas para entrada inválida e ausência. Acesso
-negado e CSRF estão definidos no incremento 06 (401/403). Os caminhos ilustrativos de extensões devem ser alinhados
-aos nomes em português dos contratos atuais antes da implementação.
+Valores, datas, identificadores e erros estão nos contratos dos incrementos.
+Acesso negado e CSRF definidos no incremento 06 (401/403). Receber evento
+semântico e sincronizar fonte real continuam extensões pendentes de contrato.
 
 ## 7. Aceite e plano de testes
 
-CA01–CA10 e CA34–CA39 estão em `spec.md`. CA06 e os cenários de importação,
-notícias, reuniões e lembretes derivados ainda dependem da evolução. Fontes e
-contexto/revisão têm CA40–CA56 nos incrementos; testes simulados não comprovam
+CA01–CA10 e CA34–CA39 estão em `spec.md`. CA06 sem eventos semânticos permanece
+parcial. Importação/contexto têm CA40–CA56, notícias CA72–CA78, login CA79–CA84,
+agenda CA85–CA90 e lembranças CA91–CA94 nos incrementos. Testes simulados não comprovam
 qualidade do modelo real. CA26–CA33 publicados na main foram
 preservados; critérios da branch com IDs coincidentes passaram para CA34–CA39.
 Complementos:

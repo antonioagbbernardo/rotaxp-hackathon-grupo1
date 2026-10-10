@@ -6,7 +6,7 @@ const HOJE = '2026-10-10'
 const pos = (id, ativo, valor, vencimento) => ({ id, ativo, valor, vencimento })
 const eixo = (r, chave) => r.eixos.find((e) => e.chave === chave)
 
-test('CA85: carteira só de baixo risco sugere Conservador', () => {
+test('CA95: carteira só de baixo risco sugere Conservador', () => {
   const r = calcularPerfilRadar(
     [pos(1, 'CDB Banco Exemplo', '50000.00', '2026-10-15'), pos(2, 'LCI Banco Exemplo', '30000.00', '2026-11-10')],
     HOJE,
@@ -17,7 +17,7 @@ test('CA85: carteira só de baixo risco sugere Conservador', () => {
   assert.equal(eixo(r, 'credito').valor, 0)
 })
 
-test('CA85: crédito privado dominante sobe risco e crédito privado', () => {
+test('CA95: crédito privado dominante sobe risco e crédito privado', () => {
   const r = calcularPerfilRadar(
     [pos(5, 'CRA Exemplo', '80000.00', '2026-10-17'), pos(6, 'LCA Exemplo', '15000.00', '2026-10-18')],
     HOJE,
@@ -27,33 +27,33 @@ test('CA85: crédito privado dominante sobe risco e crédito privado', () => {
   assert.deepEqual(eixo(r, 'risco').fontes, ['posição #5', 'posição #6'])
 })
 
-test('CA86: sem posições não há eixos nem sugestão', () => {
+test('CA96: sem posições não há eixos nem sugestão', () => {
   const r = calcularPerfilRadar([], HOJE, 'Moderado')
   assert.deepEqual(r.eixos, [])
   assert.equal(r.sugerido, null)
   assert.equal(r.diverge, false)
 })
 
-test('CA86: ativo desconhecido fica fora do risco e gera aviso', () => {
+test('CA96: ativo desconhecido fica fora do risco e gera aviso', () => {
   const r = calcularPerfilRadar([pos(1, 'Cripto XPTO', '1000.00', '2026-12-01'), pos(2, 'CDB X', '1000.00', '2026-12-01')], HOJE)
   assert.equal(r.avisos.length, 1)
   assert.match(r.avisos[0], /Cripto XPTO/)
   assert.deepEqual(eixo(r, 'risco').fontes, ['posição #2'])
 })
 
-test('CA86: só ativos desconhecidos deixam o risco ausente, sem inventar valor', () => {
+test('CA96: só ativos desconhecidos deixam o risco ausente, sem inventar valor', () => {
   const r = calcularPerfilRadar([pos(1, 'Cripto XPTO', '1000.00', '2026-12-01')], HOJE)
   assert.equal(eixo(r, 'risco').valor, null)
   assert.equal(r.sugerido, null)
 })
 
-test('CA87: posição vencida conta como prazo zero e liquidez imediata', () => {
+test('CA97: posição vencida conta como prazo zero e liquidez imediata', () => {
   const r = calcularPerfilRadar([pos(3, 'Debênture Exemplo', '20000.00', '2026-10-08')], HOJE)
   assert.equal(eixo(r, 'liquidez').valor, 100)
   assert.equal(eixo(r, 'horizonte').valor, 0)
 })
 
-test('CA88: divergência entre declarado e sugerido é exibida', () => {
+test('CA98: divergência entre declarado e sugerido é exibida', () => {
   const r = calcularPerfilRadar([pos(1, 'Tesouro Exemplo', '10000.00', '2026-10-10')], HOJE, 'Arrojado')
   assert.equal(r.declarado, 'Arrojado')
   assert.equal(r.sugerido, 'Conservador')
@@ -80,7 +80,7 @@ test('formas femininas do perfil declarado são reconhecidas', () => {
   assert.equal(r.declarado, 'Moderado')
 })
 
-test('RN61: data inexistente e valor zero geram aviso, não valor inventado', () => {
+test('RN73: data inexistente e valor zero geram aviso, não valor inventado', () => {
   const r = calcularPerfilRadar(
     [pos(1, 'CDB A', '100.00', '2026-13-45'), pos(2, 'CDB B', '0.00', '2026-12-01'), pos(3, 'CDB C', '100.00', '2026-02-30')],
     HOJE,

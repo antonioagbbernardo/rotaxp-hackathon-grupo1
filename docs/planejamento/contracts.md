@@ -321,3 +321,55 @@ sem acesso retornam 401 sem executar regra/serviço. Leitura não exige CSRF.
 em `session.key`, ao lado do banco local, permissão 0600 e fora do Git. SQLite
 armazena `sessao_acesso(token_hash, expira_em)`; somente hash do identificador.
 CLI permanece disponível sem login. Não há perfis/permissões multiassessor.
+
+## Incremento 07 — reuniões e keynotes
+
+[Regras](incrementos/07-agenda-keynotes.md). Sessão/CSRF do incremento 06.
+
+```
+GET  /api/reunioes                         lista geral (até 100, por início)
+GET  /api/clientes/<id>/reunioes            lista do cliente
+POST /api/clientes/<id>/reunioes            {objetivo,inicio_em} → 201
+GET  /api/reunioes/<id>                     detalhe/pauta atual
+PATCH /api/reunioes/<id>                    {objetivo?,inicio_em?,notas?} → 200
+POST /api/reunioes/<id>/cancelar            sem corpo → 200
+POST /api/reunioes/<id>/preparar             sem corpo → 200
+POST /api/reunioes/<id>/revisar              {pauta_id} → 200
+POST /api/reunioes/<id>/concluir             {resumo,proximos_passos?} → 201/200
+```
+
+Reunião: id, cliente_id/nome, objetivo, inicio_em (UTC), estado, notas, proxima,
+interacao_id, resultado (texto/proximos_passos/ocorrida_em ou null), pauta (ou null),
+pauta_desatualizada, revisada. Pauta: id, gerada_em,
+secoes[{titulo,itens[{texto,fontes[],url?}]}], avisos[]. Dados novos ocultam pauta
+antiga até preparar novamente; notas persistem. Conclusão repetida diferente →409.
+Entrada/campo inválido→400; inexistente→404; estado/versão incompatível→409.
+Erros usam `entrada_invalida`, `nao_encontrado` e `conflito`, sempre com campo.
+Notas até 4.000 caracteres. GET nunca chama NewsAPI/IA. Preparação próxima pode
+renovar assuntos com cache >=2h, sob o orçamento compartilhado já existente.
+CLI `acompanhar-agenda`: ciclo de coleta diária + pautas próximas; `--uma-vez`
+para executar só um ciclo. Processo local contínuo com intervalo de 60s por padrão.
+Falha de antecipação fica nos avisos da pauta, mesmo com cache anterior disponível.
+Pergunta básica sobre agenda/reunião consulta registros com fontes; não coleta.
+
+## Incremento 08 — lembranças com confirmação de data
+
+[Regras](incrementos/08-lembrancas.md). Sessão/CSRF do incremento 06.
+
+```
+GET  /api/clientes/<id>/lembrancas          {candidatos[],lembrancas[]}
+POST /api/clientes/<id>/lembrancas          {item_id,revisao,tipo,descricao,data} →201/200
+POST /api/clientes/<id>/lembrancas/<id>/feedback
+      {acao:concluir|descartar|adiar,motivo,adiado_ate?} →200
+```
+
+Data `YYYY-MM-DD`; aniversário armazena dia/mês, compromisso data inteira.
+Descrição até 500 caracteres. Revisão inteira atual; terceiro/hipótese/conflito/
+fonte antiga/bloqueio/permissão ausente recusados (400/409); identidade errada→404.
+Candidato inclui id/revisao/valor/sujeito/fontes. Lembrança inclui id/descricao/tipo/
+sujeito/ocorrencia/estado/adiado_ate/proxima/pode_contatar/fontes/versao/motivo_feedback.
+Motivo 1–1.000;
+adiar exige data futura e só essa ação aceita `adiado_ate`. Feedback por ocorrência
+é idempotente. Não cria tabela/cópia de alerta financeiro nem altera prioridade.
+Mudança de tipo/descrição/data incrementa versão da anotação; feedback antigo não
+se aplica a essa versão. Pergunta sobre lembranças usa a mesma seleção com fontes.
