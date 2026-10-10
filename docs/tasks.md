@@ -1,0 +1,57 @@
+# Plano de execução — proposta para seis pessoas
+
+Status: planejamento, sem implementação autorizada nesta etapa.
+Referências: `spec.md` e `design.md`. Os responsáveis serão definidos pela equipe.
+
+## Sequência de trabalho
+
+| Tarefa | Resultado verificável | Depende de | Aceite relacionado | Responsável proposto |
+| --- | --- | --- | --- | --- |
+| T01 — Alinhamento | Fluxo, exclusões, regras e stack registrados | Decisão da equipe | Todos | Pessoa 1 + equipe |
+| T02 — Base e dados | Ambiente reproduzível e clientes fictícios persistidos | T01 | CA02–CA04 | Pessoa 2 |
+| T03 — Primeiro fluxo | Lista abre detalhe com dados da base | T02 e contrato de dados | CA01, CA02, CA10 | Pessoas 2 e 4 |
+| T04 — Histórico | Registrar interação e consultar após recarregar | T03 | CA03, CA04 | Pessoa 5 |
+| T05 — Alertas | Vencimentos e eventos aparecem com motivo e fonte | T02 e regras validadas | CA05–CA08 | Pessoa 3 |
+| T06 — Relacionamento | Preferências e avaliação justificada funcionam | T03 | CA07, CA09 | Pessoas 4 e 5 |
+| T07 — Integração | Fluxo completo revisado, inclusive falhas | T04–T06 | Todos | Pessoa 6 + autores |
+| T08 — Entrega | README, repositório atualizado e pitch de até 5 min | T07 | Demonstração reproduzível | Pessoas 1 e 6 + equipe |
+
+Pessoa 1 mantém a especificação e apoia testes após o alinhamento. Pessoa 6
+acompanha a integração desde a base, sem esperar o final. Cada autor verifica
+sua entrega. A divisão deve acompanhar as competências reais do grupo.
+
+## Referência de tempo — 6h30 totais
+
+- 0h–0h30: alinhamento, regras, stack, contratos e responsáveis.
+- 0h30–1h15: base executável e primeiro fluxo de consulta integrado.
+- 1h15–3h30: interações, alertas e preferências, com integrações frequentes.
+- 3h30–4h30: testes essenciais e correções.
+- 4h30–5h30: revisão do fluxo completo e documentação de execução.
+- 5h30–6h30: envio final, ensaio e margem para imprevistos.
+
+Ajustar ao tempo efetivamente restante. O repositório será clonado às **17h30**,
+segundo as instruções do evento; o código da demonstração precisa estar enviado
+antes desse horário.
+
+## SDD e TDD na prática
+
+Para cada tarefa, registrar a regra e o critério de aceite antes do código.
+Escrever e revisar testes de comportamento, observar a falha esperada,
+implementar e executar novamente. Não alterar um resultado correto só para passar.
+
+Priorizar testes dos limites de vencimento, associação de interesses,
+preferências de contato, duplicidade de eventos e persistência das interações.
+Complementar com teste do fluxo completo e da interface no celular.
+
+## Roteiro proposto para demonstração
+
+1. Explicar a dificuldade de reunir contexto e priorizar contatos.
+2. Abrir um cliente e mostrar resumo com evidências.
+3. Mostrar um vencimento e uma oportunidade de contato por interesse.
+4. Registrar uma interação e conferir o histórico atualizado.
+5. Explicar custo, privacidade, limitações e evolução.
+
+## Quando faltar tempo
+
+Preservar o fluxo completo. Adiar visualizações extras, integrações de canais e
+aplicativo separado antes de cortar persistência, regras essenciais ou validação.
