@@ -271,6 +271,26 @@ sem alterações neste merge; imagem nova não conferida em navegador.
 - **Verificação:** build, lint e testes do frontend; pytest do backend (288). Não
   validado no navegador/celular.
 
+## Incremento 05 — radar de perfil do investidor (10/10/2026)
+
+- **Problema:** mostrar o perfil (conservador, moderado, arrojado) de forma visual,
+  sem ML, para a demonstração.
+- **Regras e critérios:** RN46–RN50, CA72–CA75 em
+  [incremento 05](planejamento/incrementos/05-radar-perfil.md).
+- **Decisão:** a API entrega `allocation: []` e só posições de renda fixa; por isso
+  a heurística usa `positions` (tipo, valor, prazo). Pesos fixos em
+  `frontend/src/lib/perfil-radar.ts`, ponto de troca por ML.
+- **Frontend:** `RadarPerfil.tsx` (SVG inline, sem dependência) e função pura
+  `calcularPerfilRadar`; data vem de `generatedAt`. Perfil declarado aparece ao lado
+  do sugerido, com divergência explícita.
+- **Backend/contrato:** sem mudança.
+- **Verificação:** 8 testes novos (13 no frontend), build e lint do frontend,
+  pytest do backend (288); captura em desktop (1280) e celular (390) sem rolagem
+  horizontal, com os dados fictícios de `reset-demo`.
+- **Limites:** estimativa heurística, não é suitability nem recomendação; o
+  assistente continua dizendo que não calcula risco. Cliente sem posições mostra
+  mensagem de ausência. Não validado fora do Chrome headless.
+
 ## Roteiro para a apresentação
 
 | Tempo sugerido | Mostrar e explicar |

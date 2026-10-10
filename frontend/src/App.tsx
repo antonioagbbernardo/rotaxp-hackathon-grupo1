@@ -4,6 +4,7 @@ import { AssistantPanel } from '@/features/assistant/AssistantPanel'
 import { ClientSummary } from '@/features/client-overview/ClientSummary'
 import { InvestmentProfile } from '@/features/client-overview/InvestmentProfile'
 import { PerceptionHistory } from '@/features/client-overview/PerceptionHistory'
+import { RadarPerfil } from '@/features/client-overview/RadarPerfil'
 import { ClientSidebar } from '@/features/clients/ClientSidebar'
 import { NewsSection } from '@/features/news/NewsSection'
 import { ClientWorkspace } from '@/features/client-overview/ClientWorkspace'
@@ -88,6 +89,7 @@ export function App() {
             <PerceptionHistory entries={selectedClient.perception} />
             <InvestmentProfile portfolio={selectedClient.portfolio} />
           </div>
+          <RadarPerfil client={selectedClient} hoje={data?.generatedAt ?? ''} />
           <ClientWorkspace key={selectedClient.id} client={selectedClient} onUpdated={updated} />
           <NewsSection client={selectedClient} />
         </div>

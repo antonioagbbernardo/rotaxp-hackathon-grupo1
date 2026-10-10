@@ -232,6 +232,9 @@ Síntese OpenAI autorizada: [incremento 04](incrementos/04-resumo-openai.md),
 RN40–RN45 e CA65–CA71. Melhora a redação com fontes, cache e revisão humana;
 o resumo factual RN08 e as regras determinísticas continuam independentes.
 
+Radar de perfil heurístico (demonstração): [incremento 05](incrementos/05-radar-perfil.md),
+RN46–RN50 e CA72–CA75. Só frontend; estimativa sobre posições, sem ML nem recomendação.
+
 CA11–CA25 (notícias, reuniões e keynotes) estão em [requisitos](requisitos.md);
 CA26–CA33 de inferência/feedback continuam em requisitos; CA34–CA39 acima
 validam a base implementada (IDs reconciliados durante o merge).
