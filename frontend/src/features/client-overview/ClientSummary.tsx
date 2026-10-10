@@ -1,6 +1,8 @@
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge, type BadgeTone } from '@/components/ui/Badge'
 import { Panel } from '@/components/ui/Panel'
+import { SentimentFace } from '@/components/ui/SentimentFace'
+import { priorityLabel, priorityTone, sentimentLabel } from '@/lib/sentiment'
 import { formatMonth } from '@/lib/format'
 import type { Client, ClientStatus } from '@/types/client'
 
@@ -25,14 +27,17 @@ export function ClientSummary({ client }: ClientSummaryProps) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <h1 className="text-2xl font-semibold">{client.name}</h1>
-            <Badge tone={status.tone} withDot className="w-30">
-              Prioridade: {client.priority === 'alta' ? 'Alta' : client.priority === 'media' ? 'Média' : 'Baixa'}
+            <Badge tone={client.priority ? priorityTone[client.priority] : status.tone} withDot>
+              Prioridade de atendimento: {client.priority ? priorityLabel[client.priority] : 'não calculada'}
             </Badge>
           </div>
           <p className="mt-1 text-[11px] text-ink-muted">
             {client.clientSince ? `Cliente desde ${formatMonth(client.clientSince)}` : 'Data de cadastro não informada'} · Último contato{' '}
             {client.lastContactDays === null ? 'sem registro' : client.lastContactDays === 0 ? 'hoje' : `há ${client.lastContactDays} ${client.lastContactDays === 1 ? 'dia' : 'dias'}`}
-            {' · '}Relacionamento: {client.relationshipLabel ?? 'Não avaliado'}
+          </p>
+          <p className="mt-2 flex items-center gap-2 text-xs">
+            <SentimentFace sentiment={client.sentiment} className="size-5" label={`Humor: ${sentimentLabel[client.sentiment]}`} />
+            <span>Humor do relacionamento: <strong className="font-medium">{client.relationshipLabel ?? 'Não avaliado'}</strong></span>
           </p>
           <ul className="mt-3 flex flex-wrap gap-2">
             {client.tags.map((tag) => (

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { Client } from '@/types/client'
 
-export type ClientFilter = 'all' | 'positive' | 'neutral' | 'negative'
+export type ClientFilter = 'all' | 'positive' | 'neutral' | 'negative' | 'unknown'
 
 function normalize(text: string) {
   return text
@@ -26,6 +26,7 @@ export function useClientFilters(clients: Client[]) {
       positive: clients.filter((client) => client.sentiment === 'positive').length,
       neutral: clients.filter((client) => client.sentiment === 'neutral').length,
       negative: clients.filter((client) => client.sentiment === 'negative').length,
+      unknown: clients.filter((client) => client.sentiment === 'unknown').length,
     }
   }, [clients])
 
