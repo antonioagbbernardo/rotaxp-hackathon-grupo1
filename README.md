@@ -29,7 +29,7 @@ O diferencial proposto é aproximar contexto financeiro e relacionamento: prepar
 | Integrante | Responsabilidades na divisão de trabalho |
 | --- | --- |
 | **Antonio Adolfo Geraldino Bernardo** | 
-Estruturação do SDD, implementação e integração de funcionalidades do backend, integração com o frontend, testes e documentação.
+Estruturação do SDD, implementação e integração de funcionalidades do backend, integração com o frontend, testes e documentação. |
 | **Felipe Cruzato Yacobian** | Design do site, prototipação, revisão de código, logo e imagens; escolha do framework frontend. |
 | **Marco Antônio da Cruz Braga** | Prototipação, estrutura do design e colaboração no frontend, incluindo criação de interfaces. |
 | **Marcus Vinícius Santos** | Funcionalidades como radar, card do cliente com prioridade e humor, e testes. |
