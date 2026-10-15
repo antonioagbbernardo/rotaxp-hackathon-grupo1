@@ -13,11 +13,14 @@ def create_app(config: dict | None = None) -> Flask:
     app.config.update(
         DATABASE=str(Path(app.instance_path) / "app.db"),
         CLOCK=Clock(),  # relógio único e injetável (America/Sao_Paulo)
+        PULSE_DEMO_LOGIN=os.environ.get('PULSE_DEMO_LOGIN', '1').casefold() in ('1','true','sim'),
         FRONTEND_DIST=str(Path(app.root_path).parents[1] / "frontend" / "dist"),
     )
     locais = dotenv_values(Path(app.root_path).parent / ".env")
     app.config.update(
         SECRET_KEY=os.environ.get("SECRET_KEY", locais.get("SECRET_KEY", "")),
+        PULSE_DEMO_LOGIN=str(os.environ.get('PULSE_DEMO_LOGIN', locais.get('PULSE_DEMO_LOGIN','1'))).casefold() in ('1','true','sim'),
+        SESSION_COOKIE_SECURE=str(os.environ.get('PULSE_COOKIE_SECURE',locais.get('PULSE_COOKIE_SECURE','0'))).casefold() in ('1','true','sim'),
         GEMINI_API_KEY=os.environ.get("GEMINI_API_KEY", locais.get("GEMINI_API_KEY", "")),
         GEMINI_MODEL=os.environ.get("GEMINI_MODEL", locais.get("GEMINI_MODEL", "gemini-3.5-flash-lite")),
         OPENAI_API_KEY=os.environ.get("OPENAI_API_KEY", locais.get("OPENAI_API_KEY", "")),

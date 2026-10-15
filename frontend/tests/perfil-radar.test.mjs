@@ -47,9 +47,12 @@ test('CA96: só ativos desconhecidos deixam o risco ausente, sem inventar valor'
   assert.equal(r.sugerido, null)
 })
 
-test('CA97: posição vencida conta como prazo zero e liquidez imediata', () => {
+test('CA97: posição vencida conta como prazo zero, sem afirmar liquidez', () => {
   const r = calcularPerfilRadar([pos(3, 'Debênture Exemplo', '20000.00', '2026-10-08')], HOJE)
-  assert.equal(eixo(r, 'liquidez').valor, 100)
+  assert.equal(eixo(r, 'vencimentos').valor, 100)
+  assert.equal(eixo(r, 'vencimentos').rotulo, 'Vencimentos próximos')
+  assert.match(eixo(r, 'vencimentos').explicacao, /Não indica disponibilidade para resgate/)
+  assert.equal(eixo(r, 'liquidez'), undefined)
   assert.equal(eixo(r, 'horizonte').valor, 0)
 })
 

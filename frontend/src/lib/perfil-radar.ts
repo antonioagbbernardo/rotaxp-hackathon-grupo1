@@ -5,7 +5,7 @@
  */
 
 export type PerfilSugerido = 'Conservador' | 'Moderado' | 'Arrojado'
-export type ChaveEixo = 'risco' | 'credito' | 'liquidez' | 'horizonte' | 'diversificacao'
+export type ChaveEixo = 'risco' | 'credito' | 'vencimentos' | 'horizonte' | 'diversificacao'
 
 export interface PosicaoRadar {
   id: number
@@ -47,7 +47,7 @@ const RISCO_POR_TIPO: Record<string, number> = {
   etf: 90,
 }
 const CREDITO_PRIVADO = new Set(['debenture', 'cra', 'cri'])
-const LIMITE_LIQUIDEZ_DIAS = 90
+const LIMITE_VENCIMENTO_DIAS = 90
 const TETO_HORIZONTE_DIAS = 5 * 365
 const LIMITE_CONSERVADOR = 35
 const LIMITE_MODERADO = 60
@@ -140,7 +140,7 @@ export function calcularPerfilRadar(
     credito = razaoInteira(emCredito * 100n, totalReconh)
   }
 
-  const curtas = validas.filter((p) => p.dias <= LIMITE_LIQUIDEZ_DIAS).reduce((s, p) => s + p.cents, 0n)
+  const curtas = validas.filter((p) => p.dias <= LIMITE_VENCIMENTO_DIAS).reduce((s, p) => s + p.cents, 0n)
   const liquidez = razaoInteira(curtas * 100n, totalTodas)
 
   const somaPrazo = validas.reduce((s, p) => s + p.cents * BigInt(Math.min(p.dias, TETO_HORIZONTE_DIAS)), 0n)
@@ -169,11 +169,11 @@ export function calcularPerfilRadar(
       explicacao: 'Parcela do valor em debêntures, CRA e CRI.',
     },
     {
-      chave: 'liquidez',
-      rotulo: 'Liquidez',
+      chave: 'vencimentos',
+      rotulo: 'Vencimentos próximos',
       valor: liquidez,
       fontes: fonte(validas),
-      explicacao: `Parcela do valor que vence em até ${LIMITE_LIQUIDEZ_DIAS} dias (vencida conta como imediata).`,
+      explicacao: `Parcela do valor que vence em até ${LIMITE_VENCIMENTO_DIAS} dias incluindo vencidas. Não indica disponibilidade para resgate.`,
     },
     {
       chave: 'horizonte',

@@ -104,3 +104,37 @@ def test_schema_humor_e_prompt_no_transporte(monkeypatch):
     assert capturado['input'][0]['content'] == INSTRUCOES
     assert capturado['text']['format']['schema']['properties']['fontes']['items']['enum'] == ['interacao-1']
     assert not capturado['store']
+
+
+def test_historico_contem_somente_inferencias_validadas_e_preserva_reanalises(ambiente):
+    _, c, fake = ambiente
+    assert cliente(c)['perception'] == []
+    assert c.post('/api/pulse/clientes/1/humor').status_code == 200
+    hist = cliente(c)['perception']
+    assert len(hist) == 1 and hist[0]['sentiment'] == 'negative'
+    assert hist[0]['evidencias']
+    c.post('/api/pulse/clientes/1/humor')
+    assert cliente(c)['perception'] == hist
+    c.post('/api/clientes/1/interacoes', json={'canal':'telefone','texto':'Investidor: estou preocupado.'})
+    c.post('/api/pulse/clientes/1/humor')
+    assert len(cliente(c)['perception']) == 2
+
+
+def test_fala_do_assessor_nao_e_evidencia_do_humor_do_investidor(ambiente):
+    app, c, fake = ambiente
+    with app.app_context():
+        db = get_db()
+        db.execute('DELETE FROM interacao WHERE cliente_id=5')
+        db.commit()
+    c.post('/api/clientes/5/interacoes',json={'canal':'telefone',
+        'texto':'Investidor: Estou insatisfeito. Assessor: Perfeito, vou verificar.'})
+    assert c.post('/api/pulse/clientes/5/humor').status_code == 200
+    texto = fake.chamadas[-1]['fatos'][0]['texto']
+    assert 'Estou insatisfeito' in texto and 'Perfeito' not in texto
+
+
+def test_fala_somente_do_assessor_nao_dispara_inferencia(ambiente):
+    _, c, fake = ambiente
+    c.post('/api/clientes/5/interacoes',json={'canal':'telefone','texto':'Assessor: Excelente, parabéns!'})
+    assert c.post('/api/pulse/clientes/5/humor').get_json()['estado'] == 'sem_interacoes'
+    assert not fake.chamadas

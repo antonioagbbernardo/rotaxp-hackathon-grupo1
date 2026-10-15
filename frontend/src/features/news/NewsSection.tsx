@@ -102,9 +102,10 @@ export function NewsSection({ client, onUpdated }: NewsSectionProps) {
           {state.assuntos.map((t) => <li key={t.id}>
             <span className="font-medium">{t.nome}</span> · {statusLabel[t.estado]}{t.ultima_coleta && ` · Última coleta ${formatDate(t.ultima_coleta)}`}
             {t.erro && <p className="text-negative">{t.erro.mensagem}</p>}
+            {!!t.artigos_rejeitados && <p>{t.artigos_rejeitados} artigo(s) inválido(s) ignorado(s). Os demais foram preservados.</p>}
           </li>)}
         </ul>
-        <p className="text-[10px] text-ink-muted">Consultas nesta instalação hoje: {state.chamadas_hoje}/{state.limite_diario ?? 'limite não configurado'}. Clientes com o mesmo assunto reutilizam a coleta.</p>
+        <p className="text-[10px] text-ink-muted">Consultas nesta base hoje: {state.chamadas_hoje}/{state.limite_diario ?? 'limite não configurado'}. Clientes com o mesmo assunto reutilizam a coleta.</p>
       </div>}
       {busy && <p role="status" className="mt-3 text-xs text-ink-muted">Processando. A busca pode levar alguns segundos.</p>}
       {notice && <p role="status" className="mt-3 text-xs text-ink-muted">{notice}</p>}

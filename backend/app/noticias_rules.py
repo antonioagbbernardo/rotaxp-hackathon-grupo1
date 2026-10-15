@@ -68,33 +68,48 @@ def normalizar_url(valor):
         raise ErroNoticias('O provedor retornou um link inválido.', status=502, codigo='saida_noticias_invalida') from None
 
 
+class ArtigosValidados(list):
+    rejeitados = 0
+
+
+def _validar_artigo(a, agora):
+    if not isinstance(a, dict):
+        raise ValueError()
+    if a.get('title') in (None, '[Removed]'):
+        return None
+    titulo, fonte, descricao = a.get('title'), a.get('source'), a.get('description')
+    if not isinstance(titulo, str) or not titulo.strip() or len(titulo) > 500:
+        raise ValueError()
+    if not isinstance(fonte, dict) or not isinstance(fonte.get('name'), str) or not fonte['name'].strip() or len(fonte['name']) > 200:
+        raise ValueError()
+    if descricao is not None and (not isinstance(descricao, str) or len(descricao) > 5000):
+        raise ValueError()
+    publicada = datetime.fromisoformat(a['publishedAt'])
+    if publicada.tzinfo is None or publicada > agora:
+        raise ValueError()
+    url = normalizar_url(a.get('url'))
+    if publicada < agora - timedelta(days=7):
+        return None
+    return {'url':url,'title':titulo.strip(),'description':(descricao or '').strip()[:300],
+            'source':fonte['name'].strip(),'publishedAt':formatar_utc(publicada)}
+
+
 def validar_artigos(dados, agora):
     def invalida():
         raise ErroNoticias('O provedor retornou notícias fora do formato esperado.', status=502, codigo='saida_noticias_invalida')
     if not isinstance(dados, dict) or dados.get('status') != 'ok' or not isinstance(dados.get('articles'), list) or len(dados['articles']) > 10:
         invalida()
-    artigos = {}
+    artigos, rejeitados = {}, 0
     for a in dados['articles']:
-        if not isinstance(a, dict):
-            invalida()
-        if a.get('title') in (None, '[Removed]'):
-            continue
-        titulo, fonte, descricao = a.get('title'), a.get('source'), a.get('description')
-        if not isinstance(titulo, str) or not titulo.strip() or len(titulo) > 500:
-            invalida()
-        if not isinstance(fonte, dict) or not isinstance(fonte.get('name'), str) or not fonte['name'].strip() or len(fonte['name']) > 200:
-            invalida()
-        if descricao is not None and (not isinstance(descricao, str) or len(descricao) > 5000):
-            invalida()
         try:
-            publicada = datetime.fromisoformat(a['publishedAt'])
-            if publicada.tzinfo is None or publicada > agora:
-                raise ValueError()
-        except (ValueError, TypeError, KeyError):
-            invalida()
-        url = normalizar_url(a.get('url'))
-        if publicada < agora - timedelta(days=7):
+            artigo = _validar_artigo(a, agora)
+        except (ValueError, TypeError, KeyError, ErroNoticias):
+            rejeitados += 1
             continue
-        artigos.setdefault(url, {'url': url, 'title': titulo.strip(), 'description': (descricao or '').strip()[:300],
-                                 'source': fonte['name'].strip(), 'publishedAt': formatar_utc(publicada)})
-    return list(artigos.values())
+        if artigo:
+            artigos.setdefault(artigo['url'], artigo)
+    if rejeitados and not artigos:
+        invalida()  # Preservar o cache quando o lote inteiro é inutilizável.
+    resultado = ArtigosValidados(artigos.values())
+    resultado.rejeitados = rejeitados
+    return resultado

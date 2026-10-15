@@ -123,7 +123,21 @@ def alterar_assunto(cliente_id, assunto):
 
 @bp.get("/pulse")
 def painel_pulse():
+    if request.args.get('visao') == 'lista':
+        from .painel_lista import listar
+        try:
+            pagina,limite=int(request.args.get('pagina','1')),int(request.args.get('limite','25'))
+            if pagina<1 or not 1<=limite<=100:
+                raise ValueError()
+        except ValueError:
+            raise ErroApi('entrada_invalida','Página deve ser positiva e limite deve estar entre 1 e 100.',campo='paginacao') from None
+        return jsonify(listar(pagina,limite))
     return jsonify(pulse.consultar_painel())
+
+
+@bp.get('/pulse/clientes/<int:cliente_id>')
+def painel_cliente(cliente_id):
+    return jsonify(pulse.montar_cliente(_cliente_ou_404(get_db(),cliente_id)))
 
 
 @bp.post("/pulse/clientes/<int:cliente_id>/perguntar")

@@ -16,11 +16,11 @@ from .resumo_ia_rules import montar_entrada
 
 def notas(cid):
     return [dict(r) for r in get_db().execute(
-        'SELECT id,cliente_id,turno_id,texto,evidencia,registrada_em FROM nota_assessor WHERE cliente_id=? ORDER BY id DESC LIMIT 30', (cid,))]
+        'SELECT id,cliente_id,turno_id,texto,evidencia,registrada_em FROM nota_assessor WHERE cliente_id=? AND validada=1 ORDER BY id DESC LIMIT 30', (cid,))]
 
 
 def _expor(row):
-    nota = get_db().execute('SELECT id FROM nota_assessor WHERE turno_id=?', (row['id'],)).fetchone()
+    nota = get_db().execute('SELECT id FROM nota_assessor WHERE turno_id=? AND validada=1', (row['id'],)).fetchone()
     return {'id': row['id'], 'request_id': row['request_id'], 'pergunta': row['pergunta'],
             'resposta': row['resposta'], 'fontes': json.loads(row['fontes']),
             'nota_sugerida': row['nota_sugerida'], 'nota_id': nota['id'] if nota else None,
@@ -64,6 +64,10 @@ def responder(cliente, entrada):
     b = corpo(entrada, ('pergunta', 'request_id', 'interesse'), ('pergunta',))
     pergunta = texto(b['pergunta'], 'pergunta', 4000)
     interesse = texto(b['interesse'], 'interesse', 500) if 'interesse' in b else None
+    if interesse is not None:
+        from .contexto_chat import declaracao_permitida
+        if not declaracao_permitida(interesse):
+            raise ErroAgenda('Informe um interesse declarado, sem pergunta ou hipótese.', 'interesse')
     if interesse is not None and pergunta != f'Adicionar interesse do cliente: {interesse}':
         raise ErroAgenda('A mensagem deve corresponder ao interesse declarado.', 'interesse')
     try:
@@ -130,8 +134,20 @@ def responder(cliente, entrada):
                 or (saida['nota_sugerida'] is not None and (not isinstance(saida['nota_sugerida'], str)
                     or not saida['nota_sugerida'].strip() or len(saida['nota_sugerida']) > 1000))):
             raise ErroAgenda('A IA retornou uma resposta inválida. Tente novamente.', 'chat', 502)
-        from .contexto_chat import validar
+        from .contexto_chat import validar, declaracao_permitida, interesses_declarados
         propostas = validar(saida.get('contexto_sugerido', []), pergunta)
+        # Declarações explícitas preservam negação e sujeito mesmo se a IA os inverter.
+        declarados = interesses_declarados(interesse or pergunta)
+        for item in declarados:
+            if not any(p['categoria'] == 'interesse' and p['assunto'] == item['assunto'] and p['sujeito'] == item['sujeito'] for p in propostas):
+                propostas.append(item)
+        if not declaracao_permitida(pergunta):
+            if saida['nota_sugerida']:
+                saida['resposta'] += '\n\nEsta mensagem foi tratada como pergunta ou hipótese. Nenhum contexto novo foi salvo.'
+            saida['nota_sugerida'] = None
+        elif propostas or saida['nota_sugerida']:
+            # A memória guarda o que o humano declarou, nunca a redação da própria IA.
+            saida['nota_sugerida'] = pergunta[:1000]
         if propostas and not saida['nota_sugerida']:
             raise ErroAgenda('Contexto novo exige uma nota com a informação declarada.', 'contexto_sugerido', 502)
         referencias = list(dict.fromkeys(fontes[f]['fonte'] for f in saida['fontes']))
@@ -149,9 +165,11 @@ def responder(cliente, entrada):
 
 
 def _salvar_nota(db, turno, agora):
-    from .contexto_chat import registrar
-    db.execute('INSERT OR IGNORE INTO nota_assessor(cliente_id,turno_id,texto,evidencia,registrada_em) VALUES (?,?,?,?,?)',
-        (turno['cliente_id'], turno['id'], turno['nota_sugerida'], turno['pergunta'], agora))
+    from .contexto_chat import registrar, declaracao_permitida
+    if not declaracao_permitida(turno['pergunta']):
+        raise ErroAgenda('Perguntas e hipóteses não podem ser registradas como fatos.', 'nota')
+    db.execute('INSERT OR IGNORE INTO nota_assessor(cliente_id,turno_id,texto,evidencia,registrada_em,validada) VALUES (?,?,?,?,?,1)',
+        (turno['cliente_id'], turno['id'], turno['pergunta'][:1000], turno['pergunta'], agora))
     nota = db.execute('SELECT * FROM nota_assessor WHERE turno_id=?', (turno['id'],)).fetchone()
     registrar(db, turno, nota, agora)
 

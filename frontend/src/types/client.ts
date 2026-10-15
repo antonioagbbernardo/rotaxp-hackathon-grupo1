@@ -54,7 +54,7 @@ export interface NewsState {
   catalogo: { id: string; nome: string }[]
   interesses: { id: number; revisao: number; valor: string; fontes: string[] }[]
   vinculos: { id: number | string; item_id: number | null; revisao: number; assunto: string; interesse: string; fontes: string[]; automatico?: boolean; geral?: boolean }[]
-  assuntos: { id: string; nome: string; estado: 'nunca' | 'atualizado' | 'desatualizado' | 'falhou' | 'processando'; ultima_coleta: string | null; ultima_tentativa: string | null; erro: { codigo: string; mensagem: string } | null }[]
+  assuntos: { id: string; nome: string; artigos_rejeitados?: number; estado: 'nunca' | 'atualizado' | 'desatualizado' | 'falhou' | 'processando'; ultima_coleta: string | null; ultima_tentativa: string | null; erro: { codigo: string; mensagem: string } | null }[]
   limite_diario: number | null
   chamadas_hoje: number
 }
@@ -200,4 +200,12 @@ export interface PulseView {
   advisor: { name: string; role: string }
   generatedAt: string
   clients: Client[]
+}
+
+export type ClientListItem = Pick<Client, 'id' | 'name' | 'photoUrl' | 'priority' | 'sentiment' | 'interests' | 'mood'> & { news?: NewsItem[] }
+export interface PulseListView {
+  advisor: PulseView['advisor']
+  generatedAt: string
+  clients: ClientListItem[]
+  pagination: { page: number; limit: number; total: number; pages: number }
 }

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import type { Client } from '@/types/client'
+import type { ClientListItem } from '@/types/client'
 
 export type ClientFilter = 'all' | 'positive' | 'neutral' | 'negative' | 'unknown'
 
@@ -10,13 +10,13 @@ function normalize(text: string) {
     .toLowerCase()
 }
 
-function matchesQuery(client: Client, query: string) {
+function matchesQuery(client: ClientListItem, query: string) {
   if (!query) return true
   const haystack = normalize([client.name, ...client.interests].join(' '))
   return haystack.includes(query)
 }
 
-export function useClientFilters(clients: Client[]) {
+export function useClientFilters(clients: ClientListItem[]) {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<ClientFilter>('all')
 

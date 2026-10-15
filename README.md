@@ -53,11 +53,11 @@ Na interface, o fundo escuro, os detalhes amarelos, os cards e a hierarquia tipo
 
 | Área | Comportamento implementado |
 | --- | --- |
-| Clientes | Lista de dez perfis de demonstração, fotos, busca por nome/interesses e filtros por humor inferido. |
+| Clientes | Lista paginada com fotos, busca por nome/interesses e filtros por humor inferido na página; detalhes carregados somente ao selecionar. A demonstração tem dez clientes. |
 | Carteira | Total com precisão decimal, posições e fontes, perfil cadastrado, objetivo e distribuição por valor agrupada pelo tipo dos ativos. |
-| Radar | Estimativa heurística de risco, crédito privado, liquidez, horizonte e diversificação; compara o perfil declarado com o sugerido pela carteira. |
+| Radar | Estimativa heurística de risco, crédito privado, vencimentos próximos, horizonte e diversificação; compara o perfil declarado com o sugerido pela carteira. |
 | Relacionamento | Avaliação do assessor, preferências de canal e cadência, interações e consulta de mensagens recentes, incluindo transcrições. |
-| Histórico de humor | Linha do tempo por interação, classificada por palavras-chave no backend; a inferência OpenAI do humor atual é uma funcionalidade separada. |
+| Histórico de humor | Histórico das inferências OpenAI validadas, com evidências e data do contato analisado; não atribui emoções por palavras-chave. |
 | Perfil do assessor | Edição de nome, cargo, e-mail, telefone e escritório pelo cabeçalho, com persistência e proteção de sessão/CSRF. |
 | Humor | Inferência OpenAI baseada nas interações com o investidor, com trechos de evidência e possibilidade de revisão pelo assessor. |
 | Pulse AI | Conversa natural com contexto do cliente; registra automaticamente informações declaradas pelo assessor e atualiza o painel. |
@@ -66,7 +66,7 @@ Na interface, o fundo escuro, os detalhes amarelos, os cards e a hierarquia tipo
 | Reuniões | Agendamento, edição, cancelamento, notas e pautas/keynotes com fontes; conclusão registra o resultado sem duplicar a interação. |
 | Google Calendar | Conexão OAuth e sincronização de criação, edição e cancelamento para o calendário principal; falhas mantêm a reunião local e permitem nova tentativa. |
 | Lembranças | Aniversários e compromissos com evidência, confirmação e feedback por ocorrência. |
-| Acesso | Login, sessão, proteção CSRF nas escritas e logout. |
+| Acesso | Contas com bases isoladas por assessor, senhas com hash, limite persistente de tentativas, sessão, CSRF e logout. Modo de demonstração opcional. |
 
 A prioridade de atendimento vem das regras de pendências, separada do humor e da avaliação manual de relacionamento. O cálculo de alertas permanece no backend, embora o bloco “Alertas e vencimentos” tenha sido retirado da interface. A importação visual de fontes também foi retirada; a ingestão continua disponível por CLI/API.
 
@@ -129,7 +129,8 @@ O painel salva a reunião primeiro. Ausência de configuração ou falha Google 
 ## Decisões de eficiência
 
 - **MVP por incrementos:** priorizamos o fluxo de atendimento e a apresentação; cada entrega acrescentou um comportamento verificável.
-- **Aplicação local e banco único:** Flask e SQLite reduzem infraestrutura, configuração e tempo de integração entre os integrantes.
+- **Aplicação local e SQLite:** Flask e SQLite reduzem infraestrutura, configuração e tempo de integração entre os integrantes. As contas reais usam arquivos separados para isolar clientes, conversas, carteiras e tokens do Calendar.
+- **Leitura sob demanda:** cartões paginados usam dez consultas SQL em lote na medição com dez clientes, em vez de montar todos os históricos. A lista medida retornou cerca de 5,6 KB; o detalhe é uma requisição separada. O custo em memória ainda cresce com o número de clientes porque a ordenação global por prioridade usa os registros de regras em lote. A rota completa antiga é mantida para compatibilidade, não é usada pelo painel novo.
 - **Regras antes de IA:** valores, prazos, prioridade e composição usam regras determinísticas. A IA é usada onde ajuda a interpretar ou redigir, com evidências.
 - **Precisão financeira:** dinheiro é armazenado como texto e calculado com `Decimal`; o frontend preserva valores monetários grandes sem convertê-los indiscriminadamente em `float`.
 - **Cache por assunto:** clientes com o mesmo interesse reutilizam a coleta. A busca manual/automática após inclusão de interesse reaproveita resultados muito recentes, em uma janela de dois minutos.
@@ -146,7 +147,8 @@ O painel salva a reunião primeiro. Ausência de configuração ou falha Google 
 ├── README.md                   # Documentação única do projeto
 ├── iniciar.py                  # Inicializador da demonstração
 ├── apresentacao/
-│   └── Pitch_RotaXP.pdf         # Material do pitch
+│   └── Guia_oral_5_minutos.txt # Roteiro local de ensaio (quando presente)
+├── Pitch_RotaXP (2).pdf         # Material do pitch atualizado
 ├── .github/workflows/ci.yml     # Testes, lint e build no GitHub Actions
 ├── backend/
 │   ├── app/                    # Flask, rotas, regras, integrações e persistência
@@ -226,6 +228,20 @@ Preencha apenas as integrações utilizadas em `backend/.env`. Esse arquivo não
 
 Reinicie os processos após alterar o `.env`. Sem chaves, os registros locais continuam disponíveis, mas as funcionalidades dependentes do provedor exibem seu estado de configuração. Modelos e quotas dependem das credenciais e da conta utilizada.
 
+### Contas por assessor
+
+O acesso `admin/admin` é exclusivo da demonstração. A criação da primeira conta real desativa esse acesso e encerra suas sessões. Para criar uma conta, execute em `backend/`:
+
+```bash
+uv run --locked flask --app app criar-acesso --usuario ana --nome "Assessora Ana"
+```
+
+O comando solicita e confirma uma senha de pelo menos 12 caracteres, sem exibi-la. Cada conta começa com uma base vazia em `backend/instance/assessores/`. A base principal guarda somente o cadastro de acesso e as sessões dessas contas, além dos dados anteriores da demonstração. A sessão escolhe o banco no servidor: o cliente não envia caminho de arquivo ou ID de outro assessor. Perfis, clientes, fontes, chat, carteira, agenda, notícias e tokens Google ficam isolados por banco. O processo de agenda percorre as contas separadamente. Para preservar esse isolamento, caches e limites locais de notícias também são separados por base; as quotas externas da chave continuam compartilhadas no provedor. Dentro da mesma base, clientes reutilizam a coleta por assunto.
+
+O cadastro e a carga inicial de clientes continuam sendo operações administrativas; este incremento não acrescenta uma tela de onboarding. Contas novas não recebem os dados da demonstração automaticamente. Preserve também a base principal e a `SECRET_KEY` nos backups da instalação.
+
+O login limita tentativas em janelas de 15 minutos: cinco por usuário e vinte por IP, com resposta HTTP 429 e `Retry-After`. O limite persiste após reinício. `PULSE_DEMO_LOGIN=0` desativa a demonstração mesmo sem contas cadastradas. Em uma instalação HTTPS, configure `PULSE_COOKIE_SECURE=1`. Essas opções podem ser definidas no ambiente ou em `backend/.env`.
+
 ### Configurar Google Calendar
 
 Use um projeto Google com Calendar API e cliente OAuth web habilitados para a conta que participará da demonstração. Configure o retorno autorizado correspondente à instância da aplicação. Para execução local, o código recebe, por exemplo:
@@ -278,14 +294,27 @@ A carga ampliada inclui cinco conversas novas por cliente, carteiras, formulári
 
 O comando `reset-demo` **apaga a base local** e reconstrói o cenário inicial. Depois dele, execute novamente a importação e `popular-pulse` se quiser recuperar o cenário ampliado.
 
+## Confiabilidade do contexto e eficiência
+
+- Perguntas, pedidos de preparação e hipóteses não criam memória automaticamente. A IA continua respondendo, mas o backend bloqueia a gravação desses conteúdos como fatos.
+- A validação compara a declaração original com o valor proposto para preservar negações e evitar atribuir gostos de familiares ao cliente. As notas guardam a mensagem original do assessor, em vez de uma síntese inventada pelo modelo. As guardas são conservadoras e não equivalem a compreensão semântica infalível.
+- Na atualização de uma instalação antiga, notas do chat são revalidadas. Contextos incompatíveis ficam descartados com trilha de revisão, preservando as conversas. Não há exclusão silenciosa do histórico.
+- O humor considera as falas do investidor quando a transcrição identifica interlocutores. Cada inferência validada gera um registro histórico idempotente. Textos sem identificação de falas ainda dependem da interpretação do modelo.
+- Notícias são validadas individualmente. Artigos inválidos são rejeitados, os válidos são preservados e a quantidade rejeitada aparece no painel. Se nenhum artigo do lote puder ser aproveitado devido a erros, o cache anterior permanece.
+- O eixo do radar se chama **Vencimentos próximos**. Mede a parcela com vencimento em até 90 dias, incluindo posições vencidas; não estima disponibilidade para resgate.
+- O frontend usa uma lista paginada com consultas em lote, preservando a ordenação por prioridade. Fontes e históricos completos são consultados somente para o cliente selecionado. As atualizações de humor no navegador também se restringem ao cliente aberto.
+
 ## API e persistência
+
+A lista leve está em `GET /api/pulse?visao=lista&pagina=1&limite=25`, com limite máximo de 100 cartões e metadados de paginação. O detalhe está em `GET /api/pulse/clientes/<id>`. A rota `GET /api/pulse` completa permanece para compatibilidade.
 
 As APIs de dados exigem sessão. Escritas exigem o header `X-CSRF-Token`, obtido pela sessão/autenticação. Entradas inválidas retornam erro com identificação do campo.
 
 | Rotas principais | Uso |
 | --- | --- |
 | `GET /api/auth/sessao`, `POST /api/auth/login`, `POST /api/auth/logout` | Sessão, acesso e saída. |
-| `GET /api/pulse` | Painel consolidado. |
+| `GET /api/pulse?visao=lista&pagina=1&limite=25` | Cartões paginados, em consultas em lote. |
+| `GET /api/pulse/clientes/<id>` | Contexto completo do cliente selecionado. |
 | `GET/PUT /api/pulse/assessor` | Consulta e edição do perfil do assessor. |
 | `GET /api/clientes`, `GET /api/clientes/<id>` | Clientes e detalhes. |
 | `GET/POST /api/pulse/clientes/<id>/chat` | Histórico e conversa do Pulse AI; envio usa `pergunta` e `request_id`. |
@@ -323,18 +352,18 @@ npm run build
 
 Os testes cobrem regras de prioridade, precisão financeira, contratos, login/CSRF, fontes versionadas, contexto, conversa, humor, notícias, reuniões, lembretes e repetição sem duplicações. Provedores são simulados nos testes para verificar comportamento sem gastar chamadas externas. Os testes de frontend incluem autenticação, comunicação com a API, formatação e radar.
 
-A verificação local após a integração Google Calendar passou com **409 testes de backend e 24 testes de frontend**, além de lint e build. Também foram verificadas a leitura do painel com dez clientes, a rota do perfil do assessor, o estado da integração Google Calendar e a repetição da importação das fontes atualizadas. Os testes de Calendar usam um provedor simulado; a conexão OAuth real depende da configuração e autorização da conta. Essas contagens registram a versão verificada; não representam cobertura integral de todos os cenários possíveis.
+A verificação local após as correções de confiabilidade passou com **427 testes de backend e 24 testes de frontend**, além de lint e build. Também foram verificadas a leitura do painel com dez clientes, a rota do perfil do assessor, o estado da integração Google Calendar e a repetição da importação das fontes atualizadas. Os testes de Calendar usam um provedor simulado; a conexão OAuth real depende da configuração e autorização da conta. Essas contagens registram a versão verificada; não representam cobertura integral de todos os cenários possíveis.
 
 A CI em `.github/workflows/ci.yml` executa pytest no backend e testes, lint e build no frontend. O build também faz a checagem TypeScript. Verificações reais realizadas durante o desenvolvimento incluíram chat, coleta de notícias e atualização automática após inclusão de interesse; no navegador, também foi conferida a recuperação do painel após corrigir a formatação da data de cadastro.
 
 ## Escopo e cuidados com os dados
 
-A aplicação é um MVP de demonstração com um assessor e login compartilhado. Não envia WhatsApp, e-mails, ligações ou ordens de investimento. Os canais são representados por fontes importadas; conectores reais exigem adaptação ao contrato da origem dos dados.
+A aplicação é um MVP, com modo de demonstração e suporte a contas isoladas por assessor. A criação das contas ocorre por CLI, sem cadastro público ou recuperação de senha. Não envia WhatsApp, e-mails, ligações ou ordens de investimento. Os canais são representados por fontes importadas; conectores reais exigem adaptação ao contrato da origem dos dados.
 
 A arquitetura considera privacidade e princípios da LGPD ao separar credenciais, manter evidências e permitir correções/feedback. Isso não representa uma certificação de conformidade: uso com dados reais depende de consentimento/base legal aplicável, controle de acesso individual, retenção e exclusão, infraestrutura segura e avaliação do fluxo de dados enviado aos provedores.
 
-Notícias dependem de disponibilidade, atraso, quotas e cobertura da NewsAPI; um interesse salvo pode não ter artigos recentes. O humor é uma hipótese apoiada em trechos. O radar não substitui a análise de risco ou suitability. O acesso multiassessor, os canais reais, a sincronização bidirecional de calendário e as análises tributárias ficam para a evolução da solução.
+Notícias dependem de disponibilidade, atraso, quotas e cobertura da NewsAPI; um interesse salvo pode não ter artigos recentes. O humor é uma hipótese apoiada em trechos. O radar não substitui a análise de risco ou suitability. O onboarding completo, os canais reais, a sincronização bidirecional de calendário e as análises tributárias ficam para a evolução da solução.
 
 ## Apresentação
 
-O material do pitch está em [apresentacao/Pitch_RotaXP.pdf](apresentacao/Pitch_RotaXP.pdf). A demonstração deve destacar o fluxo: escolher um cliente, entender o contexto, conversar com o Pulse AI, acrescentar um interesse, observar notícias pertinentes e preparar a próxima reunião.
+O material do pitch está em [slides atualizados](<Pitch_RotaXP (2).pdf>). A demonstração deve destacar o fluxo: escolher um cliente, entender o contexto, conversar com o Pulse AI, acrescentar um interesse, observar notícias pertinentes e preparar a próxima reunião.

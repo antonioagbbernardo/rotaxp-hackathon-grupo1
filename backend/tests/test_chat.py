@@ -226,3 +226,74 @@ def test_campo_noticias_entende_frase_e_lista_sem_buscar_frase_inteira(ambiente)
         cliente = next(i for i in c.get('/api/pulse').get_json()['clients'] if i['id'] == '2')
         assert {a['id'] for a in cliente['newsState']['assuntos']} == esperados
     assert not fake.chamadas
+
+
+@pytest.mark.parametrize('pergunta', ['Será que a Ana gosta de futebol?',
+    'Talvez a Ana gosta de futebol.', 'Como preparar uma reunião sobre futebol?'])
+def test_perguntas_e_hipoteses_nao_viram_memoria_mesmo_se_modelo_propoe(ambiente, pergunta):
+    _, c, fake = ambiente
+    fake.saida.update(nota_sugerida='A Ana gosta de futebol.', contexto_sugerido=[])
+    if 'gosta de futebol' in pergunta:
+        fake.saida['contexto_sugerido'] = [{'categoria':'interesse', 'assunto':'futebol',
+            'sujeito':'cliente', 'valor':'Gosta de futebol.', 'trecho':'gosta de futebol'}]
+    r = perguntar(c, pergunta)
+    assert r.status_code == 200
+    assert r.get_json()['nota_id'] is None
+    assert r.get_json()['contexto_sugerido'] == []
+    assert not c.get('/api/clientes/1/contexto').get_json()['itens']
+
+
+def test_negacao_nao_pode_ser_invertida_ao_salvar_interesse(ambiente):
+    _, c, fake = ambiente
+    fake.saida.update(nota_sugerida='Gosta de futebol.', contexto_sugerido=[
+        {'categoria':'interesse','assunto':'futebol','sujeito':'cliente',
+         'valor':'Gosta de futebol.','trecho':'gosta de futebol'}])
+    turno = perguntar(c, 'A Ana não gosta de futebol.').get_json()
+    assert turno['nota_id']
+    assert all('não' in p['valor'].casefold() for p in turno['contexto_sugerido'])
+    client = next(i for i in c.get('/api/pulse').get_json()['clients'] if i['id']=='1')
+    assert {a['id'] for a in client['newsState']['assuntos']} == {'mercado'}
+    assert client['advisorNotes'][0]['texto'] == 'A Ana não gosta de futebol.'
+
+
+def test_interesse_familiar_nao_e_promovido_ao_cliente(ambiente):
+    _, c, fake = ambiente
+    fake.saida.update(nota_sugerida='A filha gosta de cinema.', contexto_sugerido=[
+        {'categoria':'interesse','assunto':'cinema','sujeito':'cliente',
+         'valor':'Gosta de cinema.','trecho':'gosta de cinema'}])
+    turno = perguntar(c, 'A filha gosta de cinema.').get_json()
+    assert all(p['sujeito'] == 'familiar' for p in turno['contexto_sugerido'])
+
+
+def test_memoria_legada_de_pergunta_e_retirada_sem_apagar_a_conversa(ambiente):
+    app,c,fake=ambiente
+    fake.saida.update(nota_sugerida='Cliente gosta de futebol.',contexto_sugerido=[
+        {'categoria':'interesse','assunto':'futebol','sujeito':'cliente','valor':'Gosta de futebol.','trecho':'gosta de futebol'}])
+    turno=perguntar(c,'Cliente gosta de futebol.').get_json()
+    with app.app_context():
+        db=get_db()
+        db.execute("UPDATE chat_turno SET pergunta='Será que o cliente gosta de futebol?' WHERE id=?",(turno['id'],))
+        db.execute("DELETE FROM migracao_aplicada WHERE chave IN ('contexto-chat-v2','contexto-chat-v3')")
+        db.commit()
+    novo=create_app(dict(app.config))
+    client=cliente_autenticado(novo)
+    hist=client.get('/api/pulse/clientes/1/chat').get_json()
+    assert len(hist['mensagens'])==1 and hist['notas']==[]
+    item=client.get('/api/clientes/1/contexto').get_json()['itens'][0]
+    assert item['estado']=='descartado'
+    assert 'Revalidação' in item['historico_revisoes'][-1]['motivo']
+
+
+def test_campo_interesse_recusa_pergunta_sem_registrar_nota(ambiente):
+    _,c,_=ambiente
+    assert c.post('/api/pulse/clientes/1/chat',json={'pergunta':'Adicionar interesse do cliente: futebol?',
+        'interesse':'futebol?'}).status_code==400
+    assert c.get('/api/pulse/clientes/1/chat').get_json()['notas']==[]
+
+
+def test_assessor_pode_declarar_explicitamente_um_interesse_do_cliente(ambiente):
+    _,c,fake=ambiente
+    fake.saida.update(nota_sugerida='Cliente gosta de futebol.',contexto_sugerido=[
+        {'categoria':'interesse','assunto':'futebol','sujeito':'cliente','valor':'Gosta de futebol.','trecho':'futebol'}])
+    r=perguntar(c,'Informação fornecida pelo assessor sobre os interesses deste cliente: futebol')
+    assert r.status_code==200 and r.get_json()['contexto_sugerido']

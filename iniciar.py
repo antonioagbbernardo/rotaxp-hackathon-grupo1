@@ -34,7 +34,7 @@ try:
         shutil.copyfile(backend / '.env.example', backend / '.env')
         (backend / '.env').chmod(0o600)
         print('Configure OPENAI_API_KEY e NEWSAPI_API_KEY em backend/.env para usar as integrações.', flush=True)
-    print(f'XP Pulse: http://127.0.0.1:{args.porta}/login · acesso admin/admin', flush=True)
+    print(f'XP Pulse: http://127.0.0.1:{args.porta}/login · conta configurada ou admin/admin no modo demonstração', flush=True)
     worker = subprocess.Popen([*flask, 'acompanhar-agenda'], cwd=backend)
     try:
         executar([*flask, 'run', '--host', '127.0.0.1', '--port', str(args.porta)], backend)

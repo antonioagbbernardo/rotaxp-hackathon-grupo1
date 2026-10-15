@@ -3,7 +3,7 @@ import json
 from threading import Event
 
 import click
-from flask import current_app
+from flask import current_app, g
 
 from . import noticias, reunioes
 from .agenda_rules import ErroAgenda, proxima
@@ -24,6 +24,23 @@ def executar_ciclo():
     return resultado
 
 
+def executar_instalacao():
+    from .autenticacao import _auth_db
+    contas=_auth_db().execute('SELECT usuario,banco FROM usuario_acesso ORDER BY usuario').fetchall()
+    if not contas:
+        return executar_ciclo() if current_app.config.get('PULSE_DEMO_LOGIN',True) else {'assessores':[]}
+    resultados=[]
+    for conta in contas:
+        with current_app.app_context():
+            g.tenant_database=conta['banco']
+            try:
+                resultado=executar_ciclo()
+            except Exception:
+                resultado={'erro':'Falha no ciclo deste assessor; será tentado novamente.'}
+            resultados.append({'usuario':conta['usuario'],'resultado':resultado})
+    return {'assessores':resultados}
+
+
 def init_app(app):
     @app.cli.command('acompanhar-agenda')
     @click.option('--uma-vez', is_flag=True, help='Executa um ciclo e termina.')
@@ -33,7 +50,7 @@ def init_app(app):
         try:
             while True:
                 try:
-                    click.echo(json.dumps(executar_ciclo(), ensure_ascii=False))
+                    click.echo(json.dumps(executar_instalacao(), ensure_ascii=False))
                 except Exception:
                     if uma_vez:
                         raise click.ClickException('Falha no ciclo de atualização; confira a configuração local.') from None

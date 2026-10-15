@@ -10,24 +10,28 @@ import { NewsSection } from '@/features/news/NewsSection'
 
 import { Button } from '@/components/ui/Button'
 import { api } from '@/lib/api'
-import type { PulseView } from '@/types/client'
+import type { Client, PulseListView } from '@/types/client'
 import { MeetingsSection, UpcomingMeetings } from '@/features/meetings/MeetingsSection'
 import { RemindersSection } from '@/features/reminders/RemindersSection'
 import { AdvisorProfile } from '@/features/advisor/AdvisorProfile'
+import { useApiResource } from '@/hooks/useApiResource'
 
 export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () => void; loggingOut: boolean; logoutError: string }) {
-  const [data, setData] = useState<PulseView | null>(null)
+  const [data, setData] = useState<PulseListView | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [profileOpen, setProfileOpen] = useState(location.hash === '#/perfil')
   const [selectedClientId, setSelectedClientId] = useState(location.hash.match(/^#\/clientes\/(\d+)$/)?.[1] ?? '')
+  const [page, setPage] = useState(1)
+  const listPath = `/api/pulse?visao=lista&pagina=${page}&limite=25`
+  const { data: clientData, error: clientError, loading: clientLoading, refresh: refreshClient } = useApiResource<Client>(selectedClientId ? `/api/pulse/clientes/${selectedClientId}` : null, data?.generatedAt ?? '')
   const requestId = useRef(0)
   const humorTentado = useRef(new Set<string>())
   const noticiasTentadas = useRef(new Set<string>())
   const refresh = useCallback(async (signal?: AbortSignal) => {
     const request = ++requestId.current
     try {
-      const result = await api<PulseView>('/api/pulse', { signal })
+      const result = await api<PulseListView>(listPath, { signal })
       if (signal?.aborted || request !== requestId.current) return
       setData(result)
       setError('')
@@ -39,11 +43,11 @@ export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () 
     } finally {
       if (!signal?.aborted && request === requestId.current) setLoading(false)
     }
-  }, [])
+  }, [listPath])
   useEffect(() => {
     const controller = new AbortController()
     const request = ++requestId.current
-    api<PulseView>('/api/pulse', { signal: controller.signal }).then((result) => {
+    api<PulseListView>(listPath, { signal: controller.signal }).then((result) => {
       if (controller.signal.aborted || request !== requestId.current) return
       setData(result); setError('')
       setSelectedClientId((current) => result.clients.some((c) => c.id === current) ? current : result.clients[0]?.id ?? '')
@@ -53,7 +57,7 @@ export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () 
       if (!controller.signal.aborted && request === requestId.current) setLoading(false)
     })
     return () => controller.abort()
-  }, [])
+  }, [listPath])
   useEffect(() => {
     const changed = () => {
       setProfileOpen(location.hash === '#/perfil')
@@ -68,9 +72,9 @@ export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () 
     const interval = window.setInterval(() => { void refresh(controller.signal).catch(() => {}) }, 60_000)
     return () => { window.clearInterval(interval); controller.abort() }
   }, [refresh])
-  const selectedClient = data?.clients.find((client) => client.id === selectedClientId)
+  const selectedClient = clientData?.id === selectedClientId ? clientData : null
   useEffect(() => {
-    const pendentes = data?.clients.filter((c) => c.newsState?.configurado && c.newsState.assuntos.some((a) => a.estado === 'nunca' || a.estado === 'desatualizado') && !noticiasTentadas.current.has(`${c.id}:${c.newsState.assuntos.map((a) => `${a.id}:${a.ultima_coleta}`).join('|')}`)) ?? []
+    const pendentes = selectedClient?.newsState?.configurado && selectedClient.newsState.assuntos.some((a) => a.estado === 'nunca' || a.estado === 'desatualizado') && !noticiasTentadas.current.has(`${selectedClient.id}:${selectedClient.newsState.assuntos.map((a) => `${a.id}:${a.ultima_coleta}`).join('|')}`) ? [selectedClient] : []
     if (!pendentes.length) return
     for (const c of pendentes) noticiasTentadas.current.add(`${c.id}:${c.newsState!.assuntos.map((a) => `${a.id}:${a.ultima_coleta}`).join('|')}`)
     void (async () => {
@@ -78,11 +82,11 @@ export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () 
         try { await api(`/api/clientes/${c.id}/noticias/atualizar`, { method: 'POST' }) }
         catch { /* Erros de coleta aparecem na seção de notícias. */ }
       }
-      await refresh().catch(() => {})
+      await refreshClient(); await refresh().catch(() => {})
     })()
-  }, [data, refresh])
+  }, [selectedClient, refresh, refreshClient])
   useEffect(() => {
-    const pendentes = data?.clients.filter((c) => c.mood?.configurado && c.mood.estado === 'pendente' && !humorTentado.current.has(`${c.id}:${c.mood.assinatura}`)) ?? []
+    const pendentes = selectedClient?.mood?.configurado && selectedClient.mood.estado === 'pendente' && !humorTentado.current.has(`${selectedClient.id}:${selectedClient.mood.assinatura}`) ? [selectedClient] : []
     if (!pendentes.length) return
     for (const c of pendentes) humorTentado.current.add(`${c.id}:${c.mood!.assinatura}`)
     // Inferências em sequência e cache no servidor: uma chamada por conjunto de conversas.
@@ -91,13 +95,13 @@ export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () 
         try { await api(`/api/pulse/clientes/${c.id}/humor`, { method: 'POST' }) }
         catch { /* O estado/erro persistido aparece no cliente após a releitura. */ }
       }
-      await refresh().catch(() => {})
+      await refreshClient(); await refresh().catch(() => {})
     })()
-  }, [data, refresh])
+  }, [selectedClient, refresh, refreshClient])
   const retry = () => { setLoading(true); void refresh().catch(() => {}) }
   // Gravação já concluída: falha de releitura aparece no banner, cujo retry
   // consulta a base sem repetir a gravação do formulário.
-  const updated = () => { setLoading(true); return refresh().catch(() => {}) }
+  const updated = async () => { await refreshClient(); await refresh().catch(() => {}) }
 
   return (
     <div className="flex min-h-dvh flex-col xl:h-dvh">
@@ -115,13 +119,15 @@ export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () 
         : data && <main className="grid min-w-0 flex-1 gap-4 p-4 sm:gap-6 sm:p-6 lg:grid-cols-[280px_minmax(0,1fr)] xl:min-h-0 xl:grid-cols-[280px_minmax(0,1fr)_400px]">
         <div className="min-w-0 space-y-4 xl:overflow-y-auto">
         <ClientSidebar
-          clients={data.clients}
+          clients={data.clients.map((c) => c.id === selectedClient?.id ? selectedClient : c)}
+          pagination={data.pagination} onPage={setPage}
           selectedClientId={selectedClient?.id ?? ''}
           onSelectClient={(id) => { setSelectedClientId(id); location.hash = `/clientes/${id}` }}
         />
         <UpcomingMeetings revision={data.generatedAt} onSelect={(id) => { setSelectedClientId(id); location.hash = `/clientes/${id}` }} />
         </div>
 
+        {clientError && <p role="alert" className="text-xs text-negative">{clientError}<Button onClick={() => void refreshClient()}>Tentar novamente</Button></p>}
         {selectedClient ? <>
         <div className="min-w-0 space-y-4 xl:overflow-y-auto">
           <ClientSummary key={`humor-${selectedClient.id}`} client={selectedClient} onUpdated={updated} />
@@ -138,7 +144,7 @@ export function Dashboard({ onLogout, loggingOut, logoutError }: { onLogout: () 
         <div className="flex min-h-0 flex-col lg:col-span-2 xl:col-span-1">
           <AssistantPanel key={selectedClient.id} client={selectedClient} onUpdated={updated} />
         </div>
-        </> : <div className="p-5 text-sm text-ink-muted">Nenhum cliente cadastrado. Cadastre clientes para começar.</div>}
+        </> : <div className="p-5 text-sm text-ink-muted">{clientLoading || selectedClientId ? 'Carregando contexto do cliente…' : 'Nenhum cliente cadastrado. Cadastre clientes para começar.'}</div>}
       </main>}
     </div>
   )

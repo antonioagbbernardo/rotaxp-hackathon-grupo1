@@ -5,12 +5,17 @@ from flask import Flask, current_app, g
 
 # Dinheiro: TEXT com Decimal (nunca float). Datas: YYYY-MM-DD. Instantes: UTC ISO 8601.
 # O alerta NÃO é persistido (calculado sob demanda); só o tratamento (tratamento_alerta).
-TABELAS = ("humor_inferido", "nota_assessor", "chat_turno", "feedback_lembranca", "lembranca_contexto", "pauta_reuniao", "reuniao", "google_agenda_token", "sessao_acesso", "descarte_noticia", "coleta_artigo_noticia", "artigo_noticia", "coleta_noticia", "vinculo_noticia",
+TABELAS = ("humor_historico", "humor_inferido", "nota_assessor", "chat_turno", "feedback_lembranca", "lembranca_contexto", "pauta_reuniao", "reuniao", "google_agenda_token", "sessao_acesso", "descarte_noticia", "coleta_artigo_noticia", "artigo_noticia", "coleta_noticia", "vinculo_noticia",
            "resumo_ia", "historico_assunto", "preferencia_assunto", "revisao_contexto", "item_contexto", "processamento_contexto",
            "documento_fonte", "tratamento_alerta", "avaliacao_relacionamento", "interacao", "data_importante",
            "posicao", "cliente", "assessor")
 
 SCHEMA = """
+CREATE TABLE IF NOT EXISTS humor_historico (
+    id INTEGER PRIMARY KEY, cliente_id INTEGER NOT NULL REFERENCES cliente(id),
+    assinatura TEXT NOT NULL, dados TEXT NOT NULL, ocorrida_em TEXT NOT NULL,
+    gerado_em TEXT NOT NULL, UNIQUE(cliente_id,assinatura)
+);
 CREATE TABLE IF NOT EXISTS humor_inferido (
     cliente_id INTEGER PRIMARY KEY REFERENCES cliente(id), assinatura TEXT NOT NULL,
     estado TEXT NOT NULL, iniciada_em TEXT NOT NULL, dados TEXT,
@@ -65,6 +70,13 @@ CREATE TABLE IF NOT EXISTS pauta_reuniao (
 CREATE TABLE IF NOT EXISTS sessao_acesso (
     token_hash TEXT PRIMARY KEY, expira_em INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS usuario_acesso (
+    usuario TEXT PRIMARY KEY, senha_hash TEXT NOT NULL, banco TEXT NOT NULL UNIQUE
+);
+CREATE TABLE IF NOT EXISTS tentativa_login (
+    chave TEXT PRIMARY KEY, tentativas INTEGER NOT NULL, expira_em INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS migracao_aplicada (chave TEXT PRIMARY KEY);
 CREATE TABLE IF NOT EXISTS vinculo_noticia (
     id INTEGER PRIMARY KEY, cliente_id INTEGER NOT NULL REFERENCES cliente(id),
     item_id INTEGER NOT NULL REFERENCES item_contexto(id), revisao INTEGER NOT NULL,
@@ -201,7 +213,7 @@ CREATE TABLE IF NOT EXISTS historico_assunto (
 
 def get_db() -> sqlite3.Connection:
     if "db" not in g:
-        g.db = sqlite3.connect(current_app.config["DATABASE"])
+        g.db = sqlite3.connect(g.get('tenant_database', current_app.config["DATABASE"]))
         g.db.row_factory = sqlite3.Row
         g.db.execute("PRAGMA foreign_keys = ON")
     return g.db
@@ -211,11 +223,28 @@ def close_db(_exc=None) -> None:
     conn = g.pop("db", None)
     if conn is not None:
         conn.close()
+    auth = g.pop('auth_db', None)
+    if auth is not None:
+        auth.close()
 
 
 def init_db() -> None:
     db = get_db()
     db.executescript(SCHEMA)
+    for sql in (
+        'CREATE INDEX IF NOT EXISTS interacao_cliente_data ON interacao(cliente_id,ocorrida_em DESC,id DESC)',
+        'CREATE INDEX IF NOT EXISTS posicao_cliente ON posicao(cliente_id)',
+        'CREATE INDEX IF NOT EXISTS contexto_cliente_assunto ON item_contexto(cliente_id,assunto,sujeito)',
+        'CREATE INDEX IF NOT EXISTS revisao_item ON revisao_contexto(item_id,revisao)',
+    ):
+        db.execute(sql)
+    if 'usuario' not in {r['name'] for r in db.execute('PRAGMA table_info(sessao_acesso)')}:
+        db.execute('ALTER TABLE sessao_acesso ADD COLUMN usuario TEXT')
+        db.execute("UPDATE sessao_acesso SET usuario='__demo__' WHERE usuario IS NULL")
+    if 'artigos_rejeitados' not in {r['name'] for r in db.execute('PRAGMA table_info(coleta_noticia)')}:
+        db.execute('ALTER TABLE coleta_noticia ADD COLUMN artigos_rejeitados INTEGER NOT NULL DEFAULT 0')
+    if 'validada' not in {r['name'] for r in db.execute('PRAGMA table_info(nota_assessor)')}:
+        db.execute('ALTER TABLE nota_assessor ADD COLUMN validada INTEGER NOT NULL DEFAULT 0')
     colunas = {linha["name"] for linha in db.execute("PRAGMA table_info(reuniao)")}
     for nome, definicao in (
         ("google_event_id", "TEXT"),
@@ -249,6 +278,8 @@ def init_db() -> None:
         except Exception:
             db.rollback()
             raise
+    from .contexto_chat import revalidar_legado
+    revalidar_legado(db)
 
 
 def drop_all() -> None:

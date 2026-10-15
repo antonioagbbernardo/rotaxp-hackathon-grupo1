@@ -271,15 +271,22 @@ def test_deduplicacao_limite_janela_e_artigos_removidos(ambiente):
     artigo(url='https://exemplo.test:nao-porta/x'), artigo(publishedAt='data inválida'),
     artigo(publishedAt=(AGORA + timedelta(hours=1)).isoformat()), artigo(source=None),
 ])
-def test_saida_invalida_nao_persiste_parcial(ambiente, invalido):
+def test_artigo_invalido_nao_descarta_os_artigos_validos(ambiente, invalido):
     app, c, g = ambiente
     vincular(c)
     g.resultado['articles'] = [artigo(), invalido]
     r = atualizar(c)
-    assert r['estado'] == 'erro' and r['erro']['status'] == 502
+    assert r['estado'] == 'atualizado' and r['artigos_rejeitados'] == 1
     with app.app_context():
-        assert get_db().execute('SELECT COUNT(*) FROM artigo_noticia').fetchone()[0] == 0
-    assert consultar(c)['artigos'] == []
+        assert get_db().execute('SELECT COUNT(*) FROM artigo_noticia').fetchone()[0] == 1
+    assert len(consultar(c)['artigos']) == 1
+    assert consultar(c)['assuntos'][0]['artigos_rejeitados'] == 1
+
+
+def test_lote_so_com_links_invalidos_nao_substitui_cache_bom(ambiente):
+    from app.noticias_rules import validar_artigos, ErroNoticias
+    with pytest.raises(ErroNoticias):
+        validar_artigos({'status':'ok','articles':[artigo(url='javascript:alert(1)')]},AGORA)
 
 
 def test_erro_preserva_cache_intervalo_e_recuperacao(ambiente):

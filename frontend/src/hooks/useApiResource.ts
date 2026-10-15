@@ -1,36 +1,39 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api } from '@/lib/api'
 
-export function useApiResource<T>(path: string, revision: string) {
-  const [data, setData] = useState<T | null>(null)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(true)
+export function useApiResource<T>(path: string | null, revision: string) {
+  const [result, setResult] = useState<{ path: string | null; revision: string; data: T | null; error: string }>({ path: null, revision: '', data: null, error: '' })
+  const [pending, setPending] = useState(false)
   const generation = useRef(0)
-  const refresh = useCallback(async (signal?: AbortSignal) => {
+  const refresh = useCallback(async () => {
+    if (!path) return
     const request = ++generation.current
+    setPending(true)
     try {
-      const result = await api<T>(path, { signal })
-      if (!signal?.aborted && request === generation.current) { setData(result); setError('') }
+      const data = await api<T>(path)
+      if (request === generation.current) setResult({ path, revision, data, error: '' })
     } catch (e) {
-      if (!signal?.aborted && request === generation.current) setError(e instanceof Error ? e.message : 'Não foi possível consultar os registros.')
-      throw e
+      if (request === generation.current) setResult((old) => ({ path, revision, data: old.path === path ? old.data : null, error: e instanceof Error ? e.message : 'Não foi possível consultar os registros.' }))
     } finally {
-      if (!signal?.aborted && request === generation.current) setLoading(false)
+      if (request === generation.current) setPending(false)
     }
-  }, [path])
+  }, [path, revision])
   useEffect(() => {
+    if (!path) return
     const controller = new AbortController()
     const request = ++generation.current
-    api<T>(path, { signal: controller.signal }).then((result) => {
-      if (!controller.signal.aborted && request === generation.current) { setData(result); setError('') }
+    api<T>(path, { signal: controller.signal }).then((data) => {
+      if (!controller.signal.aborted && request === generation.current) {
+        setResult({ path, revision, data, error: '' }); setPending(false)
+      }
     }).catch((e: unknown) => {
-      if (!controller.signal.aborted && request === generation.current) setError(e instanceof Error ? e.message : 'Não foi possível consultar os registros.')
-    }).finally(() => {
-      if (!controller.signal.aborted && request === generation.current) setLoading(false)
+      if (!controller.signal.aborted && request === generation.current) {
+        setResult((old) => ({ path, revision, data: old.path === path ? old.data : null, error: e instanceof Error ? e.message : 'Não foi possível consultar os registros.' })); setPending(false)
+      }
     })
     return () => controller.abort()
   }, [path, revision])
-  // Falha de releitura aparece no banner; não repetir uma gravação já concluída.
-  const updated = () => refresh().catch(() => {})
-  return { data, error, loading, refresh: updated }
+  const samePath = result.path === path
+  return { data: samePath ? result.data : null, error: samePath ? result.error : '',
+    loading: !!path && (pending || !samePath || result.revision !== revision), refresh }
 }

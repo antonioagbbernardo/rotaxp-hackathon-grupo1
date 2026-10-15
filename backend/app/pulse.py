@@ -97,38 +97,8 @@ def montar_cliente(c, incluir_resumo_ia=True):
     instantes += [r["revisada_em"] for i in revisao["itens"] for r in i["historico_revisoes"]]
     atualizado = max(instantes, default=None)
     linhas_resumo = [apresentar_fato(f['texto']) for f in resumo['fatos']] + resumo['ausencias']
-    historico_humor = []
-    interacoes_ordenadas = sorted(ctx["interacoes"], key=lambda r: r["ocorrida_em"])
-    if interacoes_ordenadas:
-        for i in interacoes_ordenadas:
-            dt = parse_instante(i["ocorrida_em"]).astimezone(TZ)
-            mes = dt.strftime("%Y-%m")
-            texto_l = i["texto"].lower()
-            if any(k in texto_l for k in ["excelente", "top", "show", "muito obrigad", "adorei", "pode reservar", "com certeza", "perfeito", "gostei", "parabéns", "entusiasm"]):
-                sent, rotulo, motivo = "positive", "Positivo", "IA: Investidor receptivo e satisfeito com as recomendações."
-            elif any(k in texto_l for k in ["vencid", "insatisfa", "reclama", "não tenho interesse", "somente assuntos financeiros", "exclusivamente por e-mail", "urgente"]):
-                sent, rotulo, motivo = "negative", "Atenção", "IA: Investidor cauteloso, exigindo retorno técnico e postura defensiva."
-            else:
-                sent, rotulo, motivo = "neutral", "Neutro", "IA: Comunicação operacional e equilibrada sem oscilações emocionais."
-
-            historico_humor.append({
-                "id": i["id"],
-                "month": mes,
-                "date": i["ocorrida_em"],
-                "sentiment": sent,
-                "label": rotulo,
-                "reason": f"{dt.strftime('%d/%m/%Y')} ({i['canal']}): {motivo}",
-            })
-    elif ctx["avaliacoes"]:
-        for r in reversed(ctx["avaliacoes"]):
-            historico_humor.append({
-                "id": r["id"],
-                "month": parse_instante(r["avaliada_em"]).astimezone(TZ).strftime("%Y-%m"),
-                "sentiment": {"positivo": "positive", "negativo": "negative", "atencao": "neutral"}[r["estado"]],
-                "label": {"positivo": "Positivo", "negativo": "Negativo", "atencao": "Atenção"}[r["estado"]],
-                "reason": r["justificativa"],
-                "date": r["avaliada_em"],
-            })
+    from .humor import historico
+    historico_humor = historico(c['id'])
 
     cliente = {
         "photoUrl": f"/assets/avatars/{c['id']}.jpg" if 1 <= c["id"] <= 10 else None,

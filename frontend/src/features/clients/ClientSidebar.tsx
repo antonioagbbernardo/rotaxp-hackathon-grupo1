@@ -1,18 +1,21 @@
 import { Badge } from '@/components/ui/Badge'
 import { Panel } from '@/components/ui/Panel'
 import { useClientFilters } from '@/hooks/useClientFilters'
-import type { Client } from '@/types/client'
+import type { ClientListItem } from '@/types/client'
+import { Button } from '@/components/ui/Button'
 import { ClientCard } from './ClientCard'
 import { ClientFilterTabs } from './ClientFilterTabs'
 import { ClientSearch } from './ClientSearch'
 
 interface ClientSidebarProps {
-  clients: Client[]
+  clients: ClientListItem[]
   selectedClientId: string
   onSelectClient: (clientId: string) => void
+  pagination?: { page: number; total: number; pages: number }
+  onPage?: (page: number) => void
 }
 
-export function ClientSidebar({ clients, selectedClientId, onSelectClient }: ClientSidebarProps) {
+export function ClientSidebar({ clients, selectedClientId, onSelectClient, pagination, onPage }: ClientSidebarProps) {
   const { query, setQuery, filter, setFilter, visibleClients, counts } = useClientFilters(clients)
 
   return (
@@ -21,7 +24,7 @@ export function ClientSidebar({ clients, selectedClientId, onSelectClient }: Cli
         <h2 id="clients-title" className="text-lg font-semibold">
           Meus clientes
         </h2>
-        <Badge>{counts.all} clientes</Badge>
+        <Badge>{pagination?.total ?? counts.all} clientes</Badge>
       </div>
 
       <div className="mt-4 flex items-center gap-2">
@@ -50,6 +53,12 @@ export function ClientSidebar({ clients, selectedClientId, onSelectClient }: Cli
           <li className="py-8 text-center text-xs text-ink-muted">Nenhum cliente encontrado.</li>
         )}
       </ul>
+
+      {pagination && pagination.pages > 1 && <div className="mt-3 space-y-2 text-xs">
+        <p>Busca e filtros nesta página · {pagination.page}/{pagination.pages}</p>
+        <div className="flex gap-2"><Button disabled={pagination.page<=1} onClick={() => onPage?.(pagination.page-1)}>Anterior</Button>
+          <Button disabled={pagination.page>=pagination.pages} onClick={() => onPage?.(pagination.page+1)}>Próxima</Button></div>
+      </div>}
 
       <p className="mt-4 border-t border-line pt-4 text-[10px] leading-relaxed text-ink-muted">
         Relacionamento informado pelo assessor.

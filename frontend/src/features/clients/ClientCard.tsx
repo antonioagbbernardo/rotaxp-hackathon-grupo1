@@ -3,10 +3,10 @@ import { Badge } from '@/components/ui/Badge'
 import { SentimentFace } from '@/components/ui/SentimentFace'
 import { priorityLabel, priorityTone, sentimentLabel } from '@/lib/sentiment'
 import { cn } from '@/lib/cn'
-import type { Client } from '@/types/client'
+import type { ClientListItem } from '@/types/client'
 
 interface ClientCardProps {
-  client: Client
+  client: ClientListItem
   isSelected: boolean
   onSelect: (clientId: string) => void
 }
@@ -55,7 +55,7 @@ export function ClientCard({ client, isSelected, onSelect }: ClientCardProps) {
             {hasPositiveNews && <span className="font-medium text-positive">Notícia positiva</span>}
             {hasPositiveNews && hasNegativeNews && ' · '}
             {hasNegativeNews && <span className="font-medium text-negative">Notícia negativa</span>}
-            {!hasPositiveNews && !hasNegativeNews && <span className="text-ink-muted">{client.news.length ? `${client.news.length} notícia(s) para revisar` : 'Sem notícias para revisar'}</span>}
+            {!hasPositiveNews && !hasNegativeNews && <span className="text-ink-muted">{client.news ? (client.news.length ? `${client.news.length} notícia(s) para revisar` : 'Sem notícias para revisar') : 'Ver contexto e notícias'}</span>}
           </p>
         </div>
       </div>

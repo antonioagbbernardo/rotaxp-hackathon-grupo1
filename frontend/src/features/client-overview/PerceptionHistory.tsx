@@ -21,7 +21,7 @@ export function PerceptionHistory({ entries }: PerceptionHistoryProps) {
         <div>
           <h2 className="text-sm font-medium text-ink">Histórico de humor</h2>
           <p className="mt-1 text-[10px] text-ink-muted">
-            Analisado pela IA com base nas mensagens e transcrições
+            Inferências registradas a partir das interações do investidor
           </p>
         </div>
       </div>

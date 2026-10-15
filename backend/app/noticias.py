@@ -144,6 +144,7 @@ def consultar(cid, itens=None):
         elif ultima and ultima['estado'] == 'falhou':
             estado, erro = 'falhou', {'codigo': ultima['erro_codigo'], 'mensagem': ultima['erro_mensagem']}
         assuntos.append({'id': assunto, 'nome': catalogo[assunto]['nome'], 'estado': estado,
+                         'artigos_rejeitados': sucesso['artigos_rejeitados'] if sucesso else 0,
                          'ultima_coleta': sucesso['fim_em'] if sucesso else None,
                          'ultima_tentativa': ultima['inicio_em'] if ultima else None, 'erro': erro})
         if not sucesso:
@@ -230,7 +231,7 @@ def _coletar(assunto, max_idade=None):
             db.execute('INSERT OR IGNORE INTO artigo_noticia (url) VALUES (?)', (a['url'],))
             db.execute('INSERT INTO coleta_artigo_noticia (coleta_id,artigo_id,dados) VALUES (?,?,?)',
                        (pid, a['url'], json.dumps(a, ensure_ascii=False)))
-        db.execute("UPDATE coleta_noticia SET estado='concluido',fim_em=? WHERE id=?", (formatar_utc(clock.agora()), pid))
+        db.execute("UPDATE coleta_noticia SET estado='concluido',fim_em=?,artigos_rejeitados=? WHERE id=?", (formatar_utc(clock.agora()), artigos.rejeitados, pid))
         db.commit()
     except Exception as e:
         db.rollback()
@@ -240,7 +241,7 @@ def _coletar(assunto, max_idade=None):
                    (formatar_utc(clock.agora()), codigo, mensagem, pid))
         db.commit()
         raise
-    return {'assunto': assunto, 'estado': 'atualizado'}
+    return {'assunto': assunto, 'estado': 'atualizado', 'artigos_rejeitados': artigos.rejeitados}
 
 
 def _atualizar_assuntos(assuntos, max_idade=None):
